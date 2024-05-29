@@ -71,9 +71,21 @@ router.post("/register", auth, (request, response) => {
       message: Messages.USER_NOT_AUTHORIZED,
     });
   }
+
+  const requiredFields = ["username", "password", "name", "surname"];
+  const missingFields = requiredFields.filter((field) => !request.body[field]);
+  if (missingFields.length > 0) {
+    return response.status(400).send({
+      success: false,
+      message: `${missingFields.join(", ")} ${Messages.REQUIRED_FIELD}`,
+    });
+  }
+
   const password = toSHA256(request.body.password);
   const user = new User({
     username: request.body.username,
+    name: request.body.name,
+    surname: request.body.surname,
     password: password,
   });
   user
@@ -92,6 +104,27 @@ router.post("/register", auth, (request, response) => {
     });
 });
 
+// get details from token
+router.get("/details", auth, (request, response) => {
+  User.findOne({ username: request.user.username })
+    .then((user) => {
+      // send user details without __v and password
+      user = user.toObject();
+      delete user.__v;
+      delete user.password;
+      response.status(200).send({
+        message: Messages.USER_DETAILS,
+        user: user,
+      });
+    })
+    .catch((error) => {
+      response.status(404).send({
+        message: Messages.USER_NOT_FOUND,
+        error,
+      });
+    });
+});
 
+// update user endpoint
 
 module.exports = router;

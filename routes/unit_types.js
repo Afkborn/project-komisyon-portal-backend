@@ -1,0 +1,30 @@
+const Messages = require("../constants/Messages");
+const express = require("express");
+const router = express.Router();
+
+const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
+
+// get all unit types
+// get params
+// if type params is given, return only that type
+// if type params is not given, return all types
+router.get("/", (request, response) => {
+  const type = request.query.type;
+
+  if (type) {
+    const unitTypes = UnitTypeList.filter(
+      (unitType) => unitType.type === parseInt(type)
+    );
+    if (unitTypes) {
+      response.status(200).send(unitTypes);
+    } else {
+      response.status(404).send({
+        message: Messages.UNIT_TYPE_NOT_FOUND,
+      });
+    }
+  } else {
+    response.status(200).send(UnitTypeList);
+  }
+});
+
+module.exports = router;

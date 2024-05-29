@@ -1,0 +1,105 @@
+// type 0 mahkeme, type 1 savcılık, type 2 diğer
+exports.UnitTypeList = [
+  {
+    id: 1,
+    name: "Ağır Ceza Mahkemesi",
+    type: 0,
+    oncelikSirasi: 1,
+  },
+  {
+    id: 2,
+    name: "Aile Mahkemesi",
+    type: 0,
+    oncelikSirasi: 2,
+  },
+  {
+    id: 3,
+    name: "Asliye Ceza Mahkemesi",
+    type: 0,
+    oncelikSirasi: 3,
+  },
+  {
+    id: 4,
+    name: "Asliye Hukuk Mahkemesi",
+    type: 0,
+    oncelikSirasi: 4,
+  },
+  {
+    id: 5,
+    name: "Çocuk Mahkemesi",
+    type: 0,
+    oncelikSirasi: 5,
+  },
+  {
+    id: 6,
+    name: "İcra Ceza Mahkemesi",
+    type: 0,
+    oncelikSirasi: 6,
+  },
+  {
+    id: 7,
+    name: "İcra Hukuk Mahkemesi",
+    type: 0,
+    oncelikSirasi: 7,
+  },
+  {
+    id: 8,
+    name: "İnfaz Mahkemesi",
+    type: 0,
+    oncelikSirasi: 8,
+  },
+  {
+    id: 9,
+    name: "İş Mahkemesi",
+    type: 0,
+    oncelikSirasi: 9,
+  },
+  {
+    id: 10,
+    name: "Sulh Ceza Hakimliği",
+    type: 0,
+    oncelikSirasi: 10,
+  },
+  {
+    id: 11,
+    name: "Sulh Ceza Mahkemesi",
+    type: 0,
+    oncelikSirasi: 11,
+  },
+  {
+    id: 12,
+    name: "Sulh Hukuk Mahkemesi",
+    type: 0,
+    oncelikSirasi: 12,
+  },
+  {
+    id: 13,
+    name: "Tüketici Mahkemesi",
+    type: 0,
+    oncelikSirasi: 13,
+  },
+  {
+    id: 14,
+    name: "İdari İşler Müdürlüğü",
+    type: 1,
+    oncelikSirasi: 14,
+  },
+  {
+    id: 15,
+    name: "Terörle Mücadale Şube Müdürlüğü",
+    type: 1,
+    oncelikSirasi: 15,
+  },
+  {
+    id: 16,
+    name: "Diğer",
+    type: 1,
+    oncelikSirasi: 16,
+  },
+  {
+    id: 17,
+    name: "Diğer",
+    type: 2,
+    oncelikSirasi: 17,
+  },
+];

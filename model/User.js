@@ -7,6 +7,14 @@ const UserSchema = mongoose.Schema({
     required: [true, Messages.USERNAME_REQUIRED],
     unique: [true, Messages.USERNAME_EXIST],
   },
+  name: {
+    type: String,
+    required: [true, Messages.NAME_REQUIRED],
+  },
+  surname: {
+    type: String,
+    required: [true, Messages.SURNAME_REQUIRED],
+  },
   password: {
     type: String,
     required: [true, Messages.PASSWORD_REQUIRED],
