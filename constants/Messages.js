@@ -18,5 +18,6 @@ exports.INSTITUTIONNAME_REQUIRED = "Kurum adı zorunludur";
 exports.UNIT_TYPE_REQUIRED = "Kurum tipi zorunludur";
 exports.UNIT_NAME_REQUIRED = "Kurum adı zorunludur";
 exports.UNIT_NAME_EXIST = "Kurum adı mevcut";
+exports.UNIT_ID_REQUIRED = "Kurum ID zorunludur";
 
 exports.REQUIRED_FIELD = "alanı zorunludur";
