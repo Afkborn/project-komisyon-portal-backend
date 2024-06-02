@@ -9,11 +9,11 @@ const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
 // if type params is given, return only that type
 // if type params is not given, return all types
 router.get("/", (request, response) => {
-  const type = request.query.type;
+  const institutionTypeId = request.query.institutionTypeId;
 
-  if (type) {
+  if (institutionTypeId) {
     const unitTypes = UnitTypeList.filter(
-      (unitType) => unitType.type === parseInt(type)
+      (unitType) => unitType.institutionTypeId === parseInt(institutionTypeId)
     );
     if (unitTypes) {
       response.status(200).send(unitTypes);

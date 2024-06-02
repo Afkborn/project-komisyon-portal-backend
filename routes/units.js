@@ -2,18 +2,74 @@ const Messages = require("../constants/Messages");
 const express = require("express");
 const router = express.Router();
 const Unit = require("../model/Unit");
-const getTimeForLog = require("../common/time");
 const auth = require("../middleware/auth");
+const {
+  getUnitTypesByType,
+  getUnitTypeByUnitTypeId,
+} = require("../actions/UnitTypeActions");
 
 // get all units
+// institutionTypeId params is optional
+// if institutionTypeId is provided, it will return all units of that type
 router.get("/", auth, (request, response) => {
-  Unit.find()
+  const institutionTypeId = request.query.institutionTypeId;
+  if (institutionTypeId) {
+    const unitTypes = getUnitTypesByType(institutionTypeId);
+    // unitTypes örneğin şimdi 9001,9002,9003 olarak gidiyor.
+    // unitTypes'ı 9001,9002,9003 olan bütün unit'leri döndür.
+    Unit.find({ unitTypeID: { $in: unitTypes.map((unitType) => unitType.id) } })
+      .then((units) => {
+        response.send({
+          success: true,
+          unitList: units,
+        });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: error.message || Messages.UNITS_NOT_FOUND,
+        });
+      });
+  } else {
+    Unit.find()
+      .then((units) => {
+        response.send({
+          success: true,
+          unitList: units,
+        });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: error.message || Messages.UNITS_NOT_FOUND,
+        });
+      });
+  }
+});
+
+// get all units
+// institutionId params is required
+// it will return all units of that institution
+router.get("/institution/:institutionId", auth, (request, response) => {
+  const institutionId = request.params.institutionId;
+  Unit.find({ institutionID: institutionId })
     .then((units) => {
-      response.status(200).send(units);
+      // unitlerinin her birine institutionTypeId ekleyelim.
+      /// bunun için unitTypeID alalım
+      // unitTypeID'nin institutionTypeId'sini almak için UnitTypeActions.js'deki getInstitutionTypeIdByUnitTypeId fonksiyonunu kullanalım.
+      // bu fonksiyonun içinde UnitTypeList'ten ilgili unitTypeID'ye ait institutionTypeID'yi döndürelim.
+
+      units = units.map((unit) => {
+        const unitType = getUnitTypeByUnitTypeId(unit.unitTypeID);
+        return { ...unit._doc, unitType };
+      });
+
+      response.send({
+        success: true,
+        unitList: units,
+      });
     })
     .catch((error) => {
       response.status(500).send({
-        message: error.message || Messages.UNIT_LIST_NOT_FOUND,
+        message: error.message || Messages.UNITS_NOT_FOUND,
       });
     });
 });
@@ -51,6 +107,51 @@ router.post("/", auth, (request, response) => {
     });
 });
 
+//upddate a unit
+router.put("/:id", auth, (request, response) => {
+  const id = request.params.id;
 
+  Unit.findByIdAndUpdate(id, request.body, { useFindAndModify: false })
+    .then((unit) => {
+      if (!unit) {
+        return response.status(404).send({
+          success: false,
+          message: Messages.UNIT_NOT_FOUND,
+        });
+      }
+      response.send({
+        success: true,
+        message: Messages.UNIT_UPDATED,
+      });
+    })
+    .catch((error) => {
+      response.status(500).send({
+        message: error.message || Messages.UNIT_NOT_UPDATED,
+      });
+    });
+});
+
+// delete a unit
+router.delete("/:id", auth, (request, response) => {
+  const id = request.params.id;
+  Unit.findOneAndDelete({ _id: id })
+    .then((unit) => {
+      if (!unit) {
+        return response.status(404).send({
+          success: false,
+          message: Messages.UNIT_NOT_FOUND,
+        });
+      }
+      response.send({
+        success: true,
+        message: Messages.UNIT_DELETED,
+      });
+    })
+    .catch((error) => {
+      response.status(500).send({
+        message: error.message || Messages.UNIT_NOT_DELETED,
+      });
+    });
+});
 
 module.exports = router;
