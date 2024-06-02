@@ -10,7 +10,7 @@ exports.InstitutionList = [
   {
     id: 1,
     name: "Eskişehir Adliyesi",
-    types: [mahkeme, savcilik],
+    types: [mahkeme, savcilik, diger],
     status: true,
   },
   {

@@ -21,7 +21,6 @@ const UnitSchema = mongoose.Schema({
   },
   unitTypeID: {
     type: Number,
-    required: [true, Messages.UNIT_ID_REQUIRED],
   },
   delegationType: {
     type: String,
@@ -46,12 +45,6 @@ const UnitSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  clerks: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Clerk",
-    },
-  ],
 });
 
 module.exports = mongoose.model("Unit", UnitSchema);

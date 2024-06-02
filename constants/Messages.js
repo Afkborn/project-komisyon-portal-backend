@@ -27,6 +27,22 @@ exports.UNIT_DELETED = "Unit silindi";
 exports.UNIT_NOT_DELETED = "Unit silinemedi";
 
 
+// PERSON
+exports.PERSON_SICIL_REQUIRED = "Sicil numarası zorunludur";
+exports.PERSON_NAME_REQUIRED = "İsim zorunludur";
+exports.PERSON_SURNAME_REQUIRED = "Soyisim zorunludur";
+exports.PERSON_GOREVE_BASLAMA_TARIHI_REQUIRED = "Göreve başlama tarihi zorunludur";
+exports.BIRIME_BASLAMA_TARIHI_REQUIRED = "Birime başlama tarihi zorunludur";
+exports.PERSON_NOT_FOUND = "Görevli bulunamadı";
+exports.PERSON_DELETED = "Görevli silindi";
+
+
+// LEAVE
+exports.LEAVE_NOT_FOUND = "İzin bulunamadı";
+exports.LEAVE_DELETED = "İzin silindi";
+exports.LEAVE_NOT_DELETED = "İzin silinemedi";
+exports.LEAVE_NOT_UPDATED = "İzin güncellenemedi";
+
 
 // COMMON
 exports.REQUIRED_FIELD = "alanı zorunludur";

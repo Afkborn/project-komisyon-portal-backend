@@ -39,8 +39,8 @@ app.use("/api/unit_types", unit_types);
 const units = require("./routes/units");
 app.use("/api/units", units);
 
-
-
+const persons = require("./routes/persons");
+app.use("/api/persons", persons);
 
 
 
