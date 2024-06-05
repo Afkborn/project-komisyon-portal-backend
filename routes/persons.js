@@ -12,26 +12,51 @@ const {
 const auth = require("../middleware/auth");
 
 // get all persons
-router.get("/", auth, (request, response) => {
-  Person.find()
-    .then((persons) => {
-      response.send({
-        success: true,
-        personList: persons,
-      });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: error.message || Messages.PERSONS_NOT_FOUND,
-      });
-    });
-});
+// router.get("/", auth, (request, response) => {
+//   Person.find()
+//     .then((persons) => {
+//       response.send({
+//         success: true,
+//         personList: persons,
+//       });
+//     })
+//     .catch((error) => {
+//       response.status(500).send({
+//         message: error.message || Messages.PERSONS_NOT_FOUND,
+//       });
+//     });
+// });
 
 // get a person by sicil
-router.get("/:sicil", auth, (request, response) => {
-  const sicil = request.params.sicil;
+// router.get("/:sicil", auth, (request, response) => {
+//   const sicil = request.params.sicil;
 
-  Person.findOne({ sicil })
+//   Person.findOne({ sicil })
+//     .then((person) => {
+//       if (!person) {
+//         return response.status(404).send({
+//           success: false,
+//           message: Messages.PERSON_NOT_FOUND,
+//         });
+//       }
+//       response.send({
+//         success: true,
+//         person,
+//       });
+//     })
+//     .catch((error) => {
+//       response.status(500).send({
+//         message: error.message || Messages.PERSON_NOT_FOUND,
+//       });
+//     });
+// });
+
+
+// get a person by birimID
+router.get("/:birimID", auth, (request, response) => {
+  const birimID = request.params.birimID;
+
+  Person.find({ birimID })
     .then((person) => {
       if (!person) {
         return response.status(404).send({
@@ -41,7 +66,7 @@ router.get("/:sicil", auth, (request, response) => {
       }
       response.send({
         success: true,
-        person,
+        persons : person,
       });
     })
     .catch((error) => {
@@ -82,6 +107,7 @@ router.post("/", auth, (request, response) => {
 
     //  ZABIT KATİBİ
     durusmaKatibiMi,
+    calistigiHakim,
   } = request.body;
 
   const Model = modelMap[kind];
@@ -101,7 +127,7 @@ router.post("/", auth, (request, response) => {
   };
 
   if (kind === "ZabitKatibi") {
-    newPerson = new Model({ ...commonFields, durusmaKatibiMi });
+    newPerson = new Model({ ...commonFields, durusmaKatibiMi, calistigiHakim });
   } else {
     newPerson = new Model(commonFields);
   }

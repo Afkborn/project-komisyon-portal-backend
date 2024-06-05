@@ -46,3 +46,14 @@ exports.LEAVE_NOT_UPDATED = "İzin güncellenemedi";
 
 // COMMON
 exports.REQUIRED_FIELD = "alanı zorunludur";
+
+
+// TİTLE  
+exports.TITLE_NAME_REQUIRED = "Ünvan adı zorunludur";
+exports.TITLE_NOT_DELETED = "Ünvan silinemedi";
+exports.TITLE_DELETED = "Ünvan silindi";
+exports.TITLE_NOT_DELETABLE = "Ünvan silinemez";
+exports.TITLE_NOT_UPDATED = "Ünvan güncellenemedi";
+exports.TITLE_NOT_FOUND = "Ünvan bulunamadı";
+exports.TITLE_UPDATED = "Ünvan güncellendi";
+exports.TITLE_NOT_SAVED = "Ünvan kaydedilemedi";

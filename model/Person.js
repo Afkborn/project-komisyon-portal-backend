@@ -49,46 +49,55 @@ const personSchema = new Schema(
 
 const Person = mongoose.model("Person", personSchema);
 
-const Baskan = Person.discriminator(
-  "Baskan",
-  new Schema({
-    // Başkan'a özgü özellikler buraya eklenebilir
-  })
-);
+// const Baskan = Person.discriminator(
+//   "Baskan",
+//   new Schema({
+//     // Başkan'a özgü özellikler buraya eklenebilir
+//   })
+// );
 
-const UyeHakim = Person.discriminator(
-  "UyeHakim",
-  new Schema({
-    // Üye Hakim'e özgü özellikler buraya eklenebilir
-  })
-);
+// const UyeHakim = Person.discriminator(
+//   "UyeHakim",
+//   new Schema({
+//     // Üye Hakim'e özgü özellikler buraya eklenebilir
+//   })
+// );
 
 const ZabitKatibi = Person.discriminator(
   "ZabitKatibi",
   new Schema({
     durusmaKatibiMi: { type: Boolean, required: true },
+    calistigiHakim : { type: Schema.Types.ObjectId, ref: "Person" }
   })
 );
 
-const Mubasir = Person.discriminator(
-  "Mubasir",
-  new Schema({
-    // Mübaşir'e özgü özellikler buraya eklenebilir
-  })
-);
+// const Mubasir = Person.discriminator(
+//   "Mubasir",
+//   new Schema({
+//     // Mübaşir'e özgü özellikler buraya eklenebilir
+//   })
+// );
 
-const YaziİsleriMuduru = Person.discriminator(
-  "YaziİsleriMuduru",
-  new Schema({
-    // Yazı İşleri Müdürü'ne özgü özellikler buraya eklenebilir
-  })
-);
+// const YaziİsleriMuduru = Person.discriminator(
+//   "YaziİsleriMuduru",
+//   new Schema({
+//     // Yazı İşleri Müdürü'ne özgü özellikler buraya eklenebilir
+//   })
+// );
+
+
+// const DigerPersonel = Person.discriminator(
+//   "DigerPersonel",
+//   new Schema({
+//     unvanAdi: { type: String, required: true },
+//   })
+// );
 
 module.exports = {
   Person,
-  Baskan,
-  UyeHakim,
+  // Baskan,
+  // UyeHakim,
   ZabitKatibi,
-  Mubasir,
-  YaziİsleriMuduru,
+  // Mubasir,
+  // YaziİsleriMuduru,
 };
