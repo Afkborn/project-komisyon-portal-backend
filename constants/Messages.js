@@ -25,6 +25,9 @@ exports.UNIT_TYPE_NOT_FOUND = "Unit tipi bulunamadı";
 exports.UNIT_NOT_FOUND = "Unit bulunamadı";
 exports.UNIT_DELETED = "Unit silindi";
 exports.UNIT_NOT_DELETED = "Unit silinemedi";
+exports.UNIT_UPDATED = "Unit güncellendi";
+exports.UNIT_NOT_UPDATED = "Unit güncellenemedi";
+exports.UNIT_NOT_SAVED = "Unit kaydedilemedi";
 
 
 // PERSON

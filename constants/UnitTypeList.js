@@ -6,6 +6,7 @@ exports.UnitTypeList = [
     institutionTypeId: 0,
     unitType: "Ceza",
     oncelikSirasi: 1,
+    gerekenKatipSayisi: 5,
   },
   {
     id: 9002,
@@ -13,6 +14,7 @@ exports.UnitTypeList = [
     institutionTypeId: 0,
     unitType: "Hukuk",
     oncelikSirasi: 2,
+    gerekenKatipSayisi: 3,
   },
   {
     id: 9003,
@@ -20,6 +22,7 @@ exports.UnitTypeList = [
     institutionTypeId: 0,
     unitType: "Ceza",
     oncelikSirasi: 3,
+    gerekenKatipSayisi: 3,
   },
   {
     id: 9004,
@@ -27,6 +30,7 @@ exports.UnitTypeList = [
     institutionTypeId: 0,
     unitType: "Hukuk",
     oncelikSirasi: 4,
+    gerekenKatipSayisi: 3,
   },
   {
     id: 9005,
@@ -34,6 +38,7 @@ exports.UnitTypeList = [
     institutionTypeId: 0,
     unitType: "Ceza",
     oncelikSirasi: 5,
+    gerekenKatipSayisi: 3,
   },
   {
     id: 9006,
@@ -41,6 +46,7 @@ exports.UnitTypeList = [
     unitType: "Ceza",
     institutionTypeId: 0,
     oncelikSirasi: 6,
+    gerekenKatipSayisi: 3,
   },
   {
     id: 9007,
@@ -48,6 +54,7 @@ exports.UnitTypeList = [
     unitType: "Ceza",
     institutionTypeId: 0,
     oncelikSirasi: 7,
+    gerekenKatipSayisi: 3,
   },
   {
     id: 9009,
@@ -55,6 +62,7 @@ exports.UnitTypeList = [
     institutionTypeId: 0,
     unitType: "Hukuk",
     oncelikSirasi: 9,
+    gerekenKatipSayisi: 3,
   },
   {
     id: 9011,
@@ -62,6 +70,7 @@ exports.UnitTypeList = [
     institutionTypeId: 0,
     unitType: "Ceza",
     oncelikSirasi: 11,
+    gerekenKatipSayisi: 3,
   },
   {
     id: 9012,
@@ -69,6 +78,7 @@ exports.UnitTypeList = [
     institutionTypeId: 0,
     unitType: "Hukuk",
     oncelikSirasi: 12,
+    gerekenKatipSayisi: 3,
   },
   {
     id: 9014,

@@ -1,14 +1,8 @@
 const Messages = require("../constants/Messages");
 const express = require("express");
 const router = express.Router();
-const {
-  Person,
-  Baskan,
-  Mubasir,
-  UyeHakim,
-  YaziİsleriMuduru,
-  ZabitKatibi,
-} = require("../model/Person");
+const { Person, zabitkatibi } = require("../model/Person");
+const Title = require("../model/Title");
 const auth = require("../middleware/auth");
 
 // get all persons
@@ -51,14 +45,16 @@ const auth = require("../middleware/auth");
 //     });
 // });
 
-
-// get a person by birimID
+// get a persons by birimID
 router.get("/:birimID", auth, (request, response) => {
   const birimID = request.params.birimID;
-
+  // get all persons by birimID with title , without kind
   Person.find({ birimID })
-    .then((person) => {
-      if (!person) {
+    // get title without _id -v
+    .populate("title", "-_id -__v -deletable")
+    .select("-kind")
+    .then((persons) => {
+      if (!persons) {
         return response.status(404).send({
           success: false,
           message: Messages.PERSON_NOT_FOUND,
@@ -66,7 +62,7 @@ router.get("/:birimID", auth, (request, response) => {
       }
       response.send({
         success: true,
-        persons : person,
+        persons,
       });
     })
     .catch((error) => {
@@ -77,13 +73,9 @@ router.get("/:birimID", auth, (request, response) => {
 });
 
 // create a person
-router.post("/", auth, (request, response) => {
+router.post("/", auth, async (request, response) => {
   const modelMap = {
-    Baskan,
-    UyeHakim,
-    ZabitKatibi,
-    YaziİsleriMuduru,
-    Mubasir,
+    zabitkatibi,
   };
 
   const requiredFields = ["kind", "sicil", "ad", "soyad"];
@@ -107,12 +99,22 @@ router.post("/", auth, (request, response) => {
 
     //  ZABIT KATİBİ
     durusmaKatibiMi,
-    calistigiHakim,
   } = request.body;
 
-  const Model = modelMap[kind];
+  let Model = modelMap[kind];
+
   if (!Model) {
-    return response.status(400).send("Invalid kind");
+    Model = Person;
+  }
+
+  // find title by kind
+  let title = await Title.findOne({ kind });
+
+  if (!title) {
+    return response.status(404).send({
+      success: false,
+      message: Messages.TITLE_NOT_FOUND,
+    });
   }
 
   let newPerson;
@@ -124,10 +126,11 @@ router.post("/", auth, (request, response) => {
     birimID,
     birimeBaslamaTarihi,
     status,
+    title: title._id,
   };
 
-  if (kind === "ZabitKatibi") {
-    newPerson = new Model({ ...commonFields, durusmaKatibiMi, calistigiHakim });
+  if (kind === "zabitkatibi") {
+    newPerson = new Model({ ...commonFields, durusmaKatibiMi });
   } else {
     newPerson = new Model(commonFields);
   }
@@ -140,6 +143,7 @@ router.post("/", auth, (request, response) => {
     .catch((error) => {
       response.status(500).send({
         message: error.message || Messages.PERSON_NOT_SAVED,
+        code: error.code,
       });
     });
 });

@@ -18,7 +18,7 @@ const LeaveSchema = mongoose.Schema({
     type: String,
     required: [true, Messages.REASON_REQUIRED],
   },
-  comment : {
+  comment: {
     type: String,
   },
   createdDate: {
@@ -26,3 +26,5 @@ const LeaveSchema = mongoose.Schema({
     default: Date.now,
   },
 });
+
+module.exports = mongoose.model("Leave", LeaveSchema);
