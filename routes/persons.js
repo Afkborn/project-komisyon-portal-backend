@@ -4,7 +4,7 @@ const router = express.Router();
 const { Person, zabitkatibi } = require("../model/Person");
 const Title = require("../model/Title");
 const auth = require("../middleware/auth");
-
+const Logger = require("../middleware/logger");
 
 // MODELMAP
 const modelMap = {
@@ -29,68 +29,77 @@ const modelMap = {
 // });
 
 // get a person by sicil
-router.get("/bySicil/:sicil", auth, (req, res) => {
-  Person.findOne({ sicil: req.params.sicil })
-    .populate("title", "-_id -__v -deletable")
-    .populate("birimID", "-_id -__v -deletable")
-    .populate("izinler", "-_id -__v -personID")
-    .populate({
-      path: "calistigiKisi",
-      populate: {
-        path: "title",
-        select: "-_id -__v -deletable",
-      },
-    })
-    .then((person) => {
-      if (!person) {
-        return res.status(404).send({
-          success: false,
-          message: Messages.PERSON_NOT_FOUND,
+router.get(
+  "/bySicil/:sicil",
+  auth,
+  Logger("GET /persons/bySicil"),
+  (req, res) => {
+    Person.findOne({ sicil: req.params.sicil })
+      .populate("title", "-_id -__v -deletable")
+      .populate("birimID", "-_id -__v -deletable")
+      .populate("izinler", "-__v -personID")
+      .populate({
+        path: "calistigiKisi",
+        populate: {
+          path: "title",
+          select: "-_id -__v -deletable",
+        },
+      })
+      .then((person) => {
+        if (!person) {
+          return res.status(404).send({
+            success: false,
+            message: Messages.PERSON_NOT_FOUND,
+          });
+        }
+        res.send({
+          success: true,
+          person,
         });
-      }
-      res.send({
-        success: true,
-        person,
+      })
+      .catch((error) => {
+        res.status(500).send({
+          message: error.message || Messages.PERSON_NOT_FOUND,
+        });
       });
-    })
-    .catch((error) => {
-      res.status(500).send({
-        message: error.message || Messages.PERSON_NOT_FOUND,
-      });
-    });
-});
-
+  }
+);
 
 // get a persons by birimID
-router.get("/:birimID", auth, (request, response) => {
-  const birimID = request.params.birimID;
-  // get all persons by birimID with title , without kind
-  Person.find({ birimID })
-    // get title without _id -v
-    .populate("title", "-_id -__v -deletable")
-    .populate("izinler", "-_id -__v -personID")
-    .select("-kind")
-    .then((persons) => {
-      if (!persons) {
-        return response.status(404).send({
-          success: false,
-          message: Messages.PERSON_NOT_FOUND,
+router.get(
+  "/:birimID",
+  auth,
+  Logger("GET /persons/byBirimID"),
+  (request, response) => {
+    const birimID = request.params.birimID;
+    // get all persons by birimID with title , without kind
+    Person.find({ birimID })
+      // get title without _id -v
+      .populate("title", "-_id -__v -deletable")
+      .populate("izinler", "-__v -personID")
+      .select("-kind")
+      .then((persons) => {
+        if (!persons) {
+          return response.status(404).send({
+            success: false,
+            message: Messages.PERSON_NOT_FOUND,
+          });
+        }
+        response.send({
+          success: true,
+          persons,
         });
-      }
-      response.send({
-        success: true,
-        persons,
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: error.message || Messages.PERSON_NOT_FOUND,
+        });
       });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: error.message || Messages.PERSON_NOT_FOUND,
-      });
-    });
-});
+  }
+);
 
 // create a person
-router.post("/", auth, async (request, response) => {
+router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
   const requiredFields = ["kind", "sicil", "ad", "soyad"];
   const missingFields = requiredFields.filter((field) => !request.body[field]);
   if (missingFields.length > 0) {
@@ -163,7 +172,7 @@ router.post("/", auth, async (request, response) => {
 });
 
 // Update a person with id
-router.put("/:id", auth, (request, response) => {
+router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
   const id = request.params.id;
   const updateData = request.body;
   const options = { new: true, runValidators: true, context: "query" };

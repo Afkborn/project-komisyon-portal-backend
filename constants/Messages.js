@@ -48,7 +48,7 @@ exports.LEAVE_NOT_DELETED = "İzin silinemedi";
 exports.LEAVE_NOT_UPDATED = "İzin güncellenemedi";
 exports.END_DATE_REQUIRED = "Bitiş tarihi zorunludur";
 exports.LEAVES_NOT_FOUND = "İzinler bulunamadı";
-
+exports.LEAVE_NOT_SAVED = "İzin kaydedilemedi";
 
 // COMMON
 exports.REQUIRED_FIELD = "alanı zorunludur";

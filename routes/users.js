@@ -6,9 +6,11 @@ const jwt = require("jsonwebtoken");
 const getTimeForLog = require("../common/time");
 const auth = require("../middleware/auth");
 const toSHA256 = require("../common/hashing");
+const Logger = require("../middleware/logger");
 
 // login user
-router.post("/login", (request, response) => {
+
+router.post("/login",  (request, response) => {
   const requiredFields = ["username", "password"];
   const missingFields = requiredFields.filter((field) => !request.body[field]);
   if (missingFields.length > 0) {
@@ -65,7 +67,8 @@ router.post("/login", (request, response) => {
 });
 
 // register endpoint
-router.post("/register", auth, (request, response) => {
+
+router.post("/register", auth, Logger("POST /register"), (request, response) => {
   if (request.user.userPermission !== "admin") {
     return response.status(403).send({
       message: Messages.USER_NOT_AUTHORIZED,

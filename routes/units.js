@@ -7,11 +7,12 @@ const {
   getUnitTypesByType,
   getUnitTypeByUnitTypeId,
 } = require("../actions/UnitTypeActions");
+const Logger = require("../middleware/logger");
 
 // get all units
 // institutionTypeId params is optional
 // if institutionTypeId is provided, it will return all units of that type
-router.get("/", auth, (request, response) => {
+router.get("/", auth, Logger("GET /units"), (request, response) => {
   const institutionTypeId = request.query.institutionTypeId;
   if (institutionTypeId) {
     const unitTypes = getUnitTypesByType(institutionTypeId);
@@ -48,34 +49,39 @@ router.get("/", auth, (request, response) => {
 // get all units
 // institutionId params is required
 // it will return all units of that institution
-router.get("/institution/:institutionId", auth, (request, response) => {
-  const institutionId = request.params.institutionId;
-  Unit.find({ institutionID: institutionId })
-    .then((units) => {
-      // unitlerinin her birine institutionTypeId ekleyelim.
-      /// bunun için unitTypeID alalım
-      // unitTypeID'nin institutionTypeId'sini almak için UnitTypeActions.js'deki getInstitutionTypeIdByUnitTypeId fonksiyonunu kullanalım.
-      // bu fonksiyonun içinde UnitTypeList'ten ilgili unitTypeID'ye ait institutionTypeID'yi döndürelim.
+router.get(
+  "/institution/:institutionId",
+  auth,
+  Logger("GET /units/institution"),
+  (request, response) => {
+    const institutionId = request.params.institutionId;
+    Unit.find({ institutionID: institutionId })
+      .then((units) => {
+        // unitlerinin her birine institutionTypeId ekleyelim.
+        /// bunun için unitTypeID alalım
+        // unitTypeID'nin institutionTypeId'sini almak için UnitTypeActions.js'deki getInstitutionTypeIdByUnitTypeId fonksiyonunu kullanalım.
+        // bu fonksiyonun içinde UnitTypeList'ten ilgili unitTypeID'ye ait institutionTypeID'yi döndürelim.
 
-      units = units.map((unit) => {
-        const unitType = getUnitTypeByUnitTypeId(unit.unitTypeID);
-        return { ...unit._doc, unitType };
-      });
+        units = units.map((unit) => {
+          const unitType = getUnitTypeByUnitTypeId(unit.unitTypeID);
+          return { ...unit._doc, unitType };
+        });
 
-      response.send({
-        success: true,
-        unitList: units,
+        response.send({
+          success: true,
+          unitList: units,
+        });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: error.message || Messages.UNITS_NOT_FOUND,
+        });
       });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: error.message || Messages.UNITS_NOT_FOUND,
-      });
-    });
-});
+  }
+);
 
 // post a unit
-router.post("/", auth, (request, response) => {
+router.post("/", auth, Logger("POST /units"), (request, response) => {
   const requiredFields = ["institutionID", "unitTypeID", "name"];
   const missingFields = requiredFields.filter((field) => !request.body[field]);
   if (missingFields.length > 0) {
@@ -108,7 +114,7 @@ router.post("/", auth, (request, response) => {
 });
 
 //upddate a unit
-router.put("/:id", auth, (request, response) => {
+router.put("/:id", auth, Logger("PUT /units"), (request, response) => {
   const id = request.params.id;
 
   Unit.findByIdAndUpdate(id, request.body, { useFindAndModify: false })
@@ -132,7 +138,7 @@ router.put("/:id", auth, (request, response) => {
 });
 
 // delete a unit
-router.delete("/:id", auth, (request, response) => {
+router.delete("/:id", auth, Logger("DELETE /units"), (request, response) => {
   const id = request.params.id;
   Unit.findOneAndDelete({ _id: id })
     .then((unit) => {

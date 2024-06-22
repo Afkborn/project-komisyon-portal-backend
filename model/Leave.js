@@ -20,6 +20,10 @@ const LeaveSchema = mongoose.Schema({
     type: String,
     required: [true, Messages.REASON_REQUIRED],
   },
+  dayCount: {
+    type: Number,
+    required: [true, Messages.DAY_COUNT_REQUIRED],
+  },
   comment: {
     type: String,
   },

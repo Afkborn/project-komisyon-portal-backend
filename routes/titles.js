@@ -3,9 +3,11 @@ const express = require("express");
 const router = express.Router();
 const Title = require("../model/Title");
 const auth = require("../middleware/auth");
+const Logger = require("../middleware/logger");
 
 // get all titles
-router.get("/", (request, response) => {
+
+router.get("/", auth, Logger("GET /titles/"), (request, response) => {
   Title.find()
     .then((titles) => {
       response.send({
@@ -21,7 +23,7 @@ router.get("/", (request, response) => {
 });
 
 // post a title
-router.post("/", auth, (request, response) => {
+router.post("/", auth, Logger("POST /titles/"), (request, response) => {
   const title = new Title({
     name: request.body.name,
     kind: request.body.kind,
@@ -41,7 +43,7 @@ router.post("/", auth, (request, response) => {
 });
 
 // update a title by id
-router.put("/:id", auth, (request, response) => {
+router.put("/:id", auth, Logger("PUT /titles/"), (request, response) => {
   const id = request.params.id;
 
   Title.findByIdAndUpdate(id, request.body, { useFindAndModify: false })
@@ -65,7 +67,7 @@ router.put("/:id", auth, (request, response) => {
 });
 
 // delete a title by id
-router.delete("/:id", auth, (request, response) => {
+router.delete("/:id", auth, Logger("DELETE /titles/"), (request, response) => {
   const id = request.params.id;
   // find Title, if deleteable is false, return error
   Title.findById(id)
