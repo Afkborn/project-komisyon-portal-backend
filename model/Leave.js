@@ -1,10 +1,12 @@
 const mongoose = require("mongoose");
 const Messages = require("../constants/Messages");
+const { Schema } = mongoose;
 
 const LeaveSchema = mongoose.Schema({
   personID: {
-    type: String,
-    required: [true, Messages.PERSONID_REQUIRED],
+    type: Schema.Types.ObjectId,
+    ref: "Person",
+    required: [true, Messages.PERSON_ID_REQUIRED],
   },
   startDate: {
     type: Date,

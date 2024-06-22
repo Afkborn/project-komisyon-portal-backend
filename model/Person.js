@@ -1,7 +1,6 @@
 // models/person.js
 const mongoose = require("mongoose");
 const Messages = require("../constants/Messages");
-const Leave = require("./Leave");
 const { Schema } = mongoose;
 
 const options = { discriminatorKey: "kind", collection: "persons" };
@@ -43,10 +42,6 @@ const personSchema = new Schema(
         ref: "Leave",
       },
     ],
-    izindeMi: {
-      type: Boolean,
-      default: false,
-    },
     title: {
       type: Schema.Types.ObjectId,
       ref: "Title",
@@ -55,13 +50,28 @@ const personSchema = new Schema(
   options
 );
 
+// GPT ABİM MÜTHİŞ YAZDI BURAYI.
+personSchema.virtual("izindeMi").get(function () {
+  const now = new Date();
+  return this.izinler.some((leave) => {
+    return now >= leave.startDate && now <= leave.endDate;
+  });
+});
+
+personSchema.set('toJSON', { virtuals: true });
+personSchema.set('toObject', { virtuals: true });
+
 const Person = mongoose.model("Person", personSchema);
 
 const ZabitKatibi = Person.discriminator(
   "zabitkatibi",
   new Schema({
-    durusmaKatibiMi: { type: Boolean, required: true },
-    calistigiHakim: { type: Schema.Types.ObjectId, ref: "Person" },
+    durusmaKatibiMi: { type: Boolean, required: true, default: false },
+    calistigiKisi: {
+      type: Schema.Types.ObjectId,
+      ref: "Person",
+      default: null,
+    },
   })
 );
 

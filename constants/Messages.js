@@ -38,13 +38,16 @@ exports.PERSON_GOREVE_BASLAMA_TARIHI_REQUIRED = "Göreve başlama tarihi zorunlu
 exports.BIRIME_BASLAMA_TARIHI_REQUIRED = "Birime başlama tarihi zorunludur";
 exports.PERSON_NOT_FOUND = "Görevli bulunamadı";
 exports.PERSON_DELETED = "Görevli silindi";
-
+exports.PERSON_UPDATED = "Görevli güncellendi";
+exports.PERSON_NOT_UPDATED = "Görevli güncellenemedi";
 
 // LEAVE
 exports.LEAVE_NOT_FOUND = "İzin bulunamadı";
 exports.LEAVE_DELETED = "İzin silindi";
 exports.LEAVE_NOT_DELETED = "İzin silinemedi";
 exports.LEAVE_NOT_UPDATED = "İzin güncellenemedi";
+exports.END_DATE_REQUIRED = "Bitiş tarihi zorunludur";
+exports.LEAVES_NOT_FOUND = "İzinler bulunamadı";
 
 
 // COMMON

@@ -5,6 +5,13 @@ const { Person, zabitkatibi } = require("../model/Person");
 const Title = require("../model/Title");
 const auth = require("../middleware/auth");
 
+
+// MODELMAP
+const modelMap = {
+  Person,
+  zabitkatibi,
+};
+
 // get all persons
 // router.get("/", auth, (request, response) => {
 //   Person.find()
@@ -22,28 +29,37 @@ const auth = require("../middleware/auth");
 // });
 
 // get a person by sicil
-// router.get("/:sicil", auth, (request, response) => {
-//   const sicil = request.params.sicil;
+router.get("/bySicil/:sicil", auth, (req, res) => {
+  Person.findOne({ sicil: req.params.sicil })
+    .populate("title", "-_id -__v -deletable")
+    .populate("birimID", "-_id -__v -deletable")
+    .populate("izinler", "-_id -__v -personID")
+    .populate({
+      path: "calistigiKisi",
+      populate: {
+        path: "title",
+        select: "-_id -__v -deletable",
+      },
+    })
+    .then((person) => {
+      if (!person) {
+        return res.status(404).send({
+          success: false,
+          message: Messages.PERSON_NOT_FOUND,
+        });
+      }
+      res.send({
+        success: true,
+        person,
+      });
+    })
+    .catch((error) => {
+      res.status(500).send({
+        message: error.message || Messages.PERSON_NOT_FOUND,
+      });
+    });
+});
 
-//   Person.findOne({ sicil })
-//     .then((person) => {
-//       if (!person) {
-//         return response.status(404).send({
-//           success: false,
-//           message: Messages.PERSON_NOT_FOUND,
-//         });
-//       }
-//       response.send({
-//         success: true,
-//         person,
-//       });
-//     })
-//     .catch((error) => {
-//       response.status(500).send({
-//         message: error.message || Messages.PERSON_NOT_FOUND,
-//       });
-//     });
-// });
 
 // get a persons by birimID
 router.get("/:birimID", auth, (request, response) => {
@@ -52,6 +68,7 @@ router.get("/:birimID", auth, (request, response) => {
   Person.find({ birimID })
     // get title without _id -v
     .populate("title", "-_id -__v -deletable")
+    .populate("izinler", "-_id -__v -personID")
     .select("-kind")
     .then((persons) => {
       if (!persons) {
@@ -74,10 +91,6 @@ router.get("/:birimID", auth, (request, response) => {
 
 // create a person
 router.post("/", auth, async (request, response) => {
-  const modelMap = {
-    zabitkatibi,
-  };
-
   const requiredFields = ["kind", "sicil", "ad", "soyad"];
   const missingFields = requiredFields.filter((field) => !request.body[field]);
   if (missingFields.length > 0) {
@@ -99,6 +112,7 @@ router.post("/", auth, async (request, response) => {
 
     //  ZABIT KATİBİ
     durusmaKatibiMi,
+    calistigiKisi,
   } = request.body;
 
   let Model = modelMap[kind];
@@ -130,7 +144,7 @@ router.post("/", auth, async (request, response) => {
   };
 
   if (kind === "zabitkatibi") {
-    newPerson = new Model({ ...commonFields, durusmaKatibiMi });
+    newPerson = new Model({ ...commonFields, durusmaKatibiMi, calistigiKisi });
   } else {
     newPerson = new Model(commonFields);
   }
@@ -144,6 +158,49 @@ router.post("/", auth, async (request, response) => {
       response.status(500).send({
         message: error.message || Messages.PERSON_NOT_SAVED,
         code: error.code,
+      });
+    });
+});
+
+// Update a person with id
+router.put("/:id", auth, (request, response) => {
+  const id = request.params.id;
+  const updateData = request.body;
+  const options = { new: true, runValidators: true, context: "query" };
+
+  Person.findById(id)
+    .then((person) => {
+      if (!person) {
+        return response.status(404).send({
+          success: false,
+          message: Messages.PERSON_NOT_FOUND,
+        });
+      }
+
+      let Model = Person;
+      if (person.durusmaKatibiMi !== undefined) {
+        Model = zabitkatibi;
+      }
+      // YENİ MODEL EKLENDİĞİNDE BURAYA EKLEME YAPILMALI
+
+      return Model.findByIdAndUpdate(id, updateData, options);
+    })
+    .then((updatedPerson) => {
+      if (!updatedPerson) {
+        return response.status(404).send({
+          success: false,
+          message: Messages.PERSON_NOT_FOUND,
+        });
+      }
+
+      response.send({
+        success: true,
+        message: Messages.PERSON_UPDATED,
+      });
+    })
+    .catch((error) => {
+      response.status(500).send({
+        message: error.message || Messages.PERSON_NOT_UPDATED,
       });
     });
 });

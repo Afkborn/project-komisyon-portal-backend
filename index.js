@@ -45,7 +45,8 @@ app.use("/api/titles", titles);
 const persons = require("./routes/persons");
 app.use("/api/persons", persons);
 
-
+const leaves = require("./routes/leaves");
+app.use("/api/leaves", leaves);
 
 mongoDbConnect();
 
