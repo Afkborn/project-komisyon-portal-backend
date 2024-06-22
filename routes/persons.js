@@ -28,13 +28,61 @@ const modelMap = {
 //     });
 // });
 
+router.get(
+  "/byAdSoyad",
+  auth,
+  Logger("GET /persons/byAdSoyad"),
+  (request, response) => {
+    const { ad, soyad } = request.query;
+    if (!ad && !soyad) {
+      return response.status(400).send({
+        success: false,
+        message: `Ad veya Soyad ${Messages.REQUIRED_FIELD}`,
+      });
+    }
+    // ad ve soyad ile ararken küçük büyük harf duyarlılığı olmaması için
+    // $regex: new RegExp(ad, "i") kullanıldı
+    Person.find({
+      ad: { $regex: new RegExp(ad, "i") },
+      soyad: { $regex: new RegExp(soyad, "i") },
+    })
+      .populate("title", "-_id -__v -deletable")
+      .populate("birimID", "-_id -__v -deletable")
+      .populate("izinler", "-__v -personID")
+      .populate({
+        path: "calistigiKisi",
+        populate: {
+          path: "title",
+          select: "-_id -__v -deletable",
+        },
+      })
+      .then((persons) => {
+        if (!persons) {
+          return response.status(404).send({
+            success: false,
+            message: Messages.PERSON_NOT_FOUND,
+          });
+        }
+        response.send({
+          success: true,
+          persons,
+        });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: error.message || Messages.PERSON_NOT_FOUND,
+        });
+      });
+  }
+);
+
 // get a person by sicil
 router.get(
   "/bySicil/:sicil",
   auth,
   Logger("GET /persons/bySicil"),
-  (req, res) => {
-    Person.findOne({ sicil: req.params.sicil })
+  (request, response) => {
+    Person.findOne({ sicil: request.params.sicil })
       .populate("title", "-_id -__v -deletable")
       .populate("birimID", "-_id -__v -deletable")
       .populate("izinler", "-__v -personID")
@@ -47,18 +95,18 @@ router.get(
       })
       .then((person) => {
         if (!person) {
-          return res.status(404).send({
+          return response.status(404).send({
             success: false,
             message: Messages.PERSON_NOT_FOUND,
           });
         }
-        res.send({
+        response.send({
           success: true,
           person,
         });
       })
       .catch((error) => {
-        res.status(500).send({
+        response.status(500).send({
           message: error.message || Messages.PERSON_NOT_FOUND,
         });
       });

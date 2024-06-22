@@ -10,6 +10,7 @@ exports.USERNAME_EXIST = "Kullanıcı adı mevcut";
 exports.PASSWORD_INCORRECT = "Şifre yanlış";
 exports.NAME_REQUIRED = "İsim zorunludur";
 exports.SURNAME_REQUIRED = "Soyisim zorunludur";
+exports.USER_NOT_AUTHORIZED = "Kullanıcı yetkili değil";
 
 //COMPONENTS
 exports.INSTITUTIONID_REQUIRED = "Kurum ID zorunludur";

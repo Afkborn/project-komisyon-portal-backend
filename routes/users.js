@@ -67,7 +67,6 @@ router.post("/login",  (request, response) => {
 });
 
 // register endpoint
-
 router.post("/register", auth, Logger("POST /register"), (request, response) => {
   if (request.user.userPermission !== "admin") {
     return response.status(403).send({
