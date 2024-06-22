@@ -28,6 +28,7 @@ router.post("/", auth, Logger("POST /titles/"), (request, response) => {
     name: request.body.name,
     kind: request.body.kind,
     deletable: request.body.deletable,
+    oncelikSirasi: request.body.oncelikSirasi,
   });
 
   title

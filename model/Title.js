@@ -16,6 +16,10 @@ const titleSchema = mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  oncelikSirasi: {
+    type: Number,
+    default: 0,
+  },
 });
 
 module.exports = mongoose.model("Title", titleSchema);
