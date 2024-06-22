@@ -9,8 +9,7 @@ const toSHA256 = require("../common/hashing");
 const Logger = require("../middleware/logger");
 
 // login user
-
-router.post("/login",  (request, response) => {
+router.post("/login", (request, response) => {
   const requiredFields = ["username", "password"];
   const missingFields = requiredFields.filter((field) => !request.body[field]);
   if (missingFields.length > 0) {
@@ -27,7 +26,6 @@ router.post("/login",  (request, response) => {
           message: Messages.USER_NOT_FOUND,
         });
       }
-
       if (user.password !== toSHA256(request.body.password)) {
         return response.status(401).send({
           message: Messages.PASSWORD_INCORRECT,
@@ -67,50 +65,56 @@ router.post("/login",  (request, response) => {
 });
 
 // register endpoint
-router.post("/register", auth, Logger("POST /register"), (request, response) => {
-  if (request.user.userPermission !== "admin") {
-    return response.status(403).send({
-      message: Messages.USER_NOT_AUTHORIZED,
-    });
-  }
-
-  const requiredFields = ["username", "password", "name", "surname"];
-  const missingFields = requiredFields.filter((field) => !request.body[field]);
-  if (missingFields.length > 0) {
-    return response.status(400).send({
-      success: false,
-      message: `${missingFields.join(", ")} ${Messages.REQUIRED_FIELD}`,
-    });
-  }
-
-  const password = toSHA256(request.body.password);
-  const user = new User({
-    username: request.body.username,
-    name: request.body.name,
-    surname: request.body.surname,
-    password: password,
-  });
-  user
-    .save()
-    .then((result) => {
-      response.status(201).send({
-        message: Messages.USER_CREATED_SUCCESSFULLY,
-        result,
+router.post(
+  "/register",
+  auth,
+  Logger("POST /register"),
+  (request, response) => {
+    if (request.user.userPermission !== "admin") {
+      return response.status(403).send({
+        message: Messages.USER_NOT_AUTHORIZED,
       });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: Messages.USER_CREATE_FAILED,
-        error,
+    }
+
+    const requiredFields = ["username", "password", "name", "surname"];
+    const missingFields = requiredFields.filter(
+      (field) => !request.body[field]
+    );
+    if (missingFields.length > 0) {
+      return response.status(400).send({
+        success: false,
+        message: `${missingFields.join(", ")} ${Messages.REQUIRED_FIELD}`,
       });
+    }
+
+    const password = toSHA256(request.body.password);
+    const user = new User({
+      username: request.body.username,
+      name: request.body.name,
+      surname: request.body.surname,
+      password: password,
     });
-});
+    user
+      .save()
+      .then((result) => {
+        response.status(201).send({
+          message: Messages.USER_CREATED_SUCCESSFULLY,
+          result,
+        });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: Messages.USER_CREATE_FAILED,
+          error,
+        });
+      });
+  }
+);
 
 // get details from token
 router.get("/details", auth, (request, response) => {
   User.findOne({ username: request.user.username })
     .then((user) => {
-      // send user details without __v and password
       user = user.toObject();
       delete user.__v;
       delete user.password;
@@ -127,6 +131,78 @@ router.get("/details", auth, (request, response) => {
     });
 });
 
-// update user endpoint
+// update user
+router.put("/", auth, Logger("PUT /"), (request, response) => {
+  User.findOneAndUpdate(
+    { username: request.user.username },
+    request.body,
+    {
+      new: true, // Return the updated document
+      runValidators: true, // Validate the update operation
+      useFindAndModify: false,
+    }
+  )
+    .then((user) => {
+      if (!user) {
+        return response.status(404).send({
+          message: Messages.USER_NOT_FOUND,
+        });
+      }
+      response.status(200).send({
+        message: Messages.USER_UPDATED,
+        user,
+      });
+    })
+    .catch((error) => {
+      response.status(500).send({
+        message: Messages.USER_NOT_UPDATED,
+        error,
+      });
+    });
+});
+
+
+// change user password
+router.put("/password", auth, Logger("PUT /password"), (request, response) => {
+  const requiredFields = ["oldPassword", "newPassword"];
+
+  const missingFields = requiredFields.filter((field) => !request.body[field]);
+  if (missingFields.length > 0) {
+    return response.status(400).send({
+      success: false,
+      message: `${missingFields.join(", ")} ${Messages.REQUIRED_FIELD}`,
+    });
+  }
+
+  User.findOne({ username: request.user.username })
+    .then((user) => {
+      if (user.password !== toSHA256(request.body.oldPassword)) {
+        return response.status(401).send({
+          message: Messages.PASSWORD_INCORRECT,
+        });
+      }
+      user.password = toSHA256(request.body.newPassword);
+      user
+        .save()
+        .then((result) => {
+          response.status(200).send({
+            message: Messages.PASSWORD_CHANGED,
+            result,
+          });
+        })
+        .catch((error) => {
+          response.status(500).send({
+            message: Messages.PASSWORD_NOT_CHANGED,
+            error,
+          });
+        });
+    })
+    .catch((error) => {
+      response.status(404).send({
+        message: Messages.USER_NOT_FOUND,
+        error,
+      });
+    });
+});
 
 module.exports = router;

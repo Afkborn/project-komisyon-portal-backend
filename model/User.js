@@ -27,6 +27,16 @@ const UserSchema = mongoose.Schema({
     type: String,
     default: "user",
   },
+  email: {
+    type: String,
+    unique: [true, Messages.EMAIL_EXIST],
+    default: null,
+  },
+  phoneNumber: {
+    type: String,
+    unique: [true, Messages.PHONE_NUMBER_EXIST],
+    default: null,
+  },
 });
 
 module.exports = mongoose.model("User", UserSchema);
