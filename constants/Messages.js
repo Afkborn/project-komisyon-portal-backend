@@ -34,17 +34,18 @@ exports.UNIT_UPDATED = "Unit güncellendi";
 exports.UNIT_NOT_UPDATED = "Unit güncellenemedi";
 exports.UNIT_NOT_SAVED = "Unit kaydedilemedi";
 
-
 // PERSON
 exports.PERSON_SICIL_REQUIRED = "Sicil numarası zorunludur";
 exports.PERSON_NAME_REQUIRED = "İsim zorunludur";
 exports.PERSON_SURNAME_REQUIRED = "Soyisim zorunludur";
-exports.PERSON_GOREVE_BASLAMA_TARIHI_REQUIRED = "Göreve başlama tarihi zorunludur";
+exports.PERSON_GOREVE_BASLAMA_TARIHI_REQUIRED =
+  "Göreve başlama tarihi zorunludur";
 exports.BIRIME_BASLAMA_TARIHI_REQUIRED = "Birime başlama tarihi zorunludur";
 exports.PERSON_NOT_FOUND = "Görevli bulunamadı";
 exports.PERSON_DELETED = "Görevli silindi";
 exports.PERSON_UPDATED = "Görevli güncellendi";
 exports.PERSON_NOT_UPDATED = "Görevli güncellenemedi";
+exports.PERSON_NOT_DELETED = "Görevli silinemedi";
 
 // LEAVE
 exports.LEAVE_NOT_FOUND = "İzin bulunamadı";
@@ -58,8 +59,7 @@ exports.LEAVE_NOT_SAVED = "İzin kaydedilemedi";
 // COMMON
 exports.REQUIRED_FIELD = "alanı zorunludur";
 
-
-// TİTLE  
+// TİTLE
 exports.TITLE_NAME_REQUIRED = "Ünvan adı zorunludur";
 exports.TITLE_NOT_DELETED = "Ünvan silinemedi";
 exports.TITLE_DELETED = "Ünvan silindi";

@@ -262,4 +262,36 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
     });
 });
 
+// Delete a person with id
+router.delete("/:id", auth, Logger("DELETE /persons/"), (request, response) => {
+  const id = request.params.id;
+
+  Person.findById(id)
+    .then((person) => {
+      if (!person) {
+        return response.status(404).send({
+          success: false,
+          message: Messages.PERSON_NOT_FOUND,
+        });
+      }
+      Person.findOneAndDelete({ _id: id })
+        .then(() => {
+          response.send({
+            success: true,
+            message: Messages.PERSON_DELETED,
+          });
+        })
+        .catch((error) => {
+          response.status(500).send({
+            message: error.message || Messages.PERSON_NOT_DELETED,
+          });
+        });
+    })
+    .catch((error) => {
+      response.status(500).send({
+        message: error.message || Messages.PERSON_NOT_DELETED,
+      });
+    });
+});
+
 module.exports = router;
