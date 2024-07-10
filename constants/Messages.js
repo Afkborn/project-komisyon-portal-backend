@@ -46,6 +46,7 @@ exports.PERSON_DELETED = "Görevli silindi";
 exports.PERSON_UPDATED = "Görevli güncellendi";
 exports.PERSON_NOT_UPDATED = "Görevli güncellenemedi";
 exports.PERSON_NOT_DELETED = "Görevli silinemedi";
+exports. PERSONS_NOT_FOUND = "Görevliler bulunamadı";
 
 // LEAVE
 exports.LEAVE_NOT_FOUND = "İzin bulunamadı";

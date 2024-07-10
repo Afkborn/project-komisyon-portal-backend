@@ -12,14 +12,26 @@ router.get(
   async (request, response) => {
     try {
       let processStartDate = new Date();
+      let institutionId = request.query.institutionId;
       let startDate = request.query.startDate;
       let endDate = request.query.endDate;
+
+      if (!institutionId) {
+        return response.status(400).send({
+          success: false,
+          message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+        });
+      }
 
       // tüm personelleri getir, ne kadar verimli ilerde anlarız.
       let persons = await Person.find({})
         .populate("title", "-_id -__v -deletable")
         .populate("birimID", "-_id -__v -deletable")
         .populate("izinler", "-__v -personID");
+      console.log(persons);
+      persons = persons.filter((person) => {
+        return person.birimID.institutionID == institutionId;
+      });
 
       // İzinli personelleri filtrele
 

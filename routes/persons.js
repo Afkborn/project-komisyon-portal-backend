@@ -13,20 +13,40 @@ const modelMap = {
 };
 
 // get all persons
-// router.get("/", auth, (request, response) => {
-//   Person.find()
-//     .then((persons) => {
-//       response.send({
-//         success: true,
-//         personList: persons,
-//       });
-//     })
-//     .catch((error) => {
-//       response.status(500).send({
-//         message: error.message || Messages.PERSONS_NOT_FOUND,
-//       });
-//     });
-// });
+router.get("/", auth, Logger("GET /persons/"), (request, response) => {
+  let institutionId = request.query.institutionId;
+
+  if (!institutionId) {
+    return response.status(400).send({
+      success: false,
+      message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+    });
+  }
+  Person.find()
+    .select(
+      "-_id -__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi"
+    )
+    .populate("title", "-_id -__v -deletable")
+    .populate("izinler", "-__v -personID")
+    .populate("birimID", "-_id -__v -deletable")
+    .then((persons) => {
+      // filter persons by institutionId
+      persons = persons.filter((person) => {
+        return person.birimID.institutionID == institutionId;
+      });
+
+      response.send({
+        success: true,
+        personList: persons,
+      });
+    })
+    .catch((error) => {
+      console.log(error.message || Messages.PERSONS_NOT_FOUND);
+      response.status(500).send({
+        message: error.message || Messages.PERSONS_NOT_FOUND,
+      });
+    });
+});
 
 router.get(
   "/byAdSoyad",
@@ -261,9 +281,6 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
       });
     });
 });
-
-
-
 
 // Delete a person with id
 router.delete("/:id", auth, Logger("DELETE /persons/"), (request, response) => {
