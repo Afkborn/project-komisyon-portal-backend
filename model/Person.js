@@ -22,6 +22,7 @@ const personSchema = new Schema(
     },
     goreveBaslamaTarihi: {
       type: Date,
+      // default: Date.now,
       //   required: [true, Messages.PERSON_GOREVE_BASLAMA_TARIHI_REQUIRED],
     },
     birimID: {

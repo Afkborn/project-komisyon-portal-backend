@@ -48,6 +48,10 @@ app.use("/api/persons", persons);
 const leaves = require("./routes/leaves");
 app.use("/api/leaves", leaves);
 
+
+const reports = require("./routes/reports");
+app.use("/api/reports", reports);
+
 mongoDbConnect();
 
 
