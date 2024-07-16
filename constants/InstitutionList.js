@@ -6,7 +6,6 @@ const mahkeme = { id: 0, name: "Mahkeme" };
 const savcilik = { id: 1, name: "Savcılık" };
 const diger = { id: 2, name: "Diğer" };
 
-
 exports.InstitutionList = [
   {
     id: 1,

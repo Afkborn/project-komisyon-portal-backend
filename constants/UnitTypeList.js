@@ -7,6 +7,7 @@ exports.UnitTypeList = [
     unitType: "Ceza",
     oncelikSirasi: 1,
     gerekenKatipSayisi: 5,
+    eksikKatipKontrol: true,
   },
   {
     id: 9002,
@@ -15,6 +16,7 @@ exports.UnitTypeList = [
     unitType: "Hukuk",
     oncelikSirasi: 2,
     gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
   },
   {
     id: 9003,
@@ -23,6 +25,7 @@ exports.UnitTypeList = [
     unitType: "Ceza",
     oncelikSirasi: 3,
     gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
   },
   {
     id: 9004,
@@ -31,6 +34,7 @@ exports.UnitTypeList = [
     unitType: "Hukuk",
     oncelikSirasi: 4,
     gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
   },
   {
     id: 9005,
@@ -39,6 +43,7 @@ exports.UnitTypeList = [
     unitType: "Ceza",
     oncelikSirasi: 5,
     gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
   },
   {
     id: 9006,
@@ -47,6 +52,7 @@ exports.UnitTypeList = [
     institutionTypeId: 0,
     oncelikSirasi: 6,
     gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
   },
   {
     id: 9007,
@@ -55,6 +61,7 @@ exports.UnitTypeList = [
     institutionTypeId: 0,
     oncelikSirasi: 7,
     gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
   },
   {
     id: 9009,
@@ -63,6 +70,7 @@ exports.UnitTypeList = [
     unitType: "Hukuk",
     oncelikSirasi: 9,
     gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
   },
   {
     id: 9011,
@@ -71,6 +79,7 @@ exports.UnitTypeList = [
     unitType: "Ceza",
     oncelikSirasi: 11,
     gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
   },
   {
     id: 9012,
@@ -79,29 +88,34 @@ exports.UnitTypeList = [
     unitType: "Hukuk",
     oncelikSirasi: 12,
     gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
   },
   {
     id: 9014,
     name: "İdari İşler Müdürlüğü",
     institutionTypeId: 1,
     oncelikSirasi: 14,
+    eksikKatipKontrol: false,
   },
   {
     id: 9015,
     name: "Terörle Mücadale Şube Müdürlüğü",
     institutionTypeId: 1,
     oncelikSirasi: 15,
+    eksikKatipKontrol: false,
   },
   {
     id: 9016,
     name: "Diğer",
     institutionTypeId: 1,
     oncelikSirasi: 16,
+    eksikKatipKontrol: false,
   },
   {
     id: 9017,
     name: "Diğer",
     institutionTypeId: 2,
     oncelikSirasi: 17,
+    eksikKatipKontrol: false,
   },
 ];

@@ -2,8 +2,114 @@ const Messages = require("../constants/Messages");
 const express = require("express");
 const router = express.Router();
 const { Person } = require("../model/Person");
+const Unit = require("../model/Unit");
 const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
+const getTimeForLog = require("../common/time");
+
+const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
+
+router.get(
+  "/eksikKatipAramasiYapilacakBirimler",
+  auth,
+  Logger("GET /eksikKatipAramasiYapilacakBirimler"),
+  async (request, response) => {
+    let processStartDate = new Date();
+
+    let eksikKatipKontrolEdilecekBirimTipleri = [];
+    UnitTypeList.forEach((unitType) => {
+      if (unitType.eksikKatipKontrol) {
+        eksikKatipKontrolEdilecekBirimTipleri.push(unitType.id);
+      }
+    });
+
+    let eksikKatipKontrolEdilecekBirimler = await Unit.find({
+      unitTypeID: { $in: eksikKatipKontrolEdilecekBirimTipleri },
+    });
+
+    eksikKatipKontrolEdilecekBirimler = eksikKatipKontrolEdilecekBirimler.map(
+      (unit) => {
+        return {
+          birimAdi: unit.name,
+          gerekenKatipSayisi: unit.minClertCount,
+        };
+      }
+    );
+
+
+
+    let processEndDate = new Date();
+    let processTime = processEndDate - processStartDate;
+    console.log(
+      getTimeForLog() +
+        "[REPORT][eksikKatipAramasiYapilacakBirimler] Process Time: " +
+        processTime +
+        " ms"
+    );
+
+
+    response.send({
+      success: true,
+      eksikKatipKontrolEdilecekBirimler: eksikKatipKontrolEdilecekBirimler,
+    });
+  }
+);
+
+router.get(
+  "/eksikKatibiOlanBirimler",
+  auth,
+  Logger("GET /eksikKatibiOlanBirimler"),
+  async (request, response) => {
+    let processStartDate = new Date();
+
+    let eksikKatipKontrolEdilecekBirimTipleri = [];
+    UnitTypeList.forEach((unitType) => {
+      if (unitType.eksikKatipKontrol) {
+        eksikKatipKontrolEdilecekBirimTipleri.push(unitType.id);
+      }
+    });
+
+    let eksikKatipKontrolEdilecekBirimler = await Unit.find({
+      unitTypeID: { $in: eksikKatipKontrolEdilecekBirimTipleri },
+    });
+
+    let eksikKatipOlanBirimler = [];
+    for (let i = 0; i < eksikKatipKontrolEdilecekBirimler.length; i++) {
+      let unit = eksikKatipKontrolEdilecekBirimler[i];
+      let personCount = await Person.countDocuments({
+        birimID: unit._id,
+      });
+      console.log(
+        "personCount: ",
+        personCount,
+        "gerekenKatipSayisi: ",
+        unit.minClertCount
+      );
+      if (personCount < unit.minClertCount) {
+        eksikKatipOlanBirimler.push({
+          _id : unit._id,
+          birimAdi: unit.name,
+          gerekenKatipSayisi: unit.minClertCount,
+          mevcutKatipSayisi: personCount,
+          eksikKatipSayisi: unit.minClertCount - personCount,
+        });
+      }
+    }
+    let processEndDate = new Date();
+    let processTime = processEndDate - processStartDate;
+    console.log(
+      getTimeForLog() +
+        "[REPORT][eksikKatibiOlanBirimler] Process Time: " +
+        processTime +
+        " ms"
+    );
+
+    response.send({
+      success: true,
+      eksikKatipOlanBirimler: eksikKatipOlanBirimler,
+    });
+  }
+);
 
 router.get(
   "/izinliPersoneller",
@@ -28,7 +134,7 @@ router.get(
         .populate("title", "-_id -__v -deletable")
         .populate("birimID", "-_id -__v -deletable")
         .populate("izinler", "-__v -personID");
-      console.log(persons);
+
       persons = persons.filter((person) => {
         return person.birimID.institutionID == institutionId;
       });
@@ -88,11 +194,15 @@ router.get(
       }
       let processEndDate = new Date();
       let processTime = processEndDate - processStartDate;
-      console.log("Process Time: " + processTime + " ms");
+      console.log(
+        getTimeForLog() +
+          "[REPORT][izinliPersoneller] Process Time: " +
+          processTime +
+          " ms"
+      );
 
       response.send({
         success: true,
-
         izinliPersonelList: izinliPersonelList,
       });
     } catch (error) {
