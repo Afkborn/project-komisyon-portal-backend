@@ -9,6 +9,8 @@ const getTimeForLog = require("../common/time");
 
 const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
 
+
+// eksikKatipAramasiYapilacakBirimler
 router.get(
   "/eksikKatipAramasiYapilacakBirimler",
   auth,
@@ -36,8 +38,6 @@ router.get(
       }
     );
 
-
-
     let processEndDate = new Date();
     let processTime = processEndDate - processStartDate;
     console.log(
@@ -47,7 +47,6 @@ router.get(
         " ms"
     );
 
-
     response.send({
       success: true,
       eksikKatipKontrolEdilecekBirimler: eksikKatipKontrolEdilecekBirimler,
@@ -55,6 +54,7 @@ router.get(
   }
 );
 
+// eksikKatibiOlanBirimler
 router.get(
   "/eksikKatibiOlanBirimler",
   auth,
@@ -79,15 +79,10 @@ router.get(
       let personCount = await Person.countDocuments({
         birimID: unit._id,
       });
-      console.log(
-        "personCount: ",
-        personCount,
-        "gerekenKatipSayisi: ",
-        unit.minClertCount
-      );
+
       if (personCount < unit.minClertCount) {
         eksikKatipOlanBirimler.push({
-          _id : unit._id,
+          _id: unit._id,
           birimAdi: unit.name,
           gerekenKatipSayisi: unit.minClertCount,
           mevcutKatipSayisi: personCount,
@@ -111,6 +106,7 @@ router.get(
   }
 );
 
+// izinliPersoneller
 router.get(
   "/izinliPersoneller",
   auth,
@@ -162,7 +158,7 @@ router.get(
           ad: person.ad,
           soyad: person.soyad,
           birim: person.birimID.name,
-          unvan: person.title.name,
+          unvan: person.title,
           izinBaslangic: person.izinler.find((leave) => {
             return start <= leave.endDate && end >= leave.startDate;
           }).startDate,
@@ -183,7 +179,7 @@ router.get(
           ad: person.ad,
           soyad: person.soyad,
           birim: person.birimID.name,
-          unvan: person.title.name,
+          unvan: person.title,
           izinBaslangic: person.izinler.find((leave) => {
             return now >= leave.startDate && now <= leave.endDate;
           }).startDate,
