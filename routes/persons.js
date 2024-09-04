@@ -186,6 +186,8 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     birimID,
     birimeBaslamaTarihi,
     status,
+    description,
+    level,
 
     //  ZABIT KATİBİ
     durusmaKatibiMi,
@@ -217,6 +219,8 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     birimID,
     birimeBaslamaTarihi,
     status,
+    description,
+    level,
     title: title._id,
   };
 

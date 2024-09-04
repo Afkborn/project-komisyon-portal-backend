@@ -47,6 +47,12 @@ const personSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Title",
     },
+    description: {
+      type: String,
+    },
+    level: {
+      type: Number,
+    },
   },
   options
 );
@@ -59,8 +65,8 @@ personSchema.virtual("izindeMi").get(function () {
   });
 });
 
-personSchema.set('toJSON', { virtuals: true });
-personSchema.set('toObject', { virtuals: true });
+personSchema.set("toJSON", { virtuals: true });
+personSchema.set("toObject", { virtuals: true });
 
 const Person = mongoose.model("Person", personSchema);
 
