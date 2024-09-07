@@ -71,6 +71,15 @@ router.get(
       .populate("izinler", "-__v -personID")
 
       .populate({
+        path: "gecmisBirimler",
+        select: "-__v -personID -createdDate",
+        populate: {
+          path: "unitID", // `gecmisBirimler` içindeki `unitID`'yi doldur
+          select: "_id name", // `unitID` içindeki belirli alanları seç
+        },
+      })
+
+      .populate({
         path: "calistigiKisi",
         populate: {
           path: "title",
