@@ -67,8 +67,9 @@ router.get(
       soyad: { $regex: new RegExp(soyad, "i") },
     })
       .populate("title", "-_id -__v -deletable")
-      .populate("birimID", "-_id -__v -deletable")
+      .populate("birimID", " -__v -deletable")
       .populate("izinler", "-__v -personID")
+
       .populate({
         path: "calistigiKisi",
         populate: {
@@ -104,8 +105,18 @@ router.get(
   (request, response) => {
     Person.findOne({ sicil: request.params.sicil })
       .populate("title", "-_id -__v -deletable")
-      .populate("birimID", "-_id -__v -deletable")
+      .populate("birimID", " -__v -deletable")
       .populate("izinler", "-__v -personID")
+
+      .populate({
+        path: "gecmisBirimler",
+        select: "-__v -personID -createdDate",
+        populate: {
+          path: "unitID", // `gecmisBirimler` içindeki `unitID`'yi doldur
+          select: "_id name", // `unitID` içindeki belirli alanları seç
+        },
+      })
+
       .populate({
         path: "calistigiKisi",
         populate: {

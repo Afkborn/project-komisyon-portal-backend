@@ -25,14 +25,16 @@ exports.UNIT_NAME_EXIST = "Kurum adı mevcut";
 exports.UNIT_ID_REQUIRED = "Kurum ID zorunludur";
 
 //UNIT
-exports.UNITS_NOT_FOUND = "Uniteler bulunamadı";
-exports.UNIT_TYPE_NOT_FOUND = "Unit tipi bulunamadı";
-exports.UNIT_NOT_FOUND = "Unit bulunamadı";
-exports.UNIT_DELETED = "Unit silindi";
-exports.UNIT_NOT_DELETED = "Unit silinemedi";
-exports.UNIT_UPDATED = "Unit güncellendi";
-exports.UNIT_NOT_UPDATED = "Unit güncellenemedi";
-exports.UNIT_NOT_SAVED = "Unit kaydedilemedi";
+exports.UNITS_NOT_FOUND = "Birimler bulunamadı";
+exports.UNIT_TYPE_NOT_FOUND = "Birim tipi bulunamadı";
+exports.UNIT_NOT_FOUND = "Birim bulunamadı";
+exports.UNIT_DELETED = "Birim silindi";
+exports.UNIT_NOT_DELETED = "Birim silinemedi";
+exports.UNIT_UPDATED = "Birim güncellendi";
+exports.UNIT_NOT_UPDATED = "Birim güncellenemedi";
+exports.UNIT_NOT_SAVED = "Birim kaydedilemedi";
+exports.UNIT_NOT_DELETABLE_REASON_PERSON =
+  "Birimde görevli var, birim silinemez";
 
 // PERSON
 exports.PERSON_SICIL_REQUIRED = "Sicil numarası zorunludur";

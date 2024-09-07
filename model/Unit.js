@@ -14,6 +14,8 @@ const Messages = require("../constants/Messages");
 // birimTurID : Number [GEREK YOK] ÇÜNKÜ ALT BİRİMDEN GELİYOR
 // birimTurName : String [GEREK YOK]  ÇÜNKÜ ALT BİRİMDEN GELİYOR
 
+
+// buradaki Unit birimin kendisi
 const UnitSchema = mongoose.Schema({
   institutionID: {
     type: Number,

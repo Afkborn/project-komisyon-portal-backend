@@ -2,6 +2,7 @@ const Messages = require("../constants/Messages");
 const express = require("express");
 const router = express.Router();
 const Unit = require("../model/Unit");
+const { Person, zabitkatibi } = require("../model/Person");
 const auth = require("../middleware/auth");
 const {
   getUnitTypesByType,
@@ -138,20 +139,37 @@ router.put("/:id", auth, Logger("PUT /units"), (request, response) => {
 });
 
 // delete a unit
+// bu unit'e ait personel varsa silme işlemi gerçekleştirilemez.
 router.delete("/:id", auth, Logger("DELETE /units"), (request, response) => {
   const id = request.params.id;
-  Unit.findOneAndDelete({ _id: id })
-    .then((unit) => {
-      if (!unit) {
-        return response.status(404).send({
+  Person.find({ birimID: id })
+    .then((persons) => {
+      if (persons.length > 0) {
+        console.log("persons", persons);
+        console.log("personel var silinemez.")
+        return response.status(400).send({
           success: false,
-          message: Messages.UNIT_NOT_FOUND,
+          message: Messages.UNIT_NOT_DELETABLE_REASON_PERSON,
         });
       }
-      response.send({
-        success: true,
-        message: Messages.UNIT_DELETED,
-      });
+      Unit.findByIdAndRemove(id)
+        .then((unit) => {
+          if (!unit) {
+            return response.status(404).send({
+              success: false,
+              message: Messages.UNIT_NOT_FOUND,
+            });
+          }
+          response.send({
+            success: true,
+            message: Messages.UNIT_DELETED,
+          });
+        })
+        .catch((error) => {
+          response.status(500).send({
+            message: error.message || Messages.UNIT_NOT_DELETED,
+          });
+        });
     })
     .catch((error) => {
       response.status(500).send({

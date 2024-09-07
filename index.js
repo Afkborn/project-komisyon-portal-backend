@@ -45,9 +45,11 @@ app.use("/api/titles", titles);
 const persons = require("./routes/persons");
 app.use("/api/persons", persons);
 
+const personunits = require("./routes/personunits");
+app.use("/api/personunits", personunits);
+
 const leaves = require("./routes/leaves");
 app.use("/api/leaves", leaves);
-
 
 const reports = require("./routes/reports");
 app.use("/api/reports", reports);

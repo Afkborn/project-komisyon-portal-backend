@@ -33,6 +33,12 @@ const personSchema = new Schema(
       type: Date,
       //   required: [true, Messages.BIRIME_BASLAMA_TARIHI_REQUIRED],
     },
+    gecmisBirimler: [
+      {
+        type: Schema.Types.ObjectId,
+        ref : "PersonUnit",
+      }
+    ],
     status: {
       type: Boolean,
       default: true,
@@ -53,11 +59,16 @@ const personSchema = new Schema(
     level: {
       type: Number,
     },
+
+
+
+
   },
   options
 );
 
 // GPT ABİM MÜTHİŞ YAZDI BURAYI.
+// Buradaki virtual field'ı kullanarak, bir kişinin izinde olup olmadığını kontrol edebiliriz.
 personSchema.virtual("izindeMi").get(function () {
   const now = new Date();
   return this.izinler.some((leave) => {
