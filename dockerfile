@@ -1,20 +1,12 @@
-# Base image
-FROM node:16
-
-# Working directory inside the container
+FROM node:18
 WORKDIR /app
 
-# Dependencies kopyalama
+# Gerekli paketleri yükleyin
 COPY package*.json ./
+RUN npm install --only=production
 
-# Dependencies yükleme
-RUN npm install
-
-# Tüm projeyi kopyalama
+# Uygulama dosyalarını kopyalayın
 COPY . .
 
-# Kullanılacak portu tanımlama (örnek: 5000)
-EXPOSE 5000
-
-# Backend server'ı başlatma
+EXPOSE 8080
 CMD ["npm", "start"]
