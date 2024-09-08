@@ -177,5 +177,30 @@ router.delete("/:id", auth, Logger("DELETE /units"), (request, response) => {
       });
     });
 });
+ 
+
+// get all units name  with institution id
+// bu route'un amacı, institution id'si verilen unit'in adını ve id'sini döndürmek.
+// örneğin, institution id'si 1 olan unit'lerin adlarını ve id'lerini döndür.
+router.get(
+  "/institution/:institutionId/name",
+  auth,
+  Logger("GET /units/institution/name"),
+  (request, response) => {
+    const institutionId = request.params.institutionId;
+    Unit.find({ institutionID: institutionId }, { name: 1 })
+      .then((units) => {
+        response.send({
+          success: true,
+          unitList: units,
+        });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: error.message || Messages.UNITS_NOT_FOUND,
+        });
+      });
+  }
+);
 
 module.exports = router;

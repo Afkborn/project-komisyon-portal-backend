@@ -214,6 +214,12 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     calistigiKisi,
   } = request.body;
 
+
+  // Ad ilk harfi büyük, diğerleri küçük olacak şekilde düzenleme
+  // Soyad hepsi büyük olacak şekilde düzenleme
+  const adDuzenle = ad.charAt(0).toUpperCase() + ad.slice(1).toLowerCase();
+  const soyadDuzenle = soyad.toUpperCase();
+
   let Model = modelMap[kind];
 
   if (!Model) {
@@ -233,8 +239,8 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
   let newPerson;
   const commonFields = {
     sicil,
-    ad,
-    soyad,
+    ad: adDuzenle,
+    soyad: soyadDuzenle,
     goreveBaslamaTarihi,
     birimID,
     birimeBaslamaTarihi,
