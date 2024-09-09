@@ -15,6 +15,9 @@ exports.PASSWORD_CHANGED = "Şifre değiştirildi";
 exports.PASSWORD_NOT_CHANGED = "Şifre değiştirilemedi";
 exports.USER_NOT_UPDATED = "Kullanıcı güncellenemedi";
 exports.USER_UPDATED = "Kullanıcı güncellendi";
+exports.USER_NOT_DELETED = "Kullanıcı silinemedi";
+exports.USER_DELETED = "Kullanıcı silindi";
+
 
 //COMPONENTS
 exports.INSTITUTIONID_REQUIRED = "Kurum ID zorunludur";

@@ -133,15 +133,11 @@ router.get("/details", auth, (request, response) => {
 
 // update user
 router.put("/", auth, Logger("PUT /"), (request, response) => {
-  User.findOneAndUpdate(
-    { username: request.user.username },
-    request.body,
-    {
-      new: true, // Return the updated document
-      runValidators: true, // Validate the update operation
-      useFindAndModify: false,
-    }
-  )
+  User.findOneAndUpdate({ username: request.user.username }, request.body, {
+    new: true, // Return the updated document
+    runValidators: true, // Validate the update operation
+    useFindAndModify: false,
+  })
     .then((user) => {
       if (!user) {
         return response.status(404).send({
@@ -160,7 +156,6 @@ router.put("/", auth, Logger("PUT /"), (request, response) => {
       });
     });
 });
-
 
 // change user password
 router.put("/password", auth, Logger("PUT /password"), (request, response) => {
@@ -200,6 +195,44 @@ router.put("/password", auth, Logger("PUT /password"), (request, response) => {
     .catch((error) => {
       response.status(404).send({
         message: Messages.USER_NOT_FOUND,
+        error,
+      });
+    });
+});
+
+// delete user
+router.delete("/", auth, Logger("DELETE /"), (request, response) => {
+  const requiredFields = ["password"];
+  const missingFields = requiredFields.filter((field) => !request.body[field]);
+  if (missingFields.length > 0) {
+    return response.status(400).send({
+      success: false,
+      message: `${missingFields.join(", ")} ${Messages.REQUIRED_FIELD}`,
+    });
+  }
+
+  User.findOneAndDelete({ username: request.user.username })
+    .then((user) => {
+      if (!user) {
+        return response.status(404).send({
+          message: Messages.USER_NOT_FOUND,
+        });
+      }
+      let password = toSHA256(request.body.password);
+    
+      if (user.password !== password) {
+        return response.status(401).send({
+          message: Messages.PASSWORD_INCORRECT,
+        });
+      }
+      response.status(200).send({
+        message: Messages.USER_DELETED,
+      });
+    
+    })
+    .catch((error) => {
+      response.status(500).send({
+        message: Messages.USER_NOT_DELETED,
         error,
       });
     });
