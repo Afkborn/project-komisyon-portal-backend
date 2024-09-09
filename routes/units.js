@@ -152,7 +152,7 @@ router.delete("/:id", auth, Logger("DELETE /units"), (request, response) => {
           message: Messages.UNIT_NOT_DELETABLE_REASON_PERSON,
         });
       }
-      Unit.findByIdAndRemove(id)
+      Unit.findByIdAndDelete(id)
         .then((unit) => {
           if (!unit) {
             return response.status(404).send({
@@ -166,12 +166,14 @@ router.delete("/:id", auth, Logger("DELETE /units"), (request, response) => {
           });
         })
         .catch((error) => {
+          
           response.status(500).send({
             message: error.message || Messages.UNIT_NOT_DELETED,
           });
         });
     })
     .catch((error) => {
+      console.log("error", error);
       response.status(500).send({
         message: error.message || Messages.UNIT_NOT_DELETED,
       });

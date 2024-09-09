@@ -79,6 +79,7 @@ router.get(
       let unit = eksikKatipKontrolEdilecekBirimler[i];
       let personCount = await Person.countDocuments({
         birimID: unit._id,
+        kind : "zabitkatibi" // TODO: kind'i ZABİTKATİBİ olarak constant koymak biraz kötü oldu. Düzeltilecek.
       });
 
       if (personCount < unit.minClertCount) {
@@ -210,7 +211,7 @@ router.get(
   }
 );
 
-// TODO: toplamPersonelSayisi ekranında örneğin kişinin kayıtlı olduğu birim silinirse hata alıyoruz. Birim silinmeye çalıştığı zaman kayıtlı personel varsa birim silme işlemi yaptırma.
+
 
 // toplamPersonelSayisi
 router.get(

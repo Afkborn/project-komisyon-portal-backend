@@ -1,5 +1,6 @@
 // type 0 mahkeme, type 1 savcılık, type 2 diğer
 exports.UnitTypeList = [
+  // Mahkeme
   {
     id: 9001,
     name: "Ağır Ceza Mahkemesi",
@@ -90,30 +91,36 @@ exports.UnitTypeList = [
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
   },
-  {
-    id: 9014,
-    name: "İdari İşler Müdürlüğü",
-    institutionTypeId: 1,
-    oncelikSirasi: 14,
-    eksikKatipKontrol: false,
-  },
-  {
-    id: 9015,
-    name: "Terörle Mücadale Şube Müdürlüğü",
-    institutionTypeId: 1,
-    oncelikSirasi: 15,
-    eksikKatipKontrol: false,
-  },
+
+  // Savcılık
+  // {
+  //   id: 9014,
+  //   name: "İdari İşler Müdürlüğü",
+  //   institutionTypeId: 1,
+  //   oncelikSirasi: 14,
+  //   eksikKatipKontrol: false,
+  // },
+  // {
+  //   id: 9015,
+  //   name: "Terörle Mücadale Şube Müdürlüğü",
+  //   institutionTypeId: 1,
+  //   oncelikSirasi: 15,
+  //   eksikKatipKontrol: false,
+  // },
   {
     id: 9016,
-    name: "Diğer",
+    name: "Genel",
     institutionTypeId: 1,
     oncelikSirasi: 16,
     eksikKatipKontrol: false,
   },
+
+
+
+  // Diğer
   {
     id: 9017,
-    name: "Diğer",
+    name: "Genel",
     institutionTypeId: 2,
     oncelikSirasi: 17,
     eksikKatipKontrol: false,

@@ -4,8 +4,6 @@ const router = express.Router();
 
 const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
 
-// get all unit types
-// get params
 // if type params is given, return only that type
 // if type params is not given, return all types
 router.get("/", (request, response) => {
