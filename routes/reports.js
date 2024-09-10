@@ -231,7 +231,7 @@ router.get(
       }
 
       let persons = await Person.find({}).populate("birimID");
-      console.log(persons);
+      
       persons = persons.filter((person) => {
         return person.birimID.institutionID == institutionId;
       });

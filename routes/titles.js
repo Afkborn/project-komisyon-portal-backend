@@ -49,6 +49,14 @@ router.put("/:id", auth, Logger("PUT /titles/"), (request, response) => {
 
   Title.findByIdAndUpdate(id, request.body, { useFindAndModify: false })
     .then((title) => {
+      // deletable özelliği değiştirilemez
+      if (title.deletable !== request.body.deletable) {
+        return response.status(403).send({
+          success: false,
+          message: Messages.TITLE_DELETABLE_NOT_UPDATED,
+        });
+      }
+
       if (!title) {
         return response.status(404).send({
           success: false,

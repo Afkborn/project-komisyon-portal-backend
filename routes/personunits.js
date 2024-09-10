@@ -41,7 +41,7 @@ router.post(
     }
 
     let startDate = person.birimeBaslamaTarihi;
-    console.log("startDate", startDate);
+
     let unitID = person.birimID;
     const personUnit = new PersonUnit({
       personID,

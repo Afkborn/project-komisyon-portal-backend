@@ -77,4 +77,5 @@ exports.TITLE_NOT_DELETABLE = "Ünvan silinemez";
 exports.TITLE_NOT_UPDATED = "Ünvan güncellenemedi";
 exports.TITLE_NOT_FOUND = "Ünvan bulunamadı";
 exports.TITLE_UPDATED = "Ünvan güncellendi";
+exports.TITLE_DELETABLE_NOT_UPDATED = "Ünvan silinme durumu güncellenemez.";
 exports.TITLE_NOT_SAVED = "Ünvan kaydedilemedi";

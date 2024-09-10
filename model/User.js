@@ -29,11 +29,9 @@ const UserSchema = mongoose.Schema({
   },
   email: {
     type: String,
-    unique: [true, Messages.EMAIL_EXIST],
   },
   phoneNumber: {
     type: String,
-    unique: [true, Messages.PHONE_NUMBER_EXIST],
   },
 });
 
