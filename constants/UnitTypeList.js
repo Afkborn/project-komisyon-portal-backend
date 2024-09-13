@@ -48,8 +48,8 @@ exports.UnitTypeList = [
   },
   {
     id: 9006,
-    name: "İcra Ceza Mahkemesi",
-    unitType: "Ceza",
+    name: "İcra Mahkemesi",
+    unitType: "Hukuk",
     institutionTypeId: 0,
     oncelikSirasi: 6,
     gerekenKatipSayisi: 3,
@@ -75,7 +75,7 @@ exports.UnitTypeList = [
   },
   {
     id: 9011,
-    name: "Sulh Ceza Mahkemesi",
+    name: "Sulh Ceza Hakimliği",
     institutionTypeId: 0,
     unitType: "Ceza",
     oncelikSirasi: 11,
