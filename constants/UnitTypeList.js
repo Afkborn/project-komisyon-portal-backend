@@ -109,6 +109,15 @@ exports.UnitTypeList = [
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
   },
+  {
+    id: 9015,
+    name: "Kadastro  Mahkemesi",
+    institutionTypeId: 0,
+    unitType: "Hukuk",
+    oncelikSirasi: 15,
+    gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
+  },
 
   // Savcılık
   // {
