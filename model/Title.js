@@ -10,7 +10,10 @@ const titleSchema = mongoose.Schema({
   kind: {
     type: String,
     required: true,
-    unique: true,
+    //unique: true,
+    // örneğin zabıt katibi ve zabıt katibi 4b ekleniyor, ikisinde de zabıt katibi özelliğini göstermesini istiyorum
+    // ondan dolayı artık unique değeri true olmamalı
+    
   },
   deletable: {
     type: Boolean,

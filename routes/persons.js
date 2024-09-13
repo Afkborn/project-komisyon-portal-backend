@@ -6,6 +6,8 @@ const Title = require("../model/Title");
 const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
 
+
+
 // MODELMAP
 const modelMap = {
   Person,
@@ -60,11 +62,10 @@ router.get(
         message: `Ad veya Soyad ${Messages.REQUIRED_FIELD}`,
       });
     }
-    // ad ve soyad ile ararken küçük büyük harf duyarlılığı olmaması için
-    // $regex: new RegExp(ad, "i") kullanıldı
+
     Person.find({
-      ad: { $regex: new RegExp(ad, "i") },
-      soyad: { $regex: new RegExp(soyad, "i") },
+      ad: { $regex: new RegExp(ad, "iu") },
+      soyad: { $regex: new RegExp(soyad, "iu") },
     })
       .populate("title", "-_id -__v -deletable")
       .populate("birimID", " -__v -deletable")
@@ -214,11 +215,17 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     calistigiKisi,
   } = request.body;
 
-
   // Ad ilk harfi büyük, diğerleri küçük olacak şekilde düzenleme
   // Soyad hepsi büyük olacak şekilde düzenleme
-  const adDuzenle = ad.charAt(0).toUpperCase() + ad.slice(1).toLowerCase();
-  const soyadDuzenle = soyad.toUpperCase();
+  const adDuzenle = ad
+  .split(" ")
+  .map(
+    (kelime) => kelime.charAt(0).toLocaleUpperCase('tr-TR') + kelime.slice(1).toLocaleLowerCase('tr-TR')
+  )
+  .join(" ");
+
+
+  const soyadDuzenle = soyad.toUpperCase(); // Soyadı tamamen büyük harfe çevir
 
   let Model = modelMap[kind];
 
