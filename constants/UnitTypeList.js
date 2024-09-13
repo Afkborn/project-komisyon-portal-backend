@@ -91,6 +91,24 @@ exports.UnitTypeList = [
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
   },
+  {
+    id: 9013,
+    name: "Tüketici Mahkemesi",
+    institutionTypeId: 0,
+    unitType: "Hukuk",
+    oncelikSirasi: 13,
+    gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
+  },
+  {
+    id: 9014,
+    name: "Asliye Ticaret Mahkemesi",
+    institutionTypeId: 0,
+    unitType: "Hukuk",
+    oncelikSirasi: 14,
+    gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
+  },
 
   // Savcılık
   // {
