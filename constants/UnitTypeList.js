@@ -109,9 +109,10 @@ exports.UnitTypeList = [
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
   },
+
   {
-    id: 9015,
-    name: "Kadastro  Mahkemesi",
+    id: 9030,
+    name: "Kadastro Mahkemesi",
     institutionTypeId: 0,
     unitType: "Hukuk",
     oncelikSirasi: 15,
@@ -119,30 +120,14 @@ exports.UnitTypeList = [
     eksikKatipKontrol: true,
   },
 
-  // Savcılık
-  // {
-  //   id: 9014,
-  //   name: "İdari İşler Müdürlüğü",
-  //   institutionTypeId: 1,
-  //   oncelikSirasi: 14,
-  //   eksikKatipKontrol: false,
-  // },
-  // {
-  //   id: 9015,
-  //   name: "Terörle Mücadale Şube Müdürlüğü",
-  //   institutionTypeId: 1,
-  //   oncelikSirasi: 15,
-  //   eksikKatipKontrol: false,
-  // },
+  // SAVCILIK
   {
     id: 9016,
-    name: "Genel",
+    name: "Cumhuriyet Başsavcılığı",
     institutionTypeId: 1,
     oncelikSirasi: 16,
     eksikKatipKontrol: false,
   },
-
-
 
   // Diğer
   {
