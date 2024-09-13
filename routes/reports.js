@@ -17,6 +17,14 @@ router.get(
   auth,
   Logger("GET /eksikKatipAramasiYapilacakBirimler"),
   async (request, response) => {
+    let institutionId = request.query.institutionId;
+    if (!institutionId) {
+      return response.status(400).send({
+        success: false,
+        message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+      });
+    }
+
     let processStartDate = new Date();
 
     let eksikKatipKontrolEdilecekBirimTipleri = [];
@@ -28,6 +36,7 @@ router.get(
 
     let eksikKatipKontrolEdilecekBirimler = await Unit.find({
       unitTypeID: { $in: eksikKatipKontrolEdilecekBirimTipleri },
+      institutionID: institutionId,
     });
 
     eksikKatipKontrolEdilecekBirimler = eksikKatipKontrolEdilecekBirimler.map(
@@ -62,6 +71,13 @@ router.get(
   Logger("GET /eksikKatibiOlanBirimler"),
   async (request, response) => {
     let processStartDate = new Date();
+    let institutionId = request.query.institutionId;
+    if (!institutionId) {
+      return response.status(400).send({
+        success: false,
+        message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+      });
+    }
 
     let eksikKatipKontrolEdilecekBirimTipleri = [];
     UnitTypeList.forEach((unitType) => {
@@ -72,6 +88,7 @@ router.get(
 
     let eksikKatipKontrolEdilecekBirimler = await Unit.find({
       unitTypeID: { $in: eksikKatipKontrolEdilecekBirimTipleri },
+      institutionID: institutionId,
     });
 
     let eksikKatipOlanBirimler = [];
@@ -79,7 +96,7 @@ router.get(
       let unit = eksikKatipKontrolEdilecekBirimler[i];
       let personCount = await Person.countDocuments({
         birimID: unit._id,
-        kind : "zabitkatibi" // TODO: kind'i ZABİTKATİBİ olarak constant koymak biraz kötü oldu. Düzeltilecek.
+        kind: "zabitkatibi", // TODO: kind'i ZABİTKATİBİ olarak constant koymak biraz kötü oldu. Düzeltilecek.
       });
 
       if (personCount < unit.minClertCount) {
@@ -211,8 +228,6 @@ router.get(
   }
 );
 
-
-
 // toplamPersonelSayisi
 router.get(
   "/toplamPersonelSayisi",
@@ -231,7 +246,7 @@ router.get(
       }
 
       let persons = await Person.find({}).populate("birimID");
-      
+
       persons = persons.filter((person) => {
         return person.birimID.institutionID == institutionId;
       });
