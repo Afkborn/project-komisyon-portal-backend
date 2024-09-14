@@ -17,7 +17,7 @@ exports.USER_NOT_UPDATED = "Kullanıcı güncellenemedi";
 exports.USER_UPDATED = "Kullanıcı güncellendi";
 exports.USER_NOT_DELETED = "Kullanıcı silinemedi";
 exports.USER_DELETED = "Kullanıcı silindi";
-
+exports.TOKEN_NOT_FOUND = "Token bulunamadı";
 
 //COMPONENTS
 exports.INSTITUTIONID_REQUIRED = "Kurum ID zorunludur";
@@ -55,7 +55,6 @@ exports.PERSONS_NOT_FOUND = "Görevliler bulunamadı";
 exports.PERSON_NOT_SAVED = "Görevli kaydedilemedi";
 
 // PERSON UNİT
-
 
 // LEAVE
 exports.LEAVE_NOT_FOUND = "İzin bulunamadı";
