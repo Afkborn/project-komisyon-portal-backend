@@ -2,6 +2,7 @@ const Messages = require("../constants/Messages");
 const express = require("express");
 const router = express.Router();
 const Title = require("../model/Title");
+const { Person } = require("../model/Person");
 const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
 
@@ -76,7 +77,7 @@ router.put("/:id", auth, Logger("PUT /titles/"), (request, response) => {
 });
 
 // delete a title by id
-router.delete("/:id", auth, Logger("DELETE /titles/"), (request, response) => {
+router.delete("/:id", auth, Logger("DELETE /titles/"), async (request, response) => {
   const id = request.params.id;
   // find Title, if deleteable is false, return error
   Title.findById(id)
@@ -93,6 +94,16 @@ router.delete("/:id", auth, Logger("DELETE /titles/"), (request, response) => {
           message: Messages.TITLE_NOT_DELETABLE,
         });
       }
+
+      // eğer bu Title'a ait bir person varsa silme
+      let person = Person.findOne({ title: id });
+      if (person) {
+        return response.status(403).send({
+          success: false,
+          message: Messages.TITLE_NOT_DELETABLE_REASON_PERSON,
+        });
+      }
+
       Title.findOneAndDelete({ _id: id })
         .then(() => {
           response.send({

@@ -320,6 +320,8 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
 });
 
 // Delete a person with id
+// TODO: Delete person's leaves
+// TODO: Delete person's personunit
 router.delete("/:id", auth, Logger("DELETE /persons/"), (request, response) => {
   const id = request.params.id;
 

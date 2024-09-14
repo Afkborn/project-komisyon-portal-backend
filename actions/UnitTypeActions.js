@@ -14,11 +14,6 @@ function getUnitTypesByType(type) {
   );
 }
 
-// verilen unitTypeID'ye göre institutionTypeId döndürür
-function getInstitutionTypeIdByUnitTypeId(unitTypeID) {
-  return UnitTypeList.find((unitType) => unitType.id === unitTypeID)
-    .institutionTypeId;
-}
 
 function getUnitTypeByUnitTypeId(unitTypeID) {
   return UnitTypeList.find((unitType) => unitType.id === unitTypeID);

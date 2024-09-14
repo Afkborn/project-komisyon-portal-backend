@@ -48,6 +48,10 @@ app.use("/api/reports", reports);
 mongoDbConnect();
 
 
+const checkConstantTitle = require("./actions/DatabaseActions").checkConstantTitle;
+checkConstantTitle();
+
+
 
 app.listen(port, () => {
   console.log(getTimeForLog() + `Listening on port ${port}`);

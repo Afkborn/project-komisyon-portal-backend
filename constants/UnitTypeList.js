@@ -4,11 +4,17 @@ exports.UnitTypeList = [
   {
     id: 9001,
     name: "Ağır Ceza Mahkemesi",
-    institutionTypeId: 0,
-    unitType: "Ceza",
-    oncelikSirasi: 1,
-    gerekenKatipSayisi: 5,
-    eksikKatipKontrol: true,
+    institutionTypeId: 0, // Kurum tipi
+    unitType: "Ceza", // Birimin tipi, birimlerin sıralanmasında kullanılır.
+    oncelikSirasi: 1, // Öncelik sırası, birimlerin sıralanmasında kullanılır.
+    gerekenKatipSayisi: 5, // Gereken katip sayısı, eksik katip kontrolü yapılırken kullanılır.
+    eksikKatipKontrol: true, // Eksik katip kontrolü yapılacak mı?
+
+    tabloMevcutMu: true, // Personellerin tablo olarak gösterilmesi gerekiyor mu?
+    tabloHeaderName: "Ağır Ceza Mahkemeleri",
+    baskanGerekliMi: true,
+    uyeHakimGerekliMi: true,
+    hakimGerekliMi: false,
   },
   {
     id: 9002,
@@ -18,6 +24,12 @@ exports.UnitTypeList = [
     oncelikSirasi: 2,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+
+    tabloMevcutMu: true,
+    tabloHeaderName: "Aile Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
   {
     id: 9003,
@@ -27,6 +39,11 @@ exports.UnitTypeList = [
     oncelikSirasi: 3,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "Asliye Ceza Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
   {
     id: 9004,
@@ -36,6 +53,12 @@ exports.UnitTypeList = [
     oncelikSirasi: 4,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+
+    tabloMevcutMu: true,
+    tabloHeaderName: "Asliye Hukuk Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
   {
     id: 9005,
@@ -45,6 +68,11 @@ exports.UnitTypeList = [
     oncelikSirasi: 5,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "Çocuk Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
   {
     id: 9006,
@@ -54,6 +82,11 @@ exports.UnitTypeList = [
     oncelikSirasi: 6,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "İcra Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
   {
     id: 9007,
@@ -63,6 +96,11 @@ exports.UnitTypeList = [
     oncelikSirasi: 7,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "İnfaz Hakimliği",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
   {
     id: 9009,
@@ -72,6 +110,11 @@ exports.UnitTypeList = [
     oncelikSirasi: 9,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "İş Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
   {
     id: 9011,
@@ -81,6 +124,11 @@ exports.UnitTypeList = [
     oncelikSirasi: 11,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "Sulh Ceza Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
   {
     id: 9012,
@@ -90,6 +138,11 @@ exports.UnitTypeList = [
     oncelikSirasi: 12,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "Sulh Hukuk Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
   {
     id: 9013,
@@ -99,6 +152,11 @@ exports.UnitTypeList = [
     oncelikSirasi: 13,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "Aile Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
   {
     id: 9014,
@@ -108,6 +166,11 @@ exports.UnitTypeList = [
     oncelikSirasi: 14,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "Asliye Ticaret Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
 
   {
@@ -118,6 +181,11 @@ exports.UnitTypeList = [
     oncelikSirasi: 15,
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "Kadastro Mahkemeleri",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: true,
   },
 
   // SAVCILIK
@@ -127,6 +195,7 @@ exports.UnitTypeList = [
     institutionTypeId: 1,
     oncelikSirasi: 16,
     eksikKatipKontrol: false,
+    tabloMevcutMu: false,
   },
 
   // Diğer

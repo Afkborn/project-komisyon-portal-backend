@@ -44,6 +44,7 @@ router.get(
         return {
           birimAdi: unit.name,
           gerekenKatipSayisi: unit.minClertCount,
+          oncelikSirasi: unit.oncelikSirasi,
         };
       }
     );
@@ -228,6 +229,7 @@ router.get(
   }
 );
 
+// TODO: işlem yavaş çalışıyor, hızlandır.
 // toplamPersonelSayisi
 router.get(
   "/toplamPersonelSayisi",
@@ -356,6 +358,147 @@ router.get(
         titlePersonCountList: titlePersonCountList,
         unitPersonCountList: unitPersonCountList,
         unitTypePersonCountList: unitTypePersonCountList,
+      });
+    } catch (error) {
+      console.log(error);
+      response.status(500).send({
+        message: error.message || Messages.PERSONS_NOT_FOUND,
+      });
+    }
+  }
+);
+
+// personelTabloKontrolEdilecekBirimler
+router.get(
+  "/personelTabloKontrolEdilecekBirimler",
+  auth,
+  Logger("GET /personelTabloKontrolEdilecekBirimler"),
+  async (request, response) => {
+    try {
+      let processStartDate = new Date();
+      let institutionId = request.query.institutionId;
+
+      if (!institutionId) {
+        return response.status(400).send({
+          success: false,
+          message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+        });
+      }
+
+      let kontrolEdilecekBirimTipList = [];
+      let tabloKontrolEdecekBirimTipleri = [];
+
+      // tabloMevcutMu olan birim tiplerini topla
+      UnitTypeList.forEach((unitType) => {
+        if (unitType.tabloMevcutMu) {
+          tabloKontrolEdecekBirimTipleri.push(unitType.id);
+          kontrolEdilecekBirimTipList.push(unitType);
+        }
+      });
+
+      let kontrolEdilecekBirimlerList = await Unit.find({
+        unitTypeID: { $in: tabloKontrolEdecekBirimTipleri },
+        institutionID: institutionId,
+      }).select(
+        "-_id -__v -deletable -institutionID -createdDate -minClertCount"
+      );
+
+
+      let processEndDate = new Date();
+      let processTime = processEndDate - processStartDate;
+      console.log(
+        getTimeForLog() +
+          "[REPORT][personelTabloKontrolEdilecekBirimler] Process Time: " +
+          processTime +
+          " ms"
+      );
+
+      response.send({
+        success: true,
+        unitTypeList: kontrolEdilecekBirimTipList,
+        unitList: kontrolEdilecekBirimlerList,
+      });
+    } catch (error) {
+      console.log(error);
+      response.status(500).send({
+        message: error.message || Messages.PERSONS_NOT_FOUND,
+      });
+    }
+  }
+);
+
+// personelTablo
+router.get(
+  "/personelTablo",
+  auth,
+  Logger("GET /personelTablo"),
+  async (request, response) => {
+    try {
+      let processStartDate = new Date();
+      let institutionId = request.query.institutionId;
+
+      if (!institutionId) {
+        return response.status(400).send({
+          success: false,
+          message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+        });
+      }
+
+      let kontrolEdilecekBirimTipleri = [];
+
+      // tabloMevcutMu olan birim tiplerini topla
+      UnitTypeList.forEach((unitType) => {
+        if (unitType.tabloMevcutMu) {
+          kontrolEdilecekBirimTipleri.push(unitType.id);
+        }
+      });
+
+      // Birimlerin listesini lean() kullanarak düz JS nesnesine dönüştür
+      let kontrolEdilecekBirimler = await Unit.find({
+        unitTypeID: { $in: kontrolEdilecekBirimTipleri },
+        institutionID: institutionId,
+      }).lean();
+
+      // kontrolEdilecekBirimler listesindeki her bir birimi önce unitTypeID'sini unitTypeList'ten bul oncelik sırasına göre sırala, daha sonra
+      // her bir birimi series'e göre sırala
+      kontrolEdilecekBirimler.sort((a, b) => {
+        return a.oncelikSirasi - b.oncelikSirasi;
+      });
+
+      kontrolEdilecekBirimler.sort((a, b) => {
+        return a.series - b.series;
+      });
+
+      // Birimlere çalışanları ekle
+      await Promise.all(
+        kontrolEdilecekBirimler.map(async (unit) => {
+          // person objesinin goreveBaslamaTarihi, birimID, birimeBaslamaTarihi, gecmisBirimler, izinler, calistigiKisi alanlarını getirme
+
+          let persons = await Person.find({
+            birimID: unit._id,
+          })
+            .populate("title", "-_id -__v -deletable")
+            .select(
+              "-__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi -birimID -gecmisBirimler"
+            );
+
+          unit.personCount = persons.length;
+          unit.persons = persons;
+        })
+      );
+
+      let processEndDate = new Date();
+      let processTime = processEndDate - processStartDate;
+      console.log(
+        getTimeForLog() +
+          "[REPORT][personelTablo] Process Time: " +
+          processTime +
+          " ms"
+      );
+
+      response.send({
+        success: true,
+        personelTablo: kontrolEdilecekBirimler,
       });
     } catch (error) {
       console.log(error);
