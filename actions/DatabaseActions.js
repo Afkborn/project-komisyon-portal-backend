@@ -9,7 +9,7 @@ const checkConstantTitle = () => {
   let failedCount = 0;
 
   constantTitles.forEach((title) => {
-    Title.findOne({ kind: title.kind })
+    Title.findOne({ kind: title.kind, name: title.name })
       .then((data) => {
         if (!data) {
           const newTitle = new Title({
@@ -19,7 +19,9 @@ const checkConstantTitle = () => {
             oncelikSirasi: title.oncelikSirasi,
           });
           newTitle.save().then((data) => {
-            console.log(`Title ${data.name} saved successfully.`);
+            console.log(
+              getTimeForLog() + `Title ${data.name} saved successfully.`
+            );
             succesfullCount++;
           });
         } else {

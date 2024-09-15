@@ -18,6 +18,7 @@ exports.USER_UPDATED = "Kullanıcı güncellendi";
 exports.USER_NOT_DELETED = "Kullanıcı silinemedi";
 exports.USER_DELETED = "Kullanıcı silindi";
 exports.TOKEN_NOT_FOUND = "Token bulunamadı";
+exports.ROLE_REQUIRED = "Rol zorunludur";
 
 //COMPONENTS
 exports.INSTITUTIONID_REQUIRED = "Kurum ID zorunludur";

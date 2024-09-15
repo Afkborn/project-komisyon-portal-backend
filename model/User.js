@@ -23,9 +23,9 @@ const UserSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  permission: {
+  role: {
     type: String,
-    default: "user",
+    required: [true, Messages.ROLE_REQUIRED],
   },
   email: {
     type: String,

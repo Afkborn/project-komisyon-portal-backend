@@ -7,6 +7,7 @@ const getTimeForLog = require("../common/time");
 const auth = require("../middleware/auth");
 const toSHA256 = require("../common/hashing");
 const Logger = require("../middleware/logger");
+const e = require("express");
 
 // login user
 router.post("/login", (request, response) => {
@@ -36,7 +37,7 @@ router.post("/login", (request, response) => {
         {
           id: user._id,
           username: user.username,
-          userPermission: user.permission,
+          role: user.role,
         },
         "RANDOM-TOKEN",
         { expiresIn: "7d" }
@@ -70,7 +71,7 @@ router.post(
   auth,
   Logger("POST /register"),
   (request, response) => {
-    if (request.user.userPermission !== "admin") {
+    if (request.user.role !== "admin") {
       return response.status(403).send({
         message: Messages.USER_NOT_AUTHORIZED,
       });
@@ -93,7 +94,17 @@ router.post(
       name: request.body.name,
       surname: request.body.surname,
       password: password,
+      role: request.body.role,
     });
+
+    if (request.body.email) {
+      user.email = request.body.email;
+    }
+
+    if (request.body.phone) {
+      user.phone = request.body.phone;
+    }
+
     user
       .save()
       .then((result) => {
@@ -219,7 +230,7 @@ router.delete("/", auth, Logger("DELETE /"), (request, response) => {
         });
       }
       let password = toSHA256(request.body.password);
-    
+
       if (user.password !== password) {
         return response.status(401).send({
           message: Messages.PASSWORD_INCORRECT,
@@ -228,7 +239,6 @@ router.delete("/", auth, Logger("DELETE /"), (request, response) => {
       response.status(200).send({
         message: Messages.USER_DELETED,
       });
-    
     })
     .catch((error) => {
       response.status(500).send({

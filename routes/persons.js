@@ -2,11 +2,11 @@ const Messages = require("../constants/Messages");
 const express = require("express");
 const router = express.Router();
 const { Person, zabitkatibi } = require("../model/Person");
+const PersonUnit = require("../model/PersonUnit");
+const Leave = require("../model/Leave");
 const Title = require("../model/Title");
 const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
-
-
 
 // MODELMAP
 const modelMap = {
@@ -218,12 +218,13 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
   // Ad ilk harfi büyük, diğerleri küçük olacak şekilde düzenleme
   // Soyad hepsi büyük olacak şekilde düzenleme
   const adDuzenle = ad
-  .split(" ")
-  .map(
-    (kelime) => kelime.charAt(0).toLocaleUpperCase('tr-TR') + kelime.slice(1).toLocaleLowerCase('tr-TR')
-  )
-  .join(" ");
-
+    .split(" ")
+    .map(
+      (kelime) =>
+        kelime.charAt(0).toLocaleUpperCase("tr-TR") +
+        kelime.slice(1).toLocaleLowerCase("tr-TR")
+    )
+    .join(" ");
 
   const soyadDuzenle = soyad.toUpperCase(); // Soyadı tamamen büyük harfe çevir
 
@@ -322,35 +323,36 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
 // Delete a person with id
 // TODO: Delete person's leaves
 // TODO: Delete person's personunit
-router.delete("/:id", auth, Logger("DELETE /persons/"), (request, response) => {
+router.delete("/:id", auth, Logger("DELETE /persons/"), async (request, response) => {
   const id = request.params.id;
 
-  Person.findById(id)
-    .then((person) => {
-      if (!person) {
-        return response.status(404).send({
-          success: false,
-          message: Messages.PERSON_NOT_FOUND,
-        });
-      }
-      Person.findOneAndDelete({ _id: id })
-        .then(() => {
-          response.send({
-            success: true,
-            message: Messages.PERSON_DELETED,
-          });
-        })
-        .catch((error) => {
-          response.status(500).send({
-            message: error.message || Messages.PERSON_NOT_DELETED,
-          });
-        });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: error.message || Messages.PERSON_NOT_DELETED,
+  try {
+    const person = await Person.findById(id);
+    if (!person) {
+      return response.status(404).send({
+        success: false,
+        message: Messages.PERSON_NOT_FOUND,
       });
+    }
+
+    // Perform all deletions in parallel and wait for them to complete
+    await Promise.all([
+      Leave.deleteMany({ personID: id }),
+      PersonUnit.deleteMany({ personID: id })
+    ]);
+
+    // Now delete the person
+    await Person.findOneAndDelete({ _id: id });
+
+    response.send({
+      success: true,
+      message: Messages.PERSON_DELETED,
     });
+  } catch (error) {
+    response.status(500).send({
+      message: error.message || Messages.PERSON_NOT_DELETED,
+    });
+  }
 });
 
 module.exports = router;
