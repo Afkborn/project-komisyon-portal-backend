@@ -377,11 +377,12 @@ router.get(
     try {
       let processStartDate = new Date();
       let institutionId = request.query.institutionId;
+      let queryUnitType = request.query.queryUnitType;
 
-      if (!institutionId) {
+      if (!institutionId || !queryUnitType) {
         return response.status(400).send({
           success: false,
-          message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+          message: `Kurum ID veya Kurum Tipi ${Messages.REQUIRED_FIELD}`,
         });
       }
 
@@ -390,7 +391,7 @@ router.get(
 
       // tabloMevcutMu olan birim tiplerini topla
       UnitTypeList.forEach((unitType) => {
-        if (unitType.tabloMevcutMu) {
+        if (unitType.tabloMevcutMu && unitType.unitType == queryUnitType ) {
           tabloKontrolEdecekBirimTipleri.push(unitType.id);
           kontrolEdilecekBirimTipList.push(unitType);
         }
@@ -436,11 +437,12 @@ router.get(
     try {
       let processStartDate = new Date();
       let institutionId = request.query.institutionId;
+      let queryUnitType = request.query.queryUnitType;
 
-      if (!institutionId) {
+      if (!institutionId || !queryUnitType) {
         return response.status(400).send({
           success: false,
-          message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+          message: `Kurum ID veya Kurum Tipi ${Messages.REQUIRED_FIELD}`,
         });
       }
 
@@ -448,7 +450,7 @@ router.get(
 
       // tabloMevcutMu olan birim tiplerini topla
       UnitTypeList.forEach((unitType) => {
-        if (unitType.tabloMevcutMu) {
+        if (unitType.tabloMevcutMu && unitType.unitType == queryUnitType) {
           kontrolEdilecekBirimTipleri.push(unitType.id);
         }
       });
