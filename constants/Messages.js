@@ -19,6 +19,9 @@ exports.USER_NOT_DELETED = "Kullanıcı silinemedi";
 exports.USER_DELETED = "Kullanıcı silindi";
 exports.TOKEN_NOT_FOUND = "Token bulunamadı";
 exports.ROLE_REQUIRED = "Rol zorunludur";
+exports.USERS_LIST = "Kullanıcılar başarılı bir şekilde listelendi!";
+exports.USERS_NOT_FOUND = "Kullanıcılar bulunamadı";
+exports.USERS_GET_FAILED = "Kullanıcılar getirilemedi";
 
 //COMPONENTS
 exports.INSTITUTIONID_REQUIRED = "Kurum ID zorunludur";
