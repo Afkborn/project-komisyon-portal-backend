@@ -1,12 +1,12 @@
 exports.ConstantTitles = [
   {
-    name: "Zabit Katibi",
+    name: "Zabıt Kâtibi",
     kind: "zabitkatibi",
     deletable: false,
     oncelikSirasi: 15,
   },
   {
-    name: "Zabit Katibi (657/4B)",
+    name: "Zabıt Kâtibi (657/4B)",
     kind: "zabitkatibi",
     deletable: false,
     oncelikSirasi: 15,
