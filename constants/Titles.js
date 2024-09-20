@@ -12,12 +12,12 @@ exports.ConstantTitles = [
     oncelikSirasi: 15,
   },
   {
-    name: "Üye Hakim",
+    name: "Üye Hâkim",
     kind: "uyehakim",
     deletable: false,
     oncelikSirasi: 10,
   },
-  { name: "Hakim", kind: "hakim", deletable: false, oncelikSirasi: 10 },
+  { name: "Hâkim", kind: "hakim", deletable: false, oncelikSirasi: 10 },
   { name: "Başkan", kind: "baskan", deletable: false, oncelikSirasi: 8 },
   { name: "Mübaşir", kind: "mubasir", deletable: false, oncelikSirasi: 20 },
   {
