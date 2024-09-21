@@ -154,7 +154,6 @@ router.get(
   }
 );
 
-
 // get status false persons
 router.get(
   "/deactivated",
@@ -231,7 +230,7 @@ router.get(
 
 // create a person
 router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
-  const requiredFields = ["kind", "sicil", "ad", "soyad"];
+  const requiredFields = ["sicil", "ad", "soyad", "titleID"];
   const missingFields = requiredFields.filter((field) => !request.body[field]);
   if (missingFields.length > 0) {
     return response.status(400).send({
@@ -245,7 +244,7 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     ad,
     soyad,
     goreveBaslamaTarihi,
-    kind,
+    titleID,
     birimID,
     birimeBaslamaTarihi,
     status,
@@ -270,20 +269,22 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
 
   const soyadDuzenle = soyad.toUpperCase(); // Soyadı tamamen büyük harfe çevir
 
-  let Model = modelMap[kind];
-
-  if (!Model) {
-    Model = Person;
-  }
-
-  // find title by kind
-  let title = await Title.findOne({ kind });
+  // find title by id
+  const title = await Title.findById(titleID);
 
   if (!title) {
     return response.status(404).send({
       success: false,
       message: Messages.TITLE_NOT_FOUND,
     });
+  }
+
+  let kind = title.kind;
+
+  let Model = modelMap[kind];
+
+  if (!Model) {
+    Model = Person;
   }
 
   let newPerson;
@@ -401,7 +402,5 @@ router.delete(
     }
   }
 );
-
-
 
 module.exports = router;
