@@ -97,6 +97,7 @@ router.get(
       let unit = eksikKatipKontrolEdilecekBirimler[i];
       let personCount = await Person.countDocuments({
         birimID: unit._id,
+        status : true,
         kind: "zabitkatibi", // TODO: kind'i ZABİTKATİBİ olarak constant koymak biraz kötü oldu. Düzeltilecek.
       });
 
@@ -152,7 +153,7 @@ router.get(
         .populate("izinler", "-__v -personID");
 
       persons = persons.filter((person) => {
-        return person.birimID.institutionID == institutionId;
+        return person.birimID.institutionID == institutionId && person.status;
       });
 
       // İzinli personelleri filtrele
@@ -249,8 +250,9 @@ router.get(
 
       let persons = await Person.find({}).populate("birimID");
 
+    
       persons = persons.filter((person) => {
-        return person.birimID.institutionID == institutionId;
+        return person.birimID.institutionID == institutionId && person.status;
       });
       let personCount = persons.length;
 
@@ -478,6 +480,7 @@ router.get(
 
           let persons = await Person.find({
             birimID: unit._id,
+            status: true,
           })
             .populate("title", "-_id -__v -deletable")
             .select(

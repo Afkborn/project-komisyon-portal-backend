@@ -24,7 +24,7 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
       message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
     });
   }
-  Person.find()
+  Person.find({ status: true })
     .select(
       "-_id -__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi"
     )
@@ -154,6 +154,48 @@ router.get(
   }
 );
 
+
+// get status false persons
+router.get(
+  "/deactivated",
+  auth,
+  Logger("GET /persons/deactivated"),
+  (request, response) => {
+    let institutionId = request.query.institutionId;
+
+    if (!institutionId) {
+      return response.status(400).send({
+        success: false,
+        message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+      });
+    }
+    Person.find({ status: false })
+      .select(
+        "-_id -__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi"
+      )
+      .populate("title", "-_id -__v -deletable")
+      .populate("izinler", "-__v -personID")
+      .populate("birimID", "-_id -__v -deletable")
+      .then((persons) => {
+        // filter persons by institutionId
+        persons = persons.filter((person) => {
+          return person.birimID.institutionID == institutionId;
+        });
+
+        response.send({
+          success: true,
+          personList: persons,
+        });
+      })
+      .catch((error) => {
+        console.log(error.message || Messages.PERSONS_NOT_FOUND);
+        response.status(500).send({
+          message: error.message || Messages.PERSONS_NOT_FOUND,
+        });
+      });
+  }
+);
+
 // get a persons by birimID
 router.get(
   "/:birimID",
@@ -162,7 +204,7 @@ router.get(
   (request, response) => {
     const birimID = request.params.birimID;
     // get all persons by birimID with title , without kind
-    Person.find({ birimID })
+    Person.find({ birimID, status: true })
       // get title without _id -v
       .populate("title", "-_id -__v -deletable")
       .populate("izinler", "-__v -personID")
@@ -323,36 +365,43 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
 // Delete a person with id
 // TODO: Delete person's leaves
 // TODO: Delete person's personunit
-router.delete("/:id", auth, Logger("DELETE /persons/"), async (request, response) => {
-  const id = request.params.id;
+router.delete(
+  "/:id",
+  auth,
+  Logger("DELETE /persons/"),
+  async (request, response) => {
+    const id = request.params.id;
 
-  try {
-    const person = await Person.findById(id);
-    if (!person) {
-      return response.status(404).send({
-        success: false,
-        message: Messages.PERSON_NOT_FOUND,
+    try {
+      const person = await Person.findById(id);
+      if (!person) {
+        return response.status(404).send({
+          success: false,
+          message: Messages.PERSON_NOT_FOUND,
+        });
+      }
+
+      // Perform all deletions in parallel and wait for them to complete
+      await Promise.all([
+        Leave.deleteMany({ personID: id }),
+        PersonUnit.deleteMany({ personID: id }),
+      ]);
+
+      // Now delete the person
+      await Person.findOneAndDelete({ _id: id });
+
+      response.send({
+        success: true,
+        message: Messages.PERSON_DELETED,
+      });
+    } catch (error) {
+      response.status(500).send({
+        message: error.message || Messages.PERSON_NOT_DELETED,
       });
     }
-
-    // Perform all deletions in parallel and wait for them to complete
-    await Promise.all([
-      Leave.deleteMany({ personID: id }),
-      PersonUnit.deleteMany({ personID: id })
-    ]);
-
-    // Now delete the person
-    await Person.findOneAndDelete({ _id: id });
-
-    response.send({
-      success: true,
-      message: Messages.PERSON_DELETED,
-    });
-  } catch (error) {
-    response.status(500).send({
-      message: error.message || Messages.PERSON_NOT_DELETED,
-    });
   }
-});
+);
+
+
 
 module.exports = router;

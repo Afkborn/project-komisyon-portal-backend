@@ -36,13 +36,20 @@ const personSchema = new Schema(
     gecmisBirimler: [
       {
         type: Schema.Types.ObjectId,
-        ref : "PersonUnit",
-      }
+        ref: "PersonUnit",
+      },
     ],
     status: {
       type: Boolean,
       default: true,
     },
+    deactivationReason: {
+      type: String,
+    },
+    deactivationDate: {
+      type: Date,
+    },
+    
     izinler: [
       {
         type: Schema.Types.ObjectId,
@@ -59,10 +66,6 @@ const personSchema = new Schema(
     level: {
       type: Number,
     },
-
-
-
-
   },
   options
 );
