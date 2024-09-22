@@ -38,6 +38,10 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
 
       // filter persons by institutionId
       persons = persons.filter((person) => {
+        if (person.birimID === null) {
+          console.log("birimID null olan person: ", person);
+          return false;
+        }
         return person.birimID.institutionID == institutionId;
       });
 
@@ -53,6 +57,7 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
       });
     })
     .catch((error) => {
+      console.log(error)
       console.log(error.message || Messages.PERSONS_NOT_FOUND);
       response.status(500).send({
         message: error.message || Messages.PERSONS_NOT_FOUND,
