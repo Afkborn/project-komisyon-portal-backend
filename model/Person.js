@@ -3,7 +3,10 @@ const mongoose = require("mongoose");
 const Messages = require("../constants/Messages");
 const { Schema } = mongoose;
 
-const options = { discriminatorKey: "kind", collection: "persons" };
+const options = {
+  discriminatorKey: "kind",
+  collection: "persons",
+};
 
 const personSchema = new Schema(
   {

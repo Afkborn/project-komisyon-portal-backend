@@ -97,7 +97,7 @@ router.get(
       let unit = eksikKatipKontrolEdilecekBirimler[i];
       let personCount = await Person.countDocuments({
         birimID: unit._id,
-        status : true,
+        status: true,
         kind: "zabitkatibi", // TODO: kind'i ZABİTKATİBİ olarak constant koymak biraz kötü oldu. Düzeltilecek.
       });
 
@@ -250,7 +250,6 @@ router.get(
 
       let persons = await Person.find({}).populate("birimID");
 
-    
       persons = persons.filter((person) => {
         return person.birimID.institutionID == institutionId && person.status;
       });
@@ -393,7 +392,7 @@ router.get(
 
       // tabloMevcutMu olan birim tiplerini topla
       UnitTypeList.forEach((unitType) => {
-        if (unitType.tabloMevcutMu && unitType.unitType == queryUnitType ) {
+        if (unitType.tabloMevcutMu && unitType.unitType == queryUnitType) {
           tabloKontrolEdecekBirimTipleri.push(unitType.id);
           kontrolEdilecekBirimTipList.push(unitType);
         }
@@ -405,7 +404,6 @@ router.get(
       }).select(
         "-_id -__v -deletable -institutionID -createdDate -minClertCount"
       );
-
 
       let processEndDate = new Date();
       let processTime = processEndDate - processStartDate;
@@ -483,6 +481,7 @@ router.get(
             status: true,
           })
             .populate("title", "-_id -__v -deletable")
+            .populate("izinler", "-__v -personID")
             .select(
               "-__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi -birimID -gecmisBirimler"
             );
