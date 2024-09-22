@@ -8,6 +8,7 @@ const Title = require("../model/Title");
 const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
 
+const { getUnitTypeByUnitTypeId } = require("../actions/UnitTypeActions");
 // MODELMAP
 const modelMap = {
   Person,
@@ -32,9 +33,18 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
     .populate("izinler", "-__v -personID")
     .populate("birimID", "-_id -__v -deletable")
     .then((persons) => {
+
+      persons = persons.map(person => person.toObject());
+
       // filter persons by institutionId
       persons = persons.filter((person) => {
         return person.birimID.institutionID == institutionId;
+      });
+
+      //birimID içindeki unitTypeID'yi unitTypeList içindeki id ile eşleştir ve unitType'ı al
+      persons.forEach((person) => {
+        let unitType = getUnitTypeByUnitTypeId(person.birimID.unitTypeID);
+        person.birimID.oncelikSirasi = unitType.oncelikSirasi
       });
 
       response.send({
@@ -250,6 +260,7 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     status,
     description,
     level,
+    isTemporary,
 
     //  ZABIT KATİBİ
     durusmaKatibiMi,
@@ -298,6 +309,7 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     status,
     description,
     level,
+    isTemporary,
     title: title._id,
   };
 

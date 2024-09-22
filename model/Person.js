@@ -49,7 +49,10 @@ const personSchema = new Schema(
     deactivationDate: {
       type: Date,
     },
-    
+    isTemporary: {
+      type: Boolean,
+      default: false,
+    },
     izinler: [
       {
         type: Schema.Types.ObjectId,
