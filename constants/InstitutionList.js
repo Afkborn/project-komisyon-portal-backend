@@ -5,7 +5,7 @@
 const mahkeme = { id: 0, name: "Mahkeme" };
 const savcilik = { id: 1, name: "Savcılık" };
 const diger = { id: 2, name: "Diğer" };
-const genel = { id: 3, name: "Genel" };
+// const genel = { id: 3, name: "Genel" };
 
 exports.InstitutionList = [
   {
