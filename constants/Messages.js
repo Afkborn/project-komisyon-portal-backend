@@ -87,3 +87,6 @@ exports.TITLE_DELETABLE_NOT_UPDATED = "Ünvan silinme durumu güncellenemez.";
 exports.TITLE_NOT_SAVED = "Ünvan kaydedilemedi";
 exports.TITLE_HAS_PERSON = "Ünvan görevliye atanmış, silinemez";
 exports.TITLE_NOT_DELETABLE_REASON_PERSON = "Ünvan görevliye atanmış, silinemez";
+
+
+// ACTIVITY

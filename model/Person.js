@@ -6,6 +6,7 @@ const { Schema } = mongoose;
 const options = {
   discriminatorKey: "kind",
   collection: "persons",
+  timestamps: true,
 };
 
 const personSchema = new Schema(
@@ -145,13 +146,13 @@ const personSchema = new Schema(
     },
     bloodType: {
       type: String,
-      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-", ""],
+      default: "",
     },
     keyboardType: {
       type: String,
-      enum: ["F", "Q", "Belirtilmemiş"],
-      default: "Belirtilmemiş",
-      required: true,
+      enum: ["F", "Q", ""],
+      default: "",
     },
   },
   options
@@ -161,11 +162,13 @@ const personSchema = new Schema(
 // Buradaki virtual field'ı kullanarak, bir kişinin izinde olup olmadığını kontrol edebiliriz.
 personSchema.virtual("izindeMi").get(function () {
   const now = new Date();
+  if (!this.izinler || this.izinler.length === 0) {
+    return false; // Eğer izinler yoksa false döner
+  }
   return this.izinler.some((leave) => {
     return now >= leave.startDate && now <= leave.endDate;
   });
 });
-
 personSchema.set("toJSON", { virtuals: true });
 personSchema.set("toObject", { virtuals: true });
 

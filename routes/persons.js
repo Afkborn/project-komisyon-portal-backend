@@ -9,6 +9,9 @@ const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
 const PersonAttributeList = require("../constants/PersonAttributeList");
 const { getUnitTypeByUnitTypeId } = require("../actions/UnitTypeActions");
+
+const { recordActivity } = require("../actions/ActivityActions");
+const RequestTypeList = require("../constants/ActivityTypeList");
 // MODELMAP
 const modelMap = {
   Person,
@@ -227,7 +230,6 @@ router.get(
   }
 );
 
-
 // get a persons by birimID
 router.get(
   "/:birimID",
@@ -435,6 +437,12 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
           message: Messages.PERSON_NOT_FOUND,
         });
       }
+
+      recordActivity(
+        request.user.id,
+        RequestTypeList.PUT_PERSON_ID,
+        updatedPerson._id
+      );
 
       response.send({
         success: true,

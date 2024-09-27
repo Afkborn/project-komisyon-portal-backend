@@ -1,0 +1,38 @@
+const AccessRecord = require("../model/Activity");
+
+const ActivityTypeList = require("../constants/ActivityTypeList");
+
+async function recordActivity(
+  userID,
+  type,
+  personID = null,
+  description = null
+) {
+  const accessLog = new AccessRecord({
+    userID,
+    typeID: type.id,
+    personID,
+    description,
+  });
+
+  return new Promise((resolve, reject) => {
+    accessLog
+      .save()
+      .then((result) => {
+        resolve(result);
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+}
+
+function getActivityWithID(typeID) {
+
+  const key = Object.keys(ActivityTypeList).find(
+    (key) => ActivityTypeList[key].id === typeID
+  );
+  return key ? ActivityTypeList[key] : null; // Eğer anahtar bulunursa nesneyi döndür, yoksa null döndür
+}
+
+module.exports = { recordActivity, getActivityWithID };
