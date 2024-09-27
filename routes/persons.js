@@ -7,7 +7,7 @@ const Leave = require("../model/Leave");
 const Title = require("../model/Title");
 const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
-
+const PersonAttributeList = require("../constants/PersonAttributeList");
 const { getUnitTypeByUnitTypeId } = require("../actions/UnitTypeActions");
 // MODELMAP
 const modelMap = {
@@ -33,8 +33,7 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
     .populate("izinler", "-__v -personID")
     .populate("birimID", "-_id -__v -deletable")
     .then((persons) => {
-
-      persons = persons.map(person => person.toObject());
+      persons = persons.map((person) => person.toObject());
 
       // filter persons by institutionId
       persons = persons.filter((person) => {
@@ -48,7 +47,7 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
       //birimID içindeki unitTypeID'yi unitTypeList içindeki id ile eşleştir ve unitType'ı al
       persons.forEach((person) => {
         let unitType = getUnitTypeByUnitTypeId(person.birimID.unitTypeID);
-        person.birimID.oncelikSirasi = unitType.oncelikSirasi
+        person.birimID.oncelikSirasi = unitType.oncelikSirasi;
       });
 
       response.send({
@@ -57,7 +56,7 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
       });
     })
     .catch((error) => {
-      console.log(error)
+      console.log(error);
       console.log(error.message || Messages.PERSONS_NOT_FOUND);
       response.status(500).send({
         message: error.message || Messages.PERSONS_NOT_FOUND,
@@ -65,6 +64,7 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
     });
 });
 
+// get a person by ad soyad
 router.get(
   "/byAdSoyad",
   auth,
@@ -169,6 +169,19 @@ router.get(
   }
 );
 
+// get a person attribute data
+router.get(
+  "/attributeList",
+  auth,
+  Logger("GET /persons/attributeList"),
+  (request, response) => {
+    response.send({
+      success: true,
+      personAttributeList: PersonAttributeList.PersonAttributeList,
+    });
+  }
+);
+
 // get status false persons
 router.get(
   "/deactivated",
@@ -193,6 +206,10 @@ router.get(
       .then((persons) => {
         // filter persons by institutionId
         persons = persons.filter((person) => {
+          if (person.birimID === null) {
+            console.log("birimID null olan person: ", person);
+            return false;
+          }
           return person.birimID.institutionID == institutionId;
         });
 
@@ -336,6 +353,56 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
       });
     });
 });
+
+// update a person with sicil
+router.put(
+  "/updateBySicil/:sicil",
+  auth,
+  Logger("PUT /persons/updateBySicil"),
+  async (request, response) => {
+    const sicil = request.params.sicil;
+    const updateData = request.body;
+    const options = { new: true, runValidators: true, context: "query" };
+
+    try {
+      const person = await Person.findOne({ sicil });
+
+      if (!person) {
+        return response.status(404).send({
+          success: false,
+          message: Messages.PERSON_NOT_FOUND,
+        });
+      }
+
+      let Model = Person;
+      if (person.durusmaKatibiMi !== undefined) {
+        Model = zabitkatibi;
+      }
+
+      const updatedPerson = await Model.findOneAndUpdate(
+        { sicil },
+        updateData,
+        options
+      );
+
+      if (!updatedPerson) {
+        return response.status(404).send({
+          success: false,
+          message: Messages.PERSON_NOT_FOUND,
+        });
+      }
+
+      response.send({
+        success: true,
+        message: Messages.PERSON_UPDATED,
+      });
+    } catch (error) {
+      response.status(500).send({
+        message: error.message || Messages.PERSON_NOT_UPDATED,
+      });
+    }
+  }
+);
 
 // Update a person with id
 router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {

@@ -291,4 +291,8 @@ exports.UnitTypeList = [
     uyeHakimGerekliMi: false,
     hakimGerekliMi: false,
   },
+  
+
+
+  
 ];

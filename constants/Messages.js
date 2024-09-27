@@ -57,6 +57,9 @@ exports.PERSON_NOT_UPDATED = "Görevli güncellenemedi";
 exports.PERSON_NOT_DELETED = "Görevli silinemedi";
 exports.PERSONS_NOT_FOUND = "Görevliler bulunamadı";
 exports.PERSON_NOT_SAVED = "Görevli kaydedilemedi";
+exports.VALID_SICIL = (VALUE) => `Sicil numarası hatalı. Sicil: ${VALUE}`;
+exports.VALID_TCKN = (VALUE) => `TCKN hatalı. TCKN: ${VALUE}`;
+exports.VALID_PHONE = (VALUE) => `Telefon numarası hatalı. Telefon: ${VALUE}`;
 
 // PERSON UNİT
 

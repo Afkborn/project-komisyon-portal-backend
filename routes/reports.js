@@ -251,6 +251,10 @@ router.get(
       let persons = await Person.find({}).populate("birimID");
 
       persons = persons.filter((person) => {
+        // BİRİM ID'si olmayan personel varsa onları filtreliyoruz.
+        if (!person.birimID) {
+          return false;
+        }
         return person.birimID.institutionID == institutionId && person.status;
       });
       let personCount = persons.length;

@@ -10,10 +10,17 @@ const options = {
 
 const personSchema = new Schema(
   {
+    // sicil 6 haneli olmalı
     sicil: {
       type: Number,
       required: [true, Messages.PERSON_SICIL_REQUIRED],
       unique: true,
+      validate: {
+        validator: function (v) {
+          return /^\d{6}$/.test(v);
+        },
+        message: (props) => Messages.VALID_SICIL(props.value),
+      },
     },
     ad: {
       type: String,
@@ -72,6 +79,28 @@ const personSchema = new Schema(
     level: {
       type: Number,
     },
+
+    tckn: {
+      type: String,
+      validate: {
+        validator: function (v) {
+          return /^\d{11}$/.test(v);
+        },
+        message: (props) => Messages.VALID_TCKN(props.value),
+      },
+    },
+    phoneNumber: {
+      type: String,
+      validate: {
+        validator: function (v) {
+          return /^\d{10}$/.test(v);
+        },
+        message: (props) => Messages.VALID_PHONE(props.value),
+      },
+    },
+    email: {
+      type: String,
+    },
   },
   options
 );
@@ -93,7 +122,7 @@ const Person = mongoose.model("Person", personSchema);
 const ZabitKatibi = Person.discriminator(
   "zabitkatibi",
   new Schema({
-    durusmaKatibiMi: { type: Boolean, required: true, default: false },
+    durusmaKatibiMi: { type: Boolean, default: false },
     calistigiKisi: {
       type: Schema.Types.ObjectId,
       ref: "Person",
