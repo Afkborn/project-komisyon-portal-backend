@@ -153,7 +153,7 @@ exports.UnitTypeList = [
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
     tabloMevcutMu: true,
-    tabloHeaderName: "Aile Mahkemeleri",
+    tabloHeaderName: "Tüketici Mahkemeleri",
     baskanGerekliMi: false,
     uyeHakimGerekliMi: false,
     hakimGerekliMi: true,
@@ -291,8 +291,19 @@ exports.UnitTypeList = [
     uyeHakimGerekliMi: false,
     hakimGerekliMi: false,
   },
-  
 
-
-  
+  {
+    id: 9037,
+    name: "Ek Bina",
+    institutionTypeId: 2,
+    unitType: "Diger",
+    oncelikSirasi: 22,
+    gerekenKatipSayisi: 3,
+    eksikKatipKontrol: true,
+    tabloMevcutMu: true,
+    tabloHeaderName: "Ek Bina",
+    baskanGerekliMi: false,
+    uyeHakimGerekliMi: false,
+    hakimGerekliMi: false,
+  },
 ];

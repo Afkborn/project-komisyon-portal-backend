@@ -25,10 +25,38 @@ const personSchema = new Schema(
     ad: {
       type: String,
       required: [true, Messages.PERSON_NAME_REQUIRED],
+      validate: [
+        {
+          validator: function (v) {
+            return v.length > 1;
+          },
+          message: "İsim en az 2 karakter olmalıdır",
+        },
+        {
+          validator: function (v) {
+            return v.length <= 20;
+          },
+          message: "İsim en fazla 20 karakter olmalıdır",
+        },
+      ],
     },
     soyad: {
       type: String,
       required: [true, Messages.PERSON_SURNAME_REQUIRED],
+      validate: [
+        {
+          validator: function (v) {
+            return v.length > 1;
+          },
+          message: "Soyisim en az 2 karakter olmalıdır",
+        },
+        {
+          validator: function (v) {
+            return v.length <= 20;
+          },
+          message: "Soyisim en fazla 20 karakter olmalıdır",
+        },
+      ],
     },
     goreveBaslamaTarihi: {
       type: Date,
@@ -38,6 +66,7 @@ const personSchema = new Schema(
     birimID: {
       type: Schema.Types.ObjectId,
       ref: "Unit",
+      required: true,
     },
     birimeBaslamaTarihi: {
       type: Date,
@@ -75,9 +104,19 @@ const personSchema = new Schema(
     },
     description: {
       type: String,
+      validate: [
+        {
+          validator: function (v) {
+            return v.length <= 100;
+          },
+          message: "Açıklama en fazla 100 karakter olmalıdır",
+        },
+      ],
     },
     level: {
       type: Number,
+      min: 1,
+      max: 5,
     },
 
     tckn: {
@@ -100,6 +139,19 @@ const personSchema = new Schema(
     },
     email: {
       type: String,
+    },
+    birthDate: {
+      type: Date,
+    },
+    bloodType: {
+      type: String,
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+    },
+    keyboardType: {
+      type: String,
+      enum: ["F", "Q", "Belirtilmemiş"],
+      default: "Belirtilmemiş",
+      required: true,
     },
   },
   options
