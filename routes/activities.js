@@ -20,6 +20,10 @@ router.get(
         userID: request.params.userID,
       })
         .populate("userID", "-password -__v -createdDate -createdAt -updatedAt")
+        .populate("titleID", "name")
+        .populate("unitID", "name")
+        .populate("personUnitID", "name")
+        .populate("leaveID", "")
         .populate("personID", "sicil ad soyad")
         .select("-__v");
 

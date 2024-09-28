@@ -347,6 +347,13 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
   newPerson
     .save()
     .then((data) => {
+
+      recordActivity(
+        request.user.id,
+        RequestTypeList.PERSON_CREATE,
+        data._id
+      );
+
       response.status(201).send(data);
     })
     .catch((error) => {
@@ -395,6 +402,12 @@ router.put(
         });
       }
 
+      recordActivity(
+        request.user.id,
+        RequestTypeList.PERSON_UPDATE_SICIL,
+        updatedPerson._id
+      );
+
       response.send({
         success: true,
         message: Messages.PERSON_UPDATED,
@@ -440,7 +453,7 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
 
       recordActivity(
         request.user.id,
-        RequestTypeList.PUT_PERSON_ID,
+        RequestTypeList.PERSON_UPDATE_ID,
         updatedPerson._id
       );
 
@@ -472,12 +485,21 @@ router.delete(
           message: Messages.PERSON_NOT_FOUND,
         });
       }
+      let silinenPersonData = person.toObject()
 
       // Perform all deletions in parallel and wait for them to complete
       await Promise.all([
         Leave.deleteMany({ personID: id }),
         PersonUnit.deleteMany({ personID: id }),
       ]);
+      
+      
+      recordActivity(
+        request.user.id,
+        RequestTypeList.PERSON_DELETE,
+        silinenPersonData._id,
+        `Sicil: ${silinenPersonData.sicil} Ad: ${silinenPersonData.ad} Soyad: ${silinenPersonData.soyad}`
+      );
 
       // Now delete the person
       await Person.findOneAndDelete({ _id: id });
@@ -487,6 +509,7 @@ router.delete(
         message: Messages.PERSON_DELETED,
       });
     } catch (error) {
+      console.log(error);
       response.status(500).send({
         message: error.message || Messages.PERSON_NOT_DELETED,
       });

@@ -12,12 +12,28 @@ const ActivitySchema = mongoose.Schema(
       required: true,
       default: 0,
     },
-    description: {
-      type: String,
-    },
     personID: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Person",
+    },
+    titleID: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Title",
+    },
+    unitID: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Unit",
+    },
+    personUnitID: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PersonUnit",
+    },
+    leaveID: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Leave",
+    },
+    description: {
+      type: String,
     },
   },
   {

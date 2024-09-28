@@ -6,13 +6,21 @@ async function recordActivity(
   userID,
   type,
   personID = null,
-  description = null
+  description = null,
+  titleID = null,
+  unitID = null,
+  personUnitID = null,
+  leaveID = null
 ) {
   const accessLog = new AccessRecord({
     userID,
     typeID: type.id,
     personID,
     description,
+    titleID,
+    unitID,
+    personUnitID,
+    leaveID,
   });
 
   return new Promise((resolve, reject) => {
@@ -28,7 +36,6 @@ async function recordActivity(
 }
 
 function getActivityWithID(typeID) {
-
   const key = Object.keys(ActivityTypeList).find(
     (key) => ActivityTypeList[key].id === typeID
   );

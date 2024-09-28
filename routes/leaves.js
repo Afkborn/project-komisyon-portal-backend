@@ -6,6 +6,9 @@ const { Person } = require("../model/Person");
 const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
 
+const { recordActivity } = require("../actions/ActivityActions");
+const RequestTypeList = require("../constants/ActivityTypeList");
+
 // get all leaves by ID
 router.get("/:ID", auth, Logger("GET /leaves/"), (request, response) => {
   const ID = request.params.ID;
@@ -59,6 +62,17 @@ router.post(
       // save the updated person object
       await person.save();
 
+      recordActivity(
+        request.user.id,
+        RequestTypeList.LEAVE_CREATE,
+        ID,
+        null,
+        null,
+        null,
+        null,
+        savedLeave._id
+      );
+
       response.send({
         success: true,
         data: savedLeave,
@@ -82,6 +96,18 @@ router.delete("/:ID", auth, Logger("DELETE /leaves/"), (request, response) => {
           message: Messages.LEAVE_NOT_FOUND,
         });
       }
+
+      recordActivity(
+        request.user.id,
+        RequestTypeList.LEAVE_DELETE,
+        leave.personID,
+        null,
+        null,
+        null,
+        null,
+        ID
+      );
+
       response.send({
         success: true,
         message: Messages.LEAVE_DELETED,

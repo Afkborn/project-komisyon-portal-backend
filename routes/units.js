@@ -10,6 +10,9 @@ const {
 } = require("../actions/UnitTypeActions");
 const Logger = require("../middleware/logger");
 
+const { recordActivity } = require("../actions/ActivityActions");
+const RequestTypeList = require("../constants/ActivityTypeList");
+
 // get all units
 // institutionTypeId params is optional
 // if institutionTypeId is provided, it will return all units of that type
@@ -105,6 +108,14 @@ router.post("/", auth, Logger("POST /units"), (request, response) => {
   unit
     .save()
     .then((data) => {
+      recordActivity(
+        request.user.id,
+        RequestTypeList.UNIT_CREATE,
+        null,
+        null,
+        null,
+        data._id
+      );
       response.status(201).send(data);
     })
     .catch((error) => {
@@ -126,6 +137,14 @@ router.put("/:id", auth, Logger("PUT /units"), (request, response) => {
           message: Messages.UNIT_NOT_FOUND,
         });
       }
+      recordActivity(
+        request.user.id,
+        RequestTypeList.UNIT_UPDATE,
+        null,
+        null,
+        null,
+        id
+      );
       response.send({
         success: true,
         message: Messages.UNIT_UPDATED,
@@ -145,8 +164,7 @@ router.delete("/:id", auth, Logger("DELETE /units"), (request, response) => {
   Person.find({ birimID: id })
     .then((persons) => {
       if (persons.length > 0) {
-        console.log("persons", persons);
-        console.log("personel var silinemez.")
+
         return response.status(400).send({
           success: false,
           message: Messages.UNIT_NOT_DELETABLE_REASON_PERSON,
@@ -154,19 +172,27 @@ router.delete("/:id", auth, Logger("DELETE /units"), (request, response) => {
       }
       Unit.findByIdAndDelete(id)
         .then((unit) => {
+          let unitObj = unit.toObject();
           if (!unit) {
             return response.status(404).send({
               success: false,
               message: Messages.UNIT_NOT_FOUND,
             });
           }
+          recordActivity(
+            request.user.id,
+            RequestTypeList.UNIT_DELETE,
+            null,
+            `Birim: ${unitObj.name} silindi`,
+            null,
+            id
+          );
           response.send({
             success: true,
             message: Messages.UNIT_DELETED,
           });
         })
         .catch((error) => {
-          
           response.status(500).send({
             message: error.message || Messages.UNIT_NOT_DELETED,
           });
@@ -179,7 +205,6 @@ router.delete("/:id", auth, Logger("DELETE /units"), (request, response) => {
       });
     });
 });
- 
 
 // get all units name  with institution id
 // bu route'un amacı, institution id'si verilen unit'in adını ve id'sini döndürmek.

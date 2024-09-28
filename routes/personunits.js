@@ -3,12 +3,14 @@ const express = require("express");
 const router = express.Router();
 const PersonUnit = require("../model/PersonUnit");
 const auth = require("../middleware/auth");
-const {
-  getUnitTypesByType,
-  getUnitTypeByUnitTypeId,
-} = require("../actions/UnitTypeActions");
+// const {
+//   getUnitTypesByType,
+//   getUnitTypeByUnitTypeId,
+// } = require("../actions/UnitTypeActions");
 const Logger = require("../middleware/logger");
-const { Person, zabitkatibi } = require("../model/Person");
+const { Person } = require("../model/Person");
+const { recordActivity } = require("../actions/ActivityActions");
+const RequestTypeList = require("../constants/ActivityTypeList");
 
 // birim değiştirme işlemi
 // post  /personunits/changeUnit
@@ -61,6 +63,17 @@ router.post(
         person
           .save()
           .then((data) => {
+
+            recordActivity(
+              request.user.id,
+              RequestTypeList.PERSON_UNIT_CHANGE,
+              personID,
+              null,
+              null,
+              null,
+              data._id
+            );
+
             response.send({
               success: true,
               data,

@@ -14,39 +14,39 @@ const Messages = require("../constants/Messages");
 // birimTurID : Number [GEREK YOK] ÇÜNKÜ ALT BİRİMDEN GELİYOR
 // birimTurName : String [GEREK YOK]  ÇÜNKÜ ALT BİRİMDEN GELİYOR
 
-
 // buradaki Unit birimin kendisi
-const UnitSchema = mongoose.Schema({
-  institutionID: {
-    type: Number,
-    required: [true, Messages.INSTITUTIONID_REQUIRED],
+const UnitSchema = mongoose.Schema(
+  {
+    institutionID: {
+      type: Number,
+      required: [true, Messages.INSTITUTIONID_REQUIRED],
+    },
+    unitTypeID: {
+      type: Number,
+    },
+    delegationType: {
+      type: String,
+    },
+    status: {
+      type: Boolean,
+      default: true,
+    },
+    series: {
+      type: Number,
+      default: 0,
+    },
+    minClertCount: {
+      type: Number,
+      default: 1,
+    },
+    name: {
+      type: String,
+      required: [true, Messages.UNIT_NAME_REQUIRED],
+    },
   },
-  unitTypeID: {
-    type: Number,
-  },
-  delegationType: {
-    type: String,
-  },
-  status: {
-    type: Boolean,
-    default: true,
-  },
-  series: {
-    type: Number,
-    default: 0,
-  },
-  minClertCount: {
-    type: Number,
-    default: 1,
-  },
-  name: {
-    type: String,
-    required: [true, Messages.UNIT_NAME_REQUIRED],
-  },
-  createdDate: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
 module.exports = mongoose.model("Unit", UnitSchema);

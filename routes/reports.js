@@ -11,6 +11,9 @@ const getTimeForLog = require("../common/time");
 
 const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
 
+const { recordActivity } = require("../actions/ActivityActions");
+const RequestTypeList = require("../constants/ActivityTypeList");
+
 // eksikKatipAramasiYapilacakBirimler
 router.get(
   "/eksikKatipAramasiYapilacakBirimler",
@@ -120,6 +123,11 @@ router.get(
         " ms"
     );
 
+    recordActivity(
+      request.user.id,
+      RequestTypeList.REPORT_EKSIKKATIPOLANBIRIMLER
+    );
+
     response.send({
       success: true,
       eksikKatipOlanBirimler: eksikKatipOlanBirimler,
@@ -217,6 +225,8 @@ router.get(
           processTime +
           " ms"
       );
+
+      recordActivity(request.user.id, RequestTypeList.REPORT_IZINLIPERSONELLER);
 
       response.send({
         success: true,
@@ -356,6 +366,8 @@ router.get(
           processTime +
           " ms"
       );
+
+      recordActivity(request.user.id, RequestTypeList.REPORT_IZINLIPERSONELLER);
 
       response.send({
         success: true,
@@ -503,6 +515,8 @@ router.get(
           processTime +
           " ms"
       );
+
+      recordActivity(request.user.id, RequestTypeList.REPORT_PERSONELTABLO);
 
       response.send({
         success: true,
