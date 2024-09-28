@@ -186,6 +186,8 @@ const ZabitKatibi = Person.discriminator(
   })
 );
 
+
+
 module.exports = {
   Person,
   // Baskan,

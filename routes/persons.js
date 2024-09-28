@@ -351,7 +351,8 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
       recordActivity(
         request.user.id,
         RequestTypeList.PERSON_CREATE,
-        data._id
+        data._id,
+        `Sicil:${data.sicil} Ad:${data.ad} Soyad:${data.soyad}` 
       );
 
       response.status(201).send(data);

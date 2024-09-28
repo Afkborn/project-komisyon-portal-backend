@@ -71,6 +71,8 @@ exports.LEAVE_NOT_UPDATED = "İzin güncellenemedi";
 exports.END_DATE_REQUIRED = "Bitiş tarihi zorunludur";
 exports.LEAVES_NOT_FOUND = "İzinler bulunamadı";
 exports.LEAVE_NOT_SAVED = "İzin kaydedilemedi";
+exports.PERSON_ID_REQUIRED = "Personel ID zorunludur";
+
 
 // COMMON
 exports.REQUIRED_FIELD = "alanı zorunludur";
@@ -88,5 +90,3 @@ exports.TITLE_NOT_SAVED = "Ünvan kaydedilemedi";
 exports.TITLE_HAS_PERSON = "Ünvan görevliye atanmış, silinemez";
 exports.TITLE_NOT_DELETABLE_REASON_PERSON = "Ünvan görevliye atanmış, silinemez";
 
-
-// ACTIVITY

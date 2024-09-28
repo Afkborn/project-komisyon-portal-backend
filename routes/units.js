@@ -112,7 +112,7 @@ router.post("/", auth, Logger("POST /units"), (request, response) => {
         request.user.id,
         RequestTypeList.UNIT_CREATE,
         null,
-        null,
+        `Birim ${data.name} eklendi`,
         null,
         data._id
       );

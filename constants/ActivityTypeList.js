@@ -7,16 +7,17 @@ const ActivityTypeList = {
   PERSON_CREATE: {
     id: 1,
     name: "Personel Ekleme",
-    field: "personID"
+    field: "personID",
   },
   PERSON_UPDATE_ID: {
     id: 3,
     name: "Personel Güncelleme",
-    
+    field: "personID",
   },
   PERSON_UPDATE_SICIL: {
     id: 4,
     name: "Personel Güncelleme (Özellik Aktar)",
+    field: "personID",
   },
   PERSON_DELETE: {
     id: 5,
@@ -25,24 +26,27 @@ const ActivityTypeList = {
 
   TITLE_CREATE: {
     id: 6,
-    name: "Title Oluşturma",
+    name: "Ünvan Ekleme",
+    field: "titleID",
   },
   TITLE_UPDATE: {
     id: 7,
-    name: "Title Güncelleme",
+    name: "Ünvan Özellik Güncelleme",
+    field: "titleID",
   },
   TITLE_DELETE: {
     id: 8,
-    name: "Title Silme",
+    name: "Ünvan Silme",
   },
 
   UNIT_CREATE: {
     id: 9,
-    name: "Birim Oluşturma",
+    name: "Birim Ekleme",
+    field: "unitID",
   },
   UNIT_UPDATE: {
     id: 10,
-    name: "Birim Güncelleme",
+    name: "Birim Özellik Güncelleme",
     field: "unitID",
   },
   UNIT_DELETE: {
@@ -53,16 +57,18 @@ const ActivityTypeList = {
   PERSON_UNIT_CHANGE: {
     id: 13,
     name: "Personel Birim Güncelleme",
-    field : "personID"
+    field: "personID",
   },
 
   LEAVE_CREATE: {
     id: 14,
     name: "İzin Oluşturma",
+    field: "personID",
   },
   LEAVE_DELETE: {
     id: 15,
     name: "İzin Silme",
+    field: "personID",
   },
 
   REPORT_EKSIKKATIPOLANBIRIMLER: {
