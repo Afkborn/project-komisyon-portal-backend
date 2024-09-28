@@ -6,19 +6,21 @@ const ActivityTypeList = {
 
   PERSON_CREATE: {
     id: 1,
-    name: "kişi ekleme",
+    name: "Personel Ekleme",
+    field: "personID"
   },
   PERSON_UPDATE_ID: {
     id: 3,
-    name: "ID kişi güncelleme",
+    name: "Personel Güncelleme",
+    
   },
   PERSON_UPDATE_SICIL: {
     id: 4,
-    name: "Özellik Aktar İle Güncelleme",
+    name: "Personel Güncelleme (Özellik Aktar)",
   },
   PERSON_DELETE: {
     id: 5,
-    name: "Kişi Silme",
+    name: "Personel Silme",
   },
 
   TITLE_CREATE: {
@@ -41,6 +43,7 @@ const ActivityTypeList = {
   UNIT_UPDATE: {
     id: 10,
     name: "Birim Güncelleme",
+    field: "unitID",
   },
   UNIT_DELETE: {
     id: 11,
@@ -50,6 +53,7 @@ const ActivityTypeList = {
   PERSON_UNIT_CHANGE: {
     id: 13,
     name: "Personel Birim Güncelleme",
+    field : "personID"
   },
 
   LEAVE_CREATE: {
@@ -61,25 +65,22 @@ const ActivityTypeList = {
     name: "İzin Silme",
   },
 
-
-
-  REPORT_EKSIKKATIPOLANBIRIMLER : {
+  REPORT_EKSIKKATIPOLANBIRIMLER: {
     id: 17,
-    name: "Eksik Katibi Olan Birimler",
+    name: "Eksik Katibi Olan Birimler Raporu",
   },
-  REPORT_IZINLIPERSONELLER : {
+  REPORT_IZINLIPERSONELLER: {
     id: 18,
-    name: "İzinli Personeller",
+    name: "İzinli Personeller Raporu",
   },
-  REPORT_TOPLAMPERSONELSAYISI : {
+  REPORT_TOPLAMPERSONELSAYISI: {
     id: 19,
-    name: "Toplam Personel Sayısı",
+    name: "Toplam Personel Sayısı Raporu",
   },
-  REPORT_PERSONELTABLO : {
+  REPORT_PERSONELTABLO: {
     id: 21,
-    name: "Personel Tablo",
+    name: "Personel Tablo Raporu",
   },
-
 };
 
 // Dışa aktarım

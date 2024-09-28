@@ -93,6 +93,6 @@ exports.PersonAttributeList = [
     csvHeaderName: "keyboardType",
     type: "string",
     required: false,
-    desc: "Personel'in klavye türü İzin Verilen Değerler: F, Q, Belirtilmemiş",
+    desc: "Personel'in klavye türü İzin Verilen Değerler: F, Q",
   },
 ];
