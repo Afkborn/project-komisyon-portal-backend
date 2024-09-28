@@ -502,6 +502,21 @@ router.get(
               "-__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi -birimID -gecmisBirimler"
             );
 
+          // örneğin bir müdür 2 birime bakabiliyor, 2 birime bakan müdürlerde ikinciBirimID alanı var
+          let sorumluMudur = await Person.find({
+            kind: "yaziislerimudürü",
+            ikinciBirimID: unit._id,
+            status: true,
+          })
+            .populate("title", "-_id -__v -deletable")
+            .populate("izinler", "-__v -personID")
+            .select(
+              "-__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi -birimID -gecmisBirimler"
+            );
+
+          if (sorumluMudur.length > 0) {
+            persons = persons.concat(sorumluMudur);
+          }
           unit.personCount = persons.length;
           unit.persons = persons;
         })

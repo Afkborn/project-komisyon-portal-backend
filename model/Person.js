@@ -11,14 +11,14 @@ const options = {
 
 const personSchema = new Schema(
   {
-    // sicil 6 haneli olmalı
+    // sicil 6 veya 5
     sicil: {
       type: Number,
       required: [true, Messages.PERSON_SICIL_REQUIRED],
       unique: true,
       validate: {
         validator: function (v) {
-          return /^\d{6}$/.test(v);
+          return v.toString().length === 5 || v.toString().length === 6;
         },
         message: (props) => Messages.VALID_SICIL(props.value),
       },
@@ -186,7 +186,16 @@ const ZabitKatibi = Person.discriminator(
   })
 );
 
-
+const YaziIsleriMuduru = Person.discriminator(
+  "yaziislerimudürü", // ü harfi var ancak sabit title böyle olduğu için değiştiremiyorum.
+  new Schema({
+    ikinciBirimID: {
+      type: Schema.Types.ObjectId,
+      ref: "Unit",
+      default: null,
+    },
+  })
+);
 
 module.exports = {
   Person,
@@ -195,4 +204,5 @@ module.exports = {
   zabitkatibi: ZabitKatibi,
   // Mubasir,
   // YaziİsleriMuduru,
+  yaziislerimudürü: YaziIsleriMuduru,
 };

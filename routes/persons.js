@@ -1,7 +1,7 @@
 const Messages = require("../constants/Messages");
 const express = require("express");
 const router = express.Router();
-const { Person, zabitkatibi } = require("../model/Person");
+const { Person, zabitkatibi, yaziislerimudürü } = require("../model/Person");
 const PersonUnit = require("../model/PersonUnit");
 const Leave = require("../model/Leave");
 const Title = require("../model/Title");
@@ -16,6 +16,7 @@ const RequestTypeList = require("../constants/ActivityTypeList");
 const modelMap = {
   Person,
   zabitkatibi,
+  yaziislerimudürü,
 };
 
 // get all persons
@@ -87,6 +88,7 @@ router.get(
     })
       .populate("title", "-_id -__v -deletable")
       .populate("birimID", " -__v -deletable")
+      .populate("ikinciBirimID", " -__v -deletable") // yaziislerimüdürü için 2. birim olursa populate ediyoruz.
       .populate("izinler", "-__v -personID")
 
       .populate({
@@ -134,6 +136,7 @@ router.get(
     Person.findOne({ sicil: request.params.sicil })
       .populate("title", "-_id -__v -deletable")
       .populate("birimID", " -__v -deletable")
+      .populate("ikinciBirimID", " -__v -deletable") // yaziislerimüdürü için 2. birim olursa populate ediyoruz.
       .populate("izinler", "-__v -personID")
 
       .populate({
@@ -235,7 +238,7 @@ router.get(
   "/:birimID",
   auth,
   Logger("GET /persons/byBirimID"),
-  (request, response) => {
+  async (request, response) => {
     const birimID = request.params.birimID;
     // get all persons by birimID with title , without kind
     Person.find({ birimID, status: true })
@@ -250,10 +253,24 @@ router.get(
             message: Messages.PERSON_NOT_FOUND,
           });
         }
-        response.send({
-          success: true,
-          persons,
-        });
+
+        //bu birimID değerine sahip olan bir yaziislerimüdürü olabilir
+        // o yüzden ikinciBirimID değeri birimID olanları getir ve persons'a ekle
+        Person.find({
+          kind: "yaziislerimudürü",
+          ikinciBirimID: birimID,
+          status: true,
+        })
+          .populate("title", "-_id -__v -deletable")
+          .populate("izinler", "-__v -personID")
+          .select("-kind")
+          .then((yaziislerimudürü) => {
+            persons = persons.concat(yaziislerimudürü);
+            response.send({
+              success: true,
+              persons,
+            });
+          });
       })
       .catch((error) => {
         response.status(500).send({
@@ -290,6 +307,9 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     //  ZABIT KATİBİ
     durusmaKatibiMi,
     calistigiKisi,
+
+    // YAZI İŞLERİ MÜDÜRÜ
+    ikinciBirimID,
   } = request.body;
 
   // Ad ilk harfi büyük, diğerleri küçük olacak şekilde düzenleme
@@ -340,6 +360,8 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
 
   if (kind === "zabitkatibi") {
     newPerson = new Model({ ...commonFields, durusmaKatibiMi, calistigiKisi });
+  } else if (kind === "yaziislerimudürü") {
+    newPerson = new Model({ ...commonFields, ikinciBirimID });
   } else {
     newPerson = new Model(commonFields);
   }
@@ -347,12 +369,11 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
   newPerson
     .save()
     .then((data) => {
-
       recordActivity(
         request.user.id,
         RequestTypeList.PERSON_CREATE,
         data._id,
-        `Sicil:${data.sicil} Ad:${data.ad} Soyad:${data.soyad}` 
+        `Sicil:${data.sicil} Ad:${data.ad} Soyad:${data.soyad}`
       );
 
       response.status(201).send(data);
@@ -388,6 +409,9 @@ router.put(
       let Model = Person;
       if (person.durusmaKatibiMi !== undefined) {
         Model = zabitkatibi;
+      }
+      if (person.ikinciBirimID !== undefined) {
+        Model = yaziislerimudürü;
       }
 
       const updatedPerson = await Model.findOneAndUpdate(
@@ -440,6 +464,9 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
       if (person.durusmaKatibiMi !== undefined) {
         Model = zabitkatibi;
       }
+      if (person.ikinciBirimID !== undefined) {
+        Model = yaziislerimudürü;
+      }
       // YENİ MODEL EKLENDİĞİNDE BURAYA EKLEME YAPILMALI
 
       return Model.findByIdAndUpdate(id, updateData, options);
@@ -486,15 +513,14 @@ router.delete(
           message: Messages.PERSON_NOT_FOUND,
         });
       }
-      let silinenPersonData = person.toObject()
+      let silinenPersonData = person.toObject();
 
       // Perform all deletions in parallel and wait for them to complete
       await Promise.all([
         Leave.deleteMany({ personID: id }),
         PersonUnit.deleteMany({ personID: id }),
       ]);
-      
-      
+
       recordActivity(
         request.user.id,
         RequestTypeList.PERSON_DELETE,
