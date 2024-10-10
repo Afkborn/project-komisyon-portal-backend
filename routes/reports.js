@@ -546,4 +546,87 @@ router.get(
   }
 );
 
+// mahkeme ve savcılık katip sayısını dön
+router.get(
+  "/mahkemeSavcilikKatipSayisi",
+  auth,
+  Logger("GET /mahkemeSavcilikKatipSayisi"),
+  async (request, response) => {
+    try {
+      let processStartDate = new Date();
+      let institutionId = request.query.institutionId;
+
+      if (!institutionId) {
+        return response.status(400).send({
+          success: false,
+          message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+        });
+      }
+
+      let units = await Unit.find({ institutionID: institutionId });
+
+      // Process units to get institutionTypeId
+      units = units.map((unit) => {
+        unit = unit.toObject();
+        let unitType = UnitTypeList.find(
+          (unitType) => unitType.id == unit.unitTypeID
+        );
+        unit.institutionTypeId = unitType.institutionTypeId;
+        return unit;
+      });
+
+      let mahkemeKatipSayisi = 0;
+      let savcilikKatipSayisi = 0;
+      let digerKatipSayisi = 0;
+
+      // Use Promise.all to handle async countDocuments
+      await Promise.all(
+        units.map(async (unit) => {
+          let zabitKatibiCount = await Person.countDocuments({
+            birimID: unit._id,
+            kind: "zabitkatibi",
+            status: true,
+          });
+
+          if (unit.institutionTypeId == 0) {
+            mahkemeKatipSayisi += zabitKatibiCount;
+          } else if (unit.institutionTypeId == 1) {
+            savcilikKatipSayisi += zabitKatibiCount;
+          } else {
+            digerKatipSayisi += zabitKatibiCount;
+          }
+        })
+      );
+
+      let processEndDate = new Date();
+      let processTime = processEndDate - processStartDate;
+      console.log(
+        getTimeForLog() +
+          "[REPORT][mahkemeSavcilikKatipSayisi] Process Time: " +
+          processTime +
+          " ms"
+      );
+
+      // recordActivity(
+      //   request.user.id,
+      //   RequestTypeList.REPORT_MAHKEMESAVCILIKKATIP
+      // );
+
+      response.send({
+        success: true,
+        pieChartData: [
+          { title: "Mahkeme", value: mahkemeKatipSayisi, color: "#ad1313" },
+          { title: "Savcılık", value: savcilikKatipSayisi, color: "#72ad13" },
+          { title: "Diğer", value: digerKatipSayisi, color: "#4287f5" },
+        ],
+      });
+    } catch (error) {
+      console.log(error);
+      response.status(500).send({
+        message: error.message || Messages.PERSONS_NOT_FOUND,
+      });
+    }
+  }
+);
+
 module.exports = router;

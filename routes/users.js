@@ -7,7 +7,6 @@ const getTimeForLog = require("../common/time");
 const auth = require("../middleware/auth");
 const toSHA256 = require("../common/hashing");
 const Logger = require("../middleware/logger");
-const e = require("express");
 
 // login user
 router.post("/login", (request, response) => {

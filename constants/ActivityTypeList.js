@@ -87,6 +87,10 @@ const ActivityTypeList = {
     id: 21,
     name: "Personel Tablo Raporu",
   },
+  REPORT_MAHKEMESAVCILIKKATIP: {
+    id: 22,
+    name: "Mahkeme Savcılık Katip Raporu",
+  },
 };
 
 // Dışa aktarım
