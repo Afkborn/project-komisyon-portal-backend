@@ -356,6 +356,7 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     level,
     isTemporary,
     title: title._id,
+    kind,
   };
 
   if (kind === "zabitkatibi") {

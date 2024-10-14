@@ -548,9 +548,9 @@ router.get(
 
 // mahkeme ve savcılık katip sayısını dön
 router.get(
-  "/mahkemeSavcilikKatipSayisi",
+  "/chartData",
   auth,
-  Logger("GET /mahkemeSavcilikKatipSayisi"),
+  Logger("GET /chartData"),
   async (request, response) => {
     try {
       let processStartDate = new Date();
@@ -598,6 +598,38 @@ router.get(
         })
       );
 
+      // ünvan bazında personelleri getirelim
+      // getirilecek ünvanlar zabit katibi, mübaşir, yazı işleri müdürü
+      let totalZabitKatibiSayisi = 0;
+      let totalMubasirSayisi = 0;
+      let totalYazıIsleriMuduruSayisi = 0;
+      
+      await Promise.all(
+        units.map(async (unit) => {
+          let zabitKatibiCount = await Person.countDocuments({
+            birimID: unit._id,
+            kind: "zabitkatibi",
+            status: true,
+          });
+
+          let mubasirCount = await Person.countDocuments({
+            birimID: unit._id,
+            kind: "mubasir",
+            status: true,
+          });
+
+          let yazıIsleriMuduruCount = await Person.countDocuments({
+            birimID: unit._id,
+            kind: "yaziislerimudürü",
+            status: true,
+          });
+
+          totalZabitKatibiSayisi += zabitKatibiCount;
+          totalMubasirSayisi += mubasirCount;
+          totalYazıIsleriMuduruSayisi += yazıIsleriMuduruCount;
+        })
+      );
+
       let processEndDate = new Date();
       let processTime = processEndDate - processStartDate;
       console.log(
@@ -614,10 +646,23 @@ router.get(
 
       response.send({
         success: true,
-        pieChartData: [
+        katipPieChartData: [
           { title: "Mahkeme", value: mahkemeKatipSayisi, color: "#ad1313" },
           { title: "Savcılık", value: savcilikKatipSayisi, color: "#72ad13" },
           { title: "Diğer", value: digerKatipSayisi, color: "#4287f5" },
+        ],
+        unvanPieChartData: [
+          {
+            title: "Zabit Katibi",
+            value: totalZabitKatibiSayisi,
+            color: "#ad1313",
+          },
+          { title: "Mübaşir", value: totalMubasirSayisi, color: "#72ad13" },
+          {
+            title: "Yazı İşleri Müdürü",
+            value: totalYazıIsleriMuduruSayisi,
+            color: "#4287f5",
+          },
         ],
       });
     } catch (error) {
