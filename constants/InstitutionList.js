@@ -15,34 +15,34 @@ exports.InstitutionList = [
     status: true,
     isDefault: true,
   },
-  {
-    id: 2,
-    name: "Mihalıççık Adliyesi",
-    types: [mahkeme, savcilik, diger],
-    status: true,
-    isDefault: false,
-  },
-  {
-    id: 3,
-    name: "Beylikova Adliyesi",
-    types: [mahkeme, savcilik, diger],
-    status: true,
-    isDefault: false,
-  },
-  {
-    id: 4,
-    name: "Çifteler Adliyesi",
-    types: [mahkeme, savcilik, diger],
-    status: true,
-    isDefault: false,
-  },
-  {
-    id: 5,
-    name: "Sivrihisar Adliyesi",
-    types: [mahkeme, savcilik, diger],
-    status: true,
-    isDefault: false,
-  },
+  // {
+  //   id: 2,
+  //   name: "Mihalıççık Adliyesi",
+  //   types: [mahkeme, savcilik, diger],
+  //   status: true,
+  //   isDefault: false,
+  // },
+  // {
+  //   id: 3,
+  //   name: "Beylikova Adliyesi",
+  //   types: [mahkeme, savcilik, diger],
+  //   status: true,
+  //   isDefault: false,
+  // },
+  // {
+  //   id: 4,
+  //   name: "Çifteler Adliyesi",
+  //   types: [mahkeme, savcilik, diger],
+  //   status: true,
+  //   isDefault: false,
+  // },
+  // {
+  //   id: 5,
+  //   name: "Sivrihisar Adliyesi",
+  //   types: [mahkeme, savcilik, diger],
+  //   status: true,
+  //   isDefault: false,
+  // },
   {
     id: 6,
     name: "Eskişehir 1 Nolu Açık Ceza İnfaz Kurumu",
@@ -78,6 +78,11 @@ exports.InstitutionList = [
     status: true,
     isDefault: false,
   },
+  {
+    id: 3,
+    name: "Mülhakat Adliyeler",
+    types: [mahkeme, savcilik],
+    status: true,
+    isDefault: false,
+  },
 ];
-
-

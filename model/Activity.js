@@ -32,6 +32,7 @@ const ActivitySchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Leave",
     },
+    
     description: {
       type: String,
     },
