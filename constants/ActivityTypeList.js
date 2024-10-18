@@ -91,6 +91,14 @@ const ActivityTypeList = {
     id: 22,
     name: "Mahkeme Savcılık Katip Raporu",
   },
+  PERSON_DEACTIVATED_LIST: {
+    id: 23,
+    name: "Pasif Personel Listesi",
+  },
+  PERSON_ACTIVATED_LIST: {
+    id: 24,
+    name: "Aktif Personel Listesi",
+  },
 };
 
 // Dışa aktarım

@@ -10,7 +10,8 @@ async function recordActivity(
   titleID = null,
   unitID = null,
   personUnitID = null,
-  leaveID = null
+  leaveID = null,
+  isVisible = true
 ) {
   const accessLog = new AccessRecord({
     userID,
@@ -21,6 +22,7 @@ async function recordActivity(
     unitID,
     personUnitID,
     leaveID,
+    isVisible,
   });
 
   return new Promise((resolve, reject) => {

@@ -60,7 +60,7 @@ exports.PERSON_NOT_SAVED = "Görevli kaydedilemedi";
 exports.VALID_SICIL = (VALUE) => `Sicil numarası hatalı. Sicil: ${VALUE}`;
 exports.VALID_TCKN = (VALUE) => `TCKN hatalı. TCKN: ${VALUE}`;
 exports.VALID_PHONE = (VALUE) => `Telefon numarası hatalı. Telefon: ${VALUE}`;
-
+exports.PERSON_SICIL_UNIQUE = "Sicil numarası benzersiz olmalıdır";
 // PERSON UNİT
 
 // LEAVE

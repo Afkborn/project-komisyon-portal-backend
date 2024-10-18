@@ -27,7 +27,9 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
       }
     }
 
-    const activities = await Activity.find()
+    const activities = await Activity.find({
+      isVisible: true,
+    })
       .populate("userID", "-password -__v -createdDate -createdAt -updatedAt")
       .populate("titleID", "name")
       .populate("unitID", "name")

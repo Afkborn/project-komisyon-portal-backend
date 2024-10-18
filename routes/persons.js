@@ -54,6 +54,18 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
         person.birimID.oncelikSirasi = unitType.oncelikSirasi;
       });
 
+      recordActivity(
+        request.user.id, // userID
+        RequestTypeList.PERSON_ACTIVATED_LIST, // type
+        null, // personID
+        null, // description
+        null, // titleID
+        null, // unitID
+        null, // personUnitID
+        null, // leaveID
+        false // isVisible
+      );
+
       response.send({
         success: true,
         personList: persons,
@@ -219,6 +231,12 @@ router.get(
           return person.birimID.institutionID == institutionId;
         });
 
+        recordActivity(
+          request.user.id,
+          RequestTypeList.PERSON_DEACTIVATED_LIST,
+          (isVisible = false)
+        );
+
         response.send({
           success: true,
           personList: persons,
@@ -303,6 +321,8 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     description,
     level,
     isTemporary,
+    isTemporaryReason,
+    isTemporaryEndDate,
 
     //  ZABIT KATİBİ
     durusmaKatibiMi,
@@ -355,6 +375,8 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     description,
     level,
     isTemporary,
+    isTemporaryReason,
+    isTemporaryEndDate,
     title: title._id,
     kind,
   };

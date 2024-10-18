@@ -32,7 +32,10 @@ const ActivitySchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Leave",
     },
-    
+    isVisible: {
+      type: Boolean,
+      default: true,
+    },
     description: {
       type: String,
     },

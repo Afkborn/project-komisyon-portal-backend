@@ -14,6 +14,12 @@ const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
 
+// acele isler
+const {
+  getUrgentExpiringTemporaryPersonnel,
+  getUrgentExpiringLeaves,
+} = require("../actions/RushJobActions");
+
 // eksikKatipAramasiYapilacakBirimler
 router.get(
   "/eksikKatipAramasiYapilacakBirimler",
@@ -240,7 +246,6 @@ router.get(
   }
 );
 
-// TODO: işlem yavaş çalışıyor, hızlandır.
 // toplamPersonelSayisi
 router.get(
   "/toplamPersonelSayisi",
@@ -367,7 +372,10 @@ router.get(
           " ms"
       );
 
-      recordActivity(request.user.id, RequestTypeList.REPORT_IZINLIPERSONELLER);
+      recordActivity(
+        request.user.id,
+        RequestTypeList.REPORT_TOPLAMPERSONELSAYISI
+      );
 
       response.send({
         success: true,
@@ -603,7 +611,7 @@ router.get(
       let totalZabitKatibiSayisi = 0;
       let totalMubasirSayisi = 0;
       let totalYazıIsleriMuduruSayisi = 0;
-      
+
       await Promise.all(
         units.map(async (unit) => {
           let zabitKatibiCount = await Person.countDocuments({
@@ -664,6 +672,85 @@ router.get(
             color: "#4287f5",
           },
         ],
+      });
+    } catch (error) {
+      console.log(error);
+      response.status(500).send({
+        message: error.message || Messages.PERSONS_NOT_FOUND,
+      });
+    }
+  }
+);
+
+// acele işler
+router.get(
+  "/urgentJobs",
+  auth,
+  Logger("GET /urgentJobs"),
+  async (request, response) => {
+    try {
+      let processStartDate = new Date();
+      let institutionId = request.query.institutionId;
+
+      if (!institutionId) {
+        return response.status(400).send({
+          success: false,
+          message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+        });
+      }
+
+      let units = await Unit.find({ institutionID: institutionId });
+      let urgentJobs = [];
+
+      let expiringTemporaryPersonel = await getUrgentExpiringTemporaryPersonnel(
+        units,
+        14
+      );
+      expiringTemporaryPersonel.forEach((person) => {
+        urgentJobs.push({
+          urgentJobType: "Geçici Personel Karar Süresi",
+          urgentJobEndDate: person.isTemporaryEndDate,
+          urgentJobDetail: person.isTemporaryReason,
+
+          // person
+          personID: person._id,
+          sicil: person.sicil,
+          ad: person.ad,
+          soyad: person.soyad,
+        });
+      });
+
+      let expiringLeavePersonel = await getUrgentExpiringLeaves(units, 14); // 14 gün
+      expiringLeavePersonel.forEach((person) => {
+        urgentJobs.push({
+          urgentJobType: "İzin Bitiş Süresi",
+          urgentJobEndDate: person.izinler.find((leave) => {
+            return new Date() >= leave.startDate && new Date() <= leave.endDate;
+          }).endDate,
+          urgentJobDetail: person.izinler.find((leave) => {
+            return new Date() >= leave.startDate && new Date() <= leave.endDate;
+          }).izinNedeni,
+
+          // person
+          personID: person._id,
+          sicil: person.sicil,
+          ad: person.ad,
+          soyad: person.soyad,
+        });
+      });
+
+      let processEndDate = new Date();
+      let processTime = processEndDate - processStartDate;
+      console.log(
+        getTimeForLog() +
+          "[REPORT][urgentJobs] Process Time: " +
+          processTime +
+          " ms"
+      );
+
+      response.send({
+        success: true,
+        urgentJobs,
       });
     } catch (error) {
       console.log(error);

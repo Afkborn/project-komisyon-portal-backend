@@ -15,7 +15,7 @@ const personSchema = new Schema(
     sicil: {
       type: Number,
       required: [true, Messages.PERSON_SICIL_REQUIRED],
-      unique: true,
+      unique: [true, Messages.PERSON_SICIL_UNIQUE],
       validate: {
         validator: function (v) {
           return v.toString().length === 5 || v.toString().length === 6;
@@ -89,10 +89,20 @@ const personSchema = new Schema(
     deactivationDate: {
       type: Date,
     },
+    
+    
+    // geçici görevlendirme 
     isTemporary: {
       type: Boolean,
       default: false,
     },
+    isTemporaryReason: {
+      type: String,
+    },
+    isTemporaryEndDate: {
+      type: Date,
+    },
+
     izinler: [
       {
         type: Schema.Types.ObjectId,
@@ -169,6 +179,10 @@ personSchema.virtual("izindeMi").get(function () {
     return now >= leave.startDate && now <= leave.endDate;
   });
 });
+
+
+
+
 personSchema.set("toJSON", { virtuals: true });
 personSchema.set("toObject", { virtuals: true });
 
