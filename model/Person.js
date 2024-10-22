@@ -89,18 +89,21 @@ const personSchema = new Schema(
     deactivationDate: {
       type: Date,
     },
-    
-    
-    // geçici görevlendirme 
+
+    // geçici görevlendirme
     isTemporary: {
       type: Boolean,
       default: false,
     },
-    isTemporaryReason: {
+    temporaryReason: {
       type: String,
     },
-    isTemporaryEndDate: {
+    temporaryEndDate: {
       type: Date,
+    },
+    temporaryBirimID: {
+      type: Schema.Types.ObjectId,
+      ref: "Unit",
     },
 
     izinler: [
@@ -179,9 +182,6 @@ personSchema.virtual("izindeMi").get(function () {
     return now >= leave.startDate && now <= leave.endDate;
   });
 });
-
-
-
 
 personSchema.set("toJSON", { virtuals: true });
 personSchema.set("toObject", { virtuals: true });

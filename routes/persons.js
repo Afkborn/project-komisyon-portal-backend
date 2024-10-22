@@ -36,6 +36,7 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
     .populate("title", "-_id -__v -deletable")
     .populate("izinler", "-__v -personID")
     .populate("birimID", "-_id -__v -deletable")
+    .populate("temporaryBirimID", "-__v -deletable")
     .then((persons) => {
       persons = persons.map((person) => person.toObject());
 
@@ -45,7 +46,11 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
           console.log("birimID null olan person: ", person);
           return false;
         }
-        return person.birimID.institutionID == institutionId;
+        return (
+          person.birimID.institutionID == institutionId ||
+          (person.temporaryBirimID &&
+            person.temporaryBirimID.institutionID == institutionId)
+        );
       });
 
       //birimID içindeki unitTypeID'yi unitTypeList içindeki id ile eşleştir ve unitType'ı al
@@ -102,6 +107,7 @@ router.get(
       .populate("birimID", " -__v -deletable")
       .populate("ikinciBirimID", " -__v -deletable") // yaziislerimüdürü için 2. birim olursa populate ediyoruz.
       .populate("izinler", "-__v -personID")
+      .populate("temporaryBirimID", "-__v -deletable")
 
       .populate({
         path: "gecmisBirimler",
@@ -150,6 +156,7 @@ router.get(
       .populate("birimID", " -__v -deletable")
       .populate("ikinciBirimID", " -__v -deletable") // yaziislerimüdürü için 2. birim olursa populate ediyoruz.
       .populate("izinler", "-__v -personID")
+      .populate("temporaryBirimID", "-__v -deletable")
 
       .populate({
         path: "gecmisBirimler",
@@ -231,18 +238,17 @@ router.get(
           return person.birimID.institutionID == institutionId;
         });
 
-      recordActivity(
-        request.user.id, // userID
-        RequestTypeList.PERSON_ACTIVATED_LIST, // type
-        null, // personID
-        null, // description
-        null, // titleID
-        null, // unitID
-        null, // personUnitID
-        null, // leaveID
-        false // isVisible
-      );
-
+        recordActivity(
+          request.user.id, // userID
+          RequestTypeList.PERSON_ACTIVATED_LIST, // type
+          null, // personID
+          null, // description
+          null, // titleID
+          null, // unitID
+          null, // personUnitID
+          null, // leaveID
+          false // isVisible
+        );
 
         response.send({
           success: true,
@@ -291,10 +297,23 @@ router.get(
           .select("-kind")
           .then((yaziislerimudürü) => {
             persons = persons.concat(yaziislerimudürü);
-            response.send({
-              success: true,
-              persons,
-            });
+
+            // geçici personel vasra onlarıda ekleyelim
+            Person.find({
+              temporaryBirimID: birimID,
+              status: true,
+            })
+              .populate("title", "-_id -__v -deletable")
+              .populate("izinler", "-__v -personID")
+              .select("-kind")
+              .then((temporaryPersons) => {
+                persons = persons.concat(temporaryPersons);
+
+                response.send({
+                  success: true,
+                  persons,
+                });
+              });
           });
       })
       .catch((error) => {
@@ -327,9 +346,12 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     status,
     description,
     level,
+
+    // geçici personel özellikleri
     isTemporary,
-    isTemporaryReason,
-    isTemporaryEndDate,
+    temporaryReason,
+    temporaryEndDate,
+    temporaryBirimID,
 
     //  ZABIT KATİBİ
     durusmaKatibiMi,
@@ -382,8 +404,9 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     description,
     level,
     isTemporary,
-    isTemporaryReason,
-    isTemporaryEndDate,
+    temporaryReason,
+    temporaryEndDate,
+    temporaryBirimID,
     title: title._id,
     kind,
   };

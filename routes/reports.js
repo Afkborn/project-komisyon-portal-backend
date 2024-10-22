@@ -104,10 +104,20 @@ router.get(
     let eksikKatipOlanBirimler = [];
     for (let i = 0; i < eksikKatipKontrolEdilecekBirimler.length; i++) {
       let unit = eksikKatipKontrolEdilecekBirimler[i];
-      let personCount = await Person.countDocuments({
+      let personCount = 0;
+      // aktif zabit katibi sayısını bul
+      personCount += await Person.countDocuments({
         birimID: unit._id,
         status: true,
         kind: "zabitkatibi", // TODO: kind'i ZABİTKATİBİ olarak constant koymak biraz kötü oldu. Düzeltilecek.
+      });
+
+      // gecici birimi olan personelleri de ekle
+      personCount += await Person.countDocuments({
+        temporaryBirimID: unit._id,
+        isTemporary: true,
+        status: true,
+        kind: "zabitkatibi",
       });
 
       if (personCount < unit.minClertCount) {
@@ -164,10 +174,22 @@ router.get(
       let persons = await Person.find({})
         .populate("title", "-_id -__v -deletable")
         .populate("birimID", "-_id -__v -deletable")
+        .populate("temporaryBirimID", "-_id -__v -deletable")
         .populate("izinler", "-__v -personID");
 
       persons = persons.filter((person) => {
-        return person.birimID.institutionID == institutionId && person.status;
+        if (!person.birimID) {
+          return false;
+        }
+        if (person.status === false) {
+          return false;
+        }
+
+        return (
+          person.birimID.institutionID == institutionId ||
+          (person.temporaryBirimID &&
+            person.temporaryBirimID.institutionID == institutionId)
+        );
       });
 
       // İzinli personelleri filtrele
@@ -194,6 +216,7 @@ router.get(
           soyad: person.soyad,
           birim: person.birimID.name,
           unvan: person.title,
+          isTemporary: person.isTemporary,
           izinBaslangic: person.izinler.find((leave) => {
             return start <= leave.endDate && end >= leave.startDate;
           }).startDate,
@@ -215,6 +238,7 @@ router.get(
           soyad: person.soyad,
           birim: person.birimID.name,
           unvan: person.title,
+          isTemporary: person.isTemporary,
           izinBaslangic: person.izinler.find((leave) => {
             return now >= leave.startDate && now <= leave.endDate;
           }).startDate,
@@ -239,6 +263,7 @@ router.get(
         izinliPersonelList: izinliPersonelList,
       });
     } catch (error) {
+      console.log(error);
       response.status(500).send({
         message: error.message || Messages.PERSONS_NOT_FOUND,
       });
@@ -246,6 +271,7 @@ router.get(
   }
 );
 
+// geciciPersonel hesaba katılmıyor.
 // toplamPersonelSayisi
 router.get(
   "/toplamPersonelSayisi",
@@ -525,6 +551,23 @@ router.get(
           if (sorumluMudur.length > 0) {
             persons = persons.concat(sorumluMudur);
           }
+
+          // geçici personel olabiliyor.
+          let geciciPersonel = await Person.find({
+            temporaryBirimID: unit._id,
+            isTemporary: true,
+            status: true,
+          })
+            .populate("title", "-_id -__v -deletable")
+            .populate("izinler", "-__v -personID")
+            .select(
+              "-__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi -birimID -gecmisBirimler"
+            );
+
+          if (geciciPersonel.length > 0) {
+            persons = persons.concat(geciciPersonel);
+          }
+
           unit.personCount = persons.length;
           unit.persons = persons;
         })
@@ -554,6 +597,7 @@ router.get(
   }
 );
 
+// geciciPersonel hesaba katılmıyor.
 // mahkeme ve savcılık katip sayısını dön
 router.get(
   "/chartData",
@@ -683,6 +727,7 @@ router.get(
 );
 
 // acele işler
+// TODO: geciciPersonel ve kurumID durumunu değerlendir.
 router.get(
   "/urgentJobs",
   auth,
@@ -709,8 +754,8 @@ router.get(
       expiringTemporaryPersonel.forEach((person) => {
         urgentJobs.push({
           urgentJobType: "Geçici Personel Karar Süresi",
-          urgentJobEndDate: person.isTemporaryEndDate,
-          urgentJobDetail: person.isTemporaryReason,
+          urgentJobEndDate: person.temporaryEndDate,
+          urgentJobDetail: person.temporaryReason,
 
           // person
           personID: person._id,

@@ -40,5 +40,5 @@ async function getUrgentExpiringLeaves(units, day = 14) {
 
 module.exports = {
   getUrgentExpiringTemporaryPersonnel,
-    getUrgentExpiringLeaves,
+  getUrgentExpiringLeaves,
 };
