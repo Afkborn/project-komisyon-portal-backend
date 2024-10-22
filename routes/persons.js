@@ -231,11 +231,18 @@ router.get(
           return person.birimID.institutionID == institutionId;
         });
 
-        recordActivity(
-          request.user.id,
-          RequestTypeList.PERSON_DEACTIVATED_LIST,
-          (isVisible = false)
-        );
+      recordActivity(
+        request.user.id, // userID
+        RequestTypeList.PERSON_ACTIVATED_LIST, // type
+        null, // personID
+        null, // description
+        null, // titleID
+        null, // unitID
+        null, // personUnitID
+        null, // leaveID
+        false // isVisible
+      );
+
 
         response.send({
           success: true,
