@@ -44,4 +44,11 @@ function getActivityWithID(typeID) {
   return key ? ActivityTypeList[key] : null; // Eğer anahtar bulunursa nesneyi döndür, yoksa null döndür
 }
 
-module.exports = { recordActivity, getActivityWithID };
+function getActivitiesWithFilterTypes(filterTypes) {
+  return Object.keys(ActivityTypeList)
+    .filter((key) => filterTypes.includes(ActivityTypeList[key].filterType)) // filterType'lara uyanları filtrele
+    .map((key) => ActivityTypeList[key]); // Uyanları döndür
+}
+
+
+module.exports = { recordActivity, getActivityWithID, getActivitiesWithFilterTypes };

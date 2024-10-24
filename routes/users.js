@@ -310,4 +310,21 @@ router.get("/", auth, Logger("GET users/"), (request, response) => {
     });
 });
 
+// get all users name and surname
+router.get("/names", auth, Logger("GET users/names"), (request, response) => {
+  User.find({}, "name surname")
+    .then((users) => {
+      response.status(200).send({
+        message: Messages.USERS_LIST,
+        users,
+      });
+    })
+    .catch((error) => {
+      response.status(500).send({
+        message: Messages.USERS_GET_FAILED,
+        error,
+      });
+    });
+});
+
 module.exports = router;

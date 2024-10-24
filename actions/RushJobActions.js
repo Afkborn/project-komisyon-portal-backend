@@ -6,7 +6,7 @@ async function getUrgentExpiringTemporaryPersonnel(units, day = 14) {
   const persons = await Person.find({
     unitID: { $in: units },
     isTemporary: true,
-    isTemporaryEndDate: {
+    temporaryEndDate: {
       $lte: new Date(Date.now() + day * 24 * 60 * 60 * 1000),
     },
   });

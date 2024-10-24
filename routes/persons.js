@@ -215,12 +215,12 @@ router.get(
   (request, response) => {
     let institutionId = request.query.institutionId;
 
-    if (!institutionId) {
-      return response.status(400).send({
-        success: false,
-        message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
-      });
-    }
+    // if (!institutionId) {
+    //   return response.status(400).send({
+    //     success: false,
+    //     message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+    //   });
+    // }
     Person.find({ status: false })
       .select(
         "-_id -__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi"
@@ -230,13 +230,15 @@ router.get(
       .populate("birimID", "-_id -__v -deletable")
       .then((persons) => {
         // filter persons by institutionId
-        persons = persons.filter((person) => {
-          if (person.birimID === null) {
-            console.log("birimID null olan person: ", person);
-            return false;
-          }
-          return person.birimID.institutionID == institutionId;
-        });
+        if (institutionId) {
+          persons = persons.filter((person) => {
+            if (person.birimID === null) {
+              console.log("birimID null olan person: ", person);
+              return false;
+            }
+            return person.birimID.institutionID == institutionId;
+          });
+        }
 
         recordActivity(
           request.user.id, // userID

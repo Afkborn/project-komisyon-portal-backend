@@ -7,13 +7,22 @@ const Logger = require("../middleware/logger");
 const Activity = require("../model/Activity");
 
 // const RequestTypeList = require("../constants/ActivityTypeList");
-const { getActivityWithID } = require("../actions/ActivityActions");
+const {
+  getActivityWithID,
+  getActivitiesWithFilterTypes,
+} = require("../actions/ActivityActions");
 
 // get last activities
 router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
   let { page = 1, limit = 10, maxPageCount } = request.query; // Varsayılan değerleri veriyoruz
   page = parseInt(page) || 1; // Geçerli bir sayfa numarası değilse, 1 olarak al
   limit = parseInt(limit) || 10; // Geçerli bir limit numarası değilse, 10 olarak al
+
+  userID = request.query.userID; // Kullanıcı ID'sini al
+  filterType = request.query.filterType; // Filtre tipini al
+
+  startDate = request.query.startDate; // Başlangıç tarihini al
+  endDate = request.query.endDate; // Bitiş tarihini al
 
   try {
     const totalRecords = await Activity.countDocuments(); // Toplam kayıt sayısı
@@ -27,9 +36,30 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
       }
     }
 
-    const activities = await Activity.find({
+    let activityFilter = {
       isVisible: true,
-    })
+    };
+    if (userID) {
+      activityFilter.userID = userID;
+    }
+    if (filterType) {
+      // get all activities with type
+      let activityType = getActivitiesWithFilterTypes(filterType);
+      activityFilter.typeID = { $in: activityType.map((type) => type.id) };
+    }
+    if (startDate) {
+      activityFilter.createdAt = {
+        $gte: new Date(startDate),
+      };
+    }
+    if (endDate) {
+      activityFilter.createdAt = {
+        ...activityFilter.createdAt,
+        $lte: new Date(endDate + "T23:59:59.999Z"), // Bitiş tarihini günün sonuna ayarla
+      };
+    }
+
+    const activities = await Activity.find(activityFilter)
       .populate("userID", "-password -__v -createdDate -createdAt -updatedAt")
       .populate("titleID", "name")
       .populate("unitID", "name")
