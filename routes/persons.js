@@ -9,7 +9,7 @@ const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
 const PersonAttributeList = require("../constants/PersonAttributeList");
 const { getUnitTypeByUnitTypeId } = require("../actions/UnitTypeActions");
-
+const { getInstitutionListByID } = require("../actions/InstitutionActions");
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
 // MODELMAP
@@ -250,6 +250,70 @@ router.get(
           null, // personUnitID
           null, // leaveID
           false // isVisible
+        );
+
+        response.send({
+          success: true,
+          personList: persons,
+        });
+      })
+      .catch((error) => {
+        console.log(error.message || Messages.PERSONS_NOT_FOUND);
+        response.status(500).send({
+          message: error.message || Messages.PERSONS_NOT_FOUND,
+        });
+      });
+  }
+);
+
+// get isTemporary true persons
+router.get(
+  "/temporary",
+  auth,
+  Logger("GET /persons/temporary"),
+  (request, response) => {
+    let institutionId = request.query.institutionId;
+
+    Person.find({ isTemporary: true })
+      .select(
+        "-_id -__v -goreveBaslamaTarihi -kind -gecmisBirimler -calistigiKisi -birimeBaslamaTarihi"
+      )
+      .populate("title", "-_id -__v -deletable")
+      .populate("birimID", "-_id -__v -deletable")
+      .populate("temporaryBirimID", "-__v -deletable")
+      .then((persons) => {
+        persons = persons.map((person) => person.toObject());
+        // filter persons by institutionId
+        if (institutionId) {
+          persons = persons.filter((person) => {
+            if (person.birimID === null) {
+              console.log("birimID null olan person: ", person);
+              return false;
+            }
+            return person.birimID.institutionID == institutionId;
+          });
+        }
+
+        // personlar'daki InstitutionID'ye göre ilgili birimi ekle
+        persons.forEach((person) => {
+          person.birimID.institution = getInstitutionListByID(
+            person.birimID.institutionID
+          );
+          person.temporaryBirimID.institution = getInstitutionListByID(
+            person.temporaryBirimID.institutionID
+          );
+        });
+
+        recordActivity(
+          request.user.id, // userID
+          RequestTypeList.PERSON_TEMPORARY_LIST, // type
+          null, // personID
+          null, // description
+          null, // titleID
+          null, // unitID
+          null, // personUnitID
+          null, // leaveID
+          true // isVisible
         );
 
         response.send({

@@ -119,6 +119,11 @@ const ActivityTypeList = {
     name: "Aktif Personel Listesi",
     filterType: "report",
   },
+  PERSON_TEMPORARY_LIST: {
+    id: 25,
+    name: "Geçici Personel Listesi",
+    filterType: "report",
+  },
 };
 
 // Dışa aktarım
