@@ -77,5 +77,12 @@ exports.InstitutionList = [
     types: [diger],
     status: true,
     isDefault: false,
+  },
+    {
+    id: 11,
+    name: "Dış Kurum",
+    types: [diger],
+    status: true,
+    isDefault: false,
   }
 ];
