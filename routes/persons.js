@@ -242,14 +242,14 @@ router.get(
 
         recordActivity(
           request.user.id, // userID
-          RequestTypeList.PERSON_ACTIVATED_LIST, // type
+          RequestTypeList.PERSON_DEACTIVATED_LIST, // type
           null, // personID
           null, // description
           null, // titleID
           null, // unitID
           null, // personUnitID
           null, // leaveID
-          false // isVisible
+          true // isVisible
         );
 
         response.send({

@@ -63,7 +63,6 @@ router.post(
         person
           .save()
           .then((data) => {
-
             recordActivity(
               request.user.id,
               RequestTypeList.PERSON_UNIT_CHANGE,
@@ -90,6 +89,63 @@ router.post(
         console.log(error);
         response.status(500).send({
           message: error.message || Messages.PERSON_UNIT_CREATE_ERROR,
+        });
+      });
+  }
+);
+
+// birim değişikliği silme işlemi
+// delete  /personunits/:id
+router.delete(
+  "/:id",
+  auth,
+  Logger("DELETE /personunits/:id"),
+  async (request, response) => {
+    const id = request.params.id;
+    if (!id) {
+      return response.status(400).send({
+        success: false,
+        message: Messages.REQUIRED_FIELD,
+      });
+    }
+
+    let personUnit = await PersonUnit.findOne({ _id: id });
+    if (!personUnit) {
+      return response.status(404).send({
+        success: false,
+        message: Messages.PERSON_UNIT_NOT_FOUND,
+      });
+    }
+
+    let person = await Person.findOne({ _id: personUnit.personID });
+
+    // person objesinin gecmisBirimler listesinden silinir.
+    person.gecmisBirimler = person.gecmisBirimler.filter((item) => item != id);
+
+    person
+      .save()
+      .then((data) => {
+        PersonUnit.findOneAndDelete(id).then((data) => {
+          recordActivity(
+            request.user.id,
+            RequestTypeList.PERSON_UNIT_DELETE,
+            personUnit.personID,
+            null,
+            null,
+            null,
+            data._id
+          );
+
+          response.send({
+            success: true,
+            data,
+          });
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        response.status(500).send({
+          message: error.message || Messages.PERSON_UNIT_DELETE_ERROR,
         });
       });
   }

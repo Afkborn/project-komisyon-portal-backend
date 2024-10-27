@@ -124,6 +124,12 @@ const ActivityTypeList = {
     name: "Geçici Personel Listesi",
     filterType: "report",
   },
+  PERSON_UNIT_DELETE: {
+    id: 26,
+    name: "Personel Birim Silme",
+    field: "personID",
+    filterType: "person",
+  },
 };
 
 // Dışa aktarım
