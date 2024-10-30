@@ -50,5 +50,11 @@ function getActivitiesWithFilterTypes(filterTypes) {
     .map((key) => ActivityTypeList[key]); // Uyanları döndür
 }
 
+function getActivityWithPersonelHaraketScreen() {
+  return Object.keys(ActivityTypeList)
+    .filter((key) => ActivityTypeList[key].showPersonelHareketScreen) // showPersonelHareketScreen'e uyanları filtrele
+    .map((key) => ActivityTypeList[key]); // Uyanları döndür
+}
 
-module.exports = { recordActivity, getActivityWithID, getActivitiesWithFilterTypes };
+
+module.exports = { recordActivity, getActivityWithID, getActivitiesWithFilterTypes, getActivityWithPersonelHaraketScreen };

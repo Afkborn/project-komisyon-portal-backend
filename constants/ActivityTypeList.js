@@ -12,6 +12,7 @@ const ActivityTypeList = {
     name: "Personel Ekleme",
     field: "personID",
     filterType: "person",
+    showPersonelHareketScreen: true,
   },
   PERSON_UPDATE_ID: {
     id: 3,
@@ -29,6 +30,7 @@ const ActivityTypeList = {
     id: 5,
     name: "Personel Silme",
     filterType: "person",
+    showPersonelHareketScreen: true,
   },
 
   TITLE_CREATE: {
@@ -70,6 +72,7 @@ const ActivityTypeList = {
     name: "Personel Birim Güncelleme",
     field: "personID",
     filterType: "person",
+    showPersonelHareketScreen: true,
   },
   LEAVE_CREATE: {
     id: 14,
@@ -129,6 +132,13 @@ const ActivityTypeList = {
     name: "Personel Birim Silme",
     field: "personID",
     filterType: "person",
+  },
+  PERSON_DEACTIVATE: {
+    id: 27,
+    name: "Personel Pasif Duruma Getirme",
+    field: "personID",
+    filterType: "person",
+    showPersonelHareketScreen: true,
   },
 };
 

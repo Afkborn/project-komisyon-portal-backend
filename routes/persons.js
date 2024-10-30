@@ -505,6 +505,7 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     });
 });
 
+
 // update a person with sicil
 router.put(
   "/updateBySicil/:sicil",
@@ -598,11 +599,20 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
         });
       }
 
-      recordActivity(
-        request.user.id,
-        RequestTypeList.PERSON_UPDATE_ID,
-        updatedPerson._id
-      );
+      // eğer personelin status'u false olduysa recordavctivity değiştir
+      if (updateData.status === false) {
+        recordActivity(
+          request.user.id,
+          RequestTypeList.PERSON_DEACTIVATE,
+          updatedPerson._id
+        );
+      } else {
+        recordActivity(
+          request.user.id,
+          RequestTypeList.PERSON_UPDATE_ID,
+          updatedPerson._id
+        );
+      }
 
       response.send({
         success: true,

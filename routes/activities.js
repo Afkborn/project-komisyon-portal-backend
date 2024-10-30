@@ -10,7 +10,11 @@ const Activity = require("../model/Activity");
 const {
   getActivityWithID,
   getActivitiesWithFilterTypes,
+  getActivityWithPersonelHaraketScreen
 } = require("../actions/ActivityActions");
+
+
+
 
 // get last activities
 router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
@@ -23,6 +27,8 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
 
   startDate = request.query.startDate; // Başlangıç tarihini al
   endDate = request.query.endDate; // Bitiş tarihini al
+
+  personelHareketleri = request.query.personelHareketleri; // Personel Hareket Ekranı için
 
   try {
     const totalRecords = await Activity.countDocuments(); // Toplam kayıt sayısı
@@ -57,6 +63,11 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
         ...activityFilter.createdAt,
         $lte: new Date(endDate + "T23:59:59.999Z"), // Bitiş tarihini günün sonuna ayarla
       };
+    }
+
+    if (personelHareketleri) {
+      let activityType = getActivityWithPersonelHaraketScreen(filterType);
+      activityFilter.typeID = { $in: activityType.map((type) => type.id) };
     }
 
     const activities = await Activity.find(activityFilter)
