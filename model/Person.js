@@ -106,6 +106,18 @@ const personSchema = new Schema(
       ref: "Unit",
     },
 
+    // uzaklaştırma
+    isSuspended: {
+      type: Boolean,
+      default: false,
+    },
+    suspensionEndDate: {
+      type: Date,
+    },
+    suspensionReason: {
+      type: String,
+    },
+
     izinler: [
       {
         type: Schema.Types.ObjectId,

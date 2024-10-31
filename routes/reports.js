@@ -18,6 +18,7 @@ const RequestTypeList = require("../constants/ActivityTypeList");
 const {
   getUrgentExpiringTemporaryPersonnel,
   getUrgentExpiringLeaves,
+  getUrgentExpiringSuspensions
 } = require("../actions/RushJobActions");
 
 // eksikKatipAramasiYapilacakBirimler
@@ -775,6 +776,21 @@ router.get(
           urgentJobDetail: person.izinler.find((leave) => {
             return new Date() >= leave.startDate && new Date() <= leave.endDate;
           }).izinNedeni,
+
+          // person
+          personID: person._id,
+          sicil: person.sicil,
+          ad: person.ad,
+          soyad: person.soyad,
+        });
+      });
+
+      let expiringSuspensionPersonel = await getUrgentExpiringSuspensions(units, 14);
+      expiringSuspensionPersonel.forEach((person) => {
+        urgentJobs.push({
+          urgentJobType: "Uzaklaştırma Bitiş Süresi",
+          urgentJobEndDate: person.suspensionEndDate,
+          urgentJobDetail: person.suspensionReason,
 
           // person
           personID: person._id,
