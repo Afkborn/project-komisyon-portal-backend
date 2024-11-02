@@ -8,18 +8,22 @@ const Unit = require("../model/Unit");
 const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
 const getTimeForLog = require("../common/time");
+require("dotenv/config");
+const cacheDuration =
+  process.env.CACHE_DURATION_IN_SECONDS * 1000 || 1 * 60 * 1000; // eğer .env dosyasında CACHE_DURATION_IN_SECONDS yoksa 1 dakika yap
+let cacheEnabled = process.env.CACHE_ENABLED == "true";
 
 const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
 
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
 
-const {getInstitutionListByID} = require("../actions/InstitutionActions");
+const { getInstitutionListByID } = require("../actions/InstitutionActions");
 // acele isler
 const {
   getUrgentExpiringTemporaryPersonnel,
   getUrgentExpiringLeaves,
-  getUrgentExpiringSuspensions
+  getUrgentExpiringSuspensions,
 } = require("../actions/RushJobActions");
 
 // eksikKatipAramasiYapilacakBirimler
@@ -565,11 +569,10 @@ router.get(
             .select(
               "-__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi -birimID -gecmisBirimler"
             );
-            
+
           if (sorumluMubasir.length > 0) {
             persons = persons.concat(sorumluMubasir);
           }
-          
 
           // geçici personel olabiliyor.
           let geciciPersonel = await Person.find({
@@ -619,12 +622,18 @@ router.get(
 // geciciPersonel hesaba katılmıyor.
 // mahkeme ve savcılık katip sayısını dön
 // ünvan bazlı personel sayısını dön
+// bu işlem yaklaşık 100 ms sürüyor ancak sayfa her yenilendiğpinde tekrar ediyor. bundan dolayı cacheleme deneyelim.
+
+let cachedChartReportData = null;
+let lastChartDataCacheTime = 0;
+let lastCacheInstitutionId = null;
 router.get(
   "/chartData",
   auth,
-  Logger("GET /chartData"),
+  Logger("GET /mahkemeSavcilikKatipSayisi"),
   async (request, response) => {
     try {
+      const currentTime = Date.now();
       let processStartDate = new Date();
       let institutionId = request.query.institutionId;
 
@@ -635,16 +644,32 @@ router.get(
         });
       }
 
-      // get institution 
-      
+      if (
+        cacheEnabled &&
+        cachedChartReportData &&
+        currentTime - lastChartDataCacheTime < cacheDuration &&
+        lastCacheInstitutionId == institutionId
+      ) {
+        let processEndDate = new Date();
+        let processTime = processEndDate - processStartDate;
+        console.log(
+          getTimeForLog() +
+            "[CACHE][REPORT][mahkemeSavcilikKatipSayisi] Process Time: " +
+            processTime +
+            " ms"
+        );
+        return response.send(cachedChartReportData);
+      }
+
+      // get institution
+
       let institution = getInstitutionListByID(institutionId);
-      if (institution.katipTitleChartVisible == false){
+      if (institution.katipTitleChartVisible == false) {
         return response.status(400).send({
           success: false,
-          katipTitleChartVisible : false,
+          katipTitleChartVisible: false,
           message: `Bu kurumda katip ve ünvan için tablo bulunmamaktadır.`,
         });
-
       }
       let units = await Unit.find({ institutionID: institutionId });
 
@@ -727,26 +752,36 @@ router.get(
       //   RequestTypeList.REPORT_MAHKEMESAVCILIKKATIP
       // );
 
+      let katipPieChartData = [
+        { title: "Mahkeme", value: mahkemeKatipSayisi, color: "#ad1313" },
+        { title: "Savcılık", value: savcilikKatipSayisi, color: "#72ad13" },
+        { title: "Diğer", value: digerKatipSayisi, color: "#4287f5" },
+      ];
+      let unvanPieChartData = [
+        {
+          title: "Zabit Katibi",
+          value: totalZabitKatibiSayisi,
+          color: "#ad1313",
+        },
+        { title: "Mübaşir", value: totalMubasirSayisi, color: "#72ad13" },
+        {
+          title: "Yazı İşleri Müdürü",
+          value: totalYazıIsleriMuduruSayisi,
+          color: "#4287f5",
+        },
+      ];
+      lastCacheInstitutionId = institutionId;
+      lastChartDataCacheTime = currentTime;
+      cachedChartReportData = {
+        success: true,
+        katipPieChartData: katipPieChartData,
+        unvanPieChartData: unvanPieChartData,
+      };
+
       response.send({
         success: true,
-        katipPieChartData: [
-          { title: "Mahkeme", value: mahkemeKatipSayisi, color: "#ad1313" },
-          { title: "Savcılık", value: savcilikKatipSayisi, color: "#72ad13" },
-          { title: "Diğer", value: digerKatipSayisi, color: "#4287f5" },
-        ],
-        unvanPieChartData: [
-          {
-            title: "Zabit Katibi",
-            value: totalZabitKatibiSayisi,
-            color: "#ad1313",
-          },
-          { title: "Mübaşir", value: totalMubasirSayisi, color: "#72ad13" },
-          {
-            title: "Yazı İşleri Müdürü",
-            value: totalYazıIsleriMuduruSayisi,
-            color: "#4287f5",
-          },
-        ],
+        katipPieChartData: katipPieChartData,
+        unvanPieChartData: unvanPieChartData,
       });
     } catch (error) {
       console.log(error);
@@ -759,12 +794,16 @@ router.get(
 
 // acele işler
 // TODO: geciciPersonel ve kurumID durumunu değerlendir.
+let cachedUrgentJobsData = null;
+let lastUrgentJobsCacheTime = 0;
+let lastUrgentJobsInstitutionId = null;
 router.get(
   "/urgentJobs",
   auth,
   Logger("GET /urgentJobs"),
   async (request, response) => {
     try {
+      const currentTime = Date.now();
       let processStartDate = new Date();
       let institutionId = request.query.institutionId;
 
@@ -773,6 +812,23 @@ router.get(
           success: false,
           message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
         });
+      }
+
+      if (
+        cacheEnabled &&
+        cachedUrgentJobsData &&
+        currentTime - lastUrgentJobsCacheTime < cacheDuration &&
+        lastUrgentJobsInstitutionId == institutionId
+      ) {
+        let processEndDate = new Date();
+        let processTime = processEndDate - processStartDate;
+        console.log(
+          getTimeForLog() +
+            "[CACHE][REPORT][urgentJobs] Process Time: " +
+            processTime +
+            " ms"
+        );
+        return response.send(cachedUrgentJobsData);
       }
 
       let units = await Unit.find({ institutionID: institutionId });
@@ -815,7 +871,10 @@ router.get(
         });
       });
 
-      let expiringSuspensionPersonel = await getUrgentExpiringSuspensions(units, 14);
+      let expiringSuspensionPersonel = await getUrgentExpiringSuspensions(
+        units,
+        14
+      );
       expiringSuspensionPersonel.forEach((person) => {
         urgentJobs.push({
           urgentJobType: "Uzaklaştırma Bitiş Süresi",
@@ -831,6 +890,12 @@ router.get(
       });
 
       let processEndDate = new Date();
+      lastUrgentJobsCacheTime = currentTime;
+      lastUrgentJobsInstitutionId = institutionId;
+      cachedUrgentJobsData = {
+        success: true,
+        urgentJobs: urgentJobs,
+      };
       let processTime = processEndDate - processStartDate;
       console.log(
         getTimeForLog() +
