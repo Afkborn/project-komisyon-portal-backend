@@ -17,6 +17,7 @@ const { getUnitTypeByUnitTypeId } = require("../actions/UnitTypeActions");
 const { getInstitutionListByID } = require("../actions/InstitutionActions");
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
+
 // MODELMAP
 const modelMap = {
   Person,
@@ -336,7 +337,7 @@ router.get(
   }
 );
 
-// GET A isSuspended true persons
+// get isSuspended true persons
 router.get(
   "/suspended",
   auth,
@@ -373,6 +374,126 @@ router.get(
         recordActivity(
           request.user.id, // userID
           RequestTypeList.PERSON_SUSPENDED_LIST, // type
+          null, // personID
+          null, // description
+          null, // titleID
+          null, // unitID
+          null, // personUnitID
+          null, // leaveID
+          true // isVisible
+        );
+
+        response.send({
+          success: true,
+          personList: persons,
+        });
+      })
+      .catch((error) => {
+        console.log(error.message || Messages.PERSONS_NOT_FOUND);
+        response.status(500).send({
+          message: error.message || Messages.PERSONS_NOT_FOUND,
+        });
+      });
+  }
+);
+
+// get isDisabled true persons
+router.get(
+  "/disabled",
+  auth,
+  Logger("GET /persons/disabled"),
+  (request, response) => {
+    let institutionId = request.query.institutionId;
+
+    Person.find({ isDisabled: true })
+      .select(
+        "-_id -__v -goreveBaslamaTarihi -kind -gecmisBirimler -calistigiKisi -birimeBaslamaTarihi"
+      )
+      .populate("title", "-_id -__v -deletable")
+      .populate("birimID", "-_id -__v -deletable")
+      .then((persons) => {
+        persons = persons.map((person) => person.toObject());
+        // filter persons by institutionId
+        if (institutionId) {
+          persons = persons.filter((person) => {
+            if (person.birimID === null) {
+              console.log("birimID null olan person: ", person);
+              return false;
+            }
+            return person.birimID.institutionID == institutionId;
+          });
+        }
+
+        // personlar'daki InstitutionID'ye göre ilgili birimi ekle
+        persons.forEach((person) => {
+          person.birimID.institution = getInstitutionListByID(
+            person.birimID.institutionID
+          );
+        });
+
+        recordActivity(
+          request.user.id, // userID
+          RequestTypeList.REPORT_PERSON_DISABLED_LIST, // type
+          null, // personID
+          null, // description
+          null, // titleID
+          null, // unitID
+          null, // personUnitID
+          null, // leaveID
+          true // isVisible
+        );
+
+        response.send({
+          success: true,
+          personList: persons,
+        });
+      })
+      .catch((error) => {
+        console.log(error.message || Messages.PERSONS_NOT_FOUND);
+        response.status(500).send({
+          message: error.message || Messages.PERSONS_NOT_FOUND,
+        });
+      });
+  }
+);
+
+// get isMartyrRelative true persons
+router.get(
+  "/martyrRelative",
+  auth,
+  Logger("GET /persons/martyrRelative"),
+  (request, response) => {
+    let institutionId = request.query.institutionId;
+
+    Person.find({ isMartyrRelative: true })
+      .select(
+        "-_id -__v -goreveBaslamaTarihi -kind -gecmisBirimler -calistigiKisi -birimeBaslamaTarihi"
+      )
+      .populate("title", "-_id -__v -deletable")
+      .populate("birimID", "-_id -__v -deletable")
+      .then((persons) => {
+        persons = persons.map((person) => person.toObject());
+        // filter persons by institutionId
+        if (institutionId) {
+          persons = persons.filter((person) => {
+            if (person.birimID === null) {
+              console.log("birimID null olan person: ", person);
+              return false;
+            }
+            return person.birimID.institutionID == institutionId;
+          });
+        }
+
+        // personlar'daki InstitutionID'ye göre ilgili birimi ekle
+        persons.forEach((person) => {
+          person.birimID.institution = getInstitutionListByID(
+            person.birimID.institutionID
+          );
+        });
+
+        recordActivity(
+          request.user.id, // userID
+          RequestTypeList.REPORT_PERSON_MARTYR_RELATIVE_LIST, // type
           null, // personID
           null, // description
           null, // titleID

@@ -155,6 +155,16 @@ const ActivityTypeList = {
     filterType: "person",
     showPersonelHareketScreen: true,
   },
+  REPORT_PERSON_DISABLED_LIST: {
+    id: 30,
+    name: "Engelli Personel Listesi",
+    filterType: "report",
+  },
+  REPORT_PERSON_MARTYR_RELATIVE_LIST: {
+    id: 31,
+    name: "Şehit Gazi Yakını Personel Listesi",
+    filterType: "report",
+  },
   
 };
 
