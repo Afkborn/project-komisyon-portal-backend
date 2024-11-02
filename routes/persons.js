@@ -1,7 +1,12 @@
 const Messages = require("../constants/Messages");
 const express = require("express");
 const router = express.Router();
-const { Person, zabitkatibi, yaziislerimudürü } = require("../model/Person");
+const {
+  Person,
+  zabitkatibi,
+  yaziislerimudürü,
+  mubasir,
+} = require("../model/Person");
 const PersonUnit = require("../model/PersonUnit");
 const Leave = require("../model/Leave");
 const Title = require("../model/Title");
@@ -17,6 +22,7 @@ const modelMap = {
   Person,
   zabitkatibi,
   yaziislerimudürü,
+  mubasir,
 };
 
 // get all persons
@@ -330,7 +336,6 @@ router.get(
   }
 );
 
-
 // GET A isSuspended true persons
 router.get(
   "/suspended",
@@ -412,7 +417,7 @@ router.get(
           });
         }
 
-        //bu birimID değerine sahip olan bir yaziislerimüdürü olabilir
+        //bu birimID değerine sahip olan bir yaziislerimüdürü ve mubasir olabilir
         // o yüzden ikinciBirimID değeri birimID olanları getir ve persons'a ekle
         Person.find({
           kind: "yaziislerimudürü",
@@ -425,21 +430,47 @@ router.get(
           .then((yaziislerimudürü) => {
             persons = persons.concat(yaziislerimudürü);
 
-            // geçici personel vasra onlarıda ekleyelim
+            // mubasirleri de ekleyelim
             Person.find({
-              temporaryBirimID: birimID,
+              kind: "mubasir",
+              ikinciBirimID: birimID,
               status: true,
             })
               .populate("title", "-_id -__v -deletable")
               .populate("izinler", "-__v -personID")
               .select("-kind")
-              .then((temporaryPersons) => {
-                persons = persons.concat(temporaryPersons);
+              .then((mubasir) => {
+                persons = persons.concat(mubasir);
 
-                response.send({
-                  success: true,
-                  persons,
-                });
+                // zabit katibileri de ekleyelim
+                Person.find({
+                  kind: "zabitkatibi",
+                  calistigiKisi: birimID,
+                  status: true,
+                })
+                  .populate("title", "-_id -__v -deletable")
+                  .populate("izinler", "-__v -personID")
+                  .select("-kind")
+                  .then((zabitkatibi) => {
+                    persons = persons.concat(zabitkatibi);
+
+                    // geçici personel vasra onlarıda ekleyelim
+                    Person.find({
+                      temporaryBirimID: birimID,
+                      status: true,
+                    })
+                      .populate("title", "-_id -__v -deletable")
+                      .populate("izinler", "-__v -personID")
+                      .select("-kind")
+                      .then((temporaryPersons) => {
+                        persons = persons.concat(temporaryPersons);
+
+                        response.send({
+                          success: true,
+                          persons,
+                        });
+                      });
+                  });
               });
           });
       })
@@ -484,7 +515,7 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     durusmaKatibiMi,
     calistigiKisi,
 
-    // YAZI İŞLERİ MÜDÜRÜ
+    // YAZI İŞLERİ MÜDÜRÜ ve MÜBAŞİR
     ikinciBirimID,
   } = request.body;
 
@@ -542,6 +573,8 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     newPerson = new Model({ ...commonFields, durusmaKatibiMi, calistigiKisi });
   } else if (kind === "yaziislerimudürü") {
     newPerson = new Model({ ...commonFields, ikinciBirimID });
+  } else if (kind === "mubasir") {
+    newPerson = new Model({ ...commonFields, ikinciBirimID });
   } else {
     newPerson = new Model(commonFields);
   }
@@ -565,7 +598,6 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
       });
     });
 });
-
 
 // update a person with sicil
 router.put(
@@ -592,7 +624,12 @@ router.put(
         Model = zabitkatibi;
       }
       if (person.ikinciBirimID !== undefined) {
-        Model = yaziislerimudürü;
+        if (person.kind === "yaziislerimudürü") {
+          Model = yaziislerimudürü;
+        }
+        if (person.kind === "mubasir") {
+          Model = mubasir;
+        }
       }
 
       const updatedPerson = await Model.findOneAndUpdate(
@@ -646,7 +683,12 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
         Model = zabitkatibi;
       }
       if (person.ikinciBirimID !== undefined) {
-        Model = yaziislerimudürü;
+        if (person.kind === "yaziislerimudürü") {
+          Model = yaziislerimudürü;
+        }
+        if (person.kind === "mubasir") {
+          Model = mubasir;
+        }
       }
       // YENİ MODEL EKLENDİĞİNDE BURAYA EKLEME YAPILMALI
 
@@ -668,11 +710,20 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
           updatedPerson._id
         );
       } else {
-        recordActivity(
-          request.user.id,
-          RequestTypeList.PERSON_UPDATE_ID,
-          updatedPerson._id
-        );
+        // eğer personelin status'u true ancak isSuspended true olduysa recordavctivity değiştir
+        if (updateData.isSuspended === true) {
+          recordActivity(
+            request.user.id,
+            RequestTypeList.PERSON_SUSPEND,
+            updatedPerson._id
+          );
+        } else {
+          recordActivity(
+            request.user.id,
+            RequestTypeList.PERSON_UPDATE_ID,
+            updatedPerson._id
+          );
+        }
       }
 
       response.send({

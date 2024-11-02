@@ -1,12 +1,26 @@
 const InstitutionList = require("../constants/InstitutionList").InstitutionList;
 
 function getInstitutionListByID(typeId) {
-  let result = InstitutionList.find((institutionID) => institutionID.id === typeId);
+  // Gelen `typeId` değerini kontrol
+  typeId = parseInt(typeId);
+  if (isNaN(typeId)) {
+    throw new Error("Institution ID must be a number.");
+  }
+  
+  // `find` sonucunu `result` değişkenine atıyoruz
+  const result = InstitutionList.find((institution) => institution.id === typeId);
+
+  // `result` undefined ise kontrol ediyoruz
+  if (!result) {
+    throw new Error(`Institution with ID ${typeId} not found.`);
+  }
+
+  // Eğer `result` geçerli bir nesne ise, istenen bilgileri döndürüyoruz
   return {
     id: result.id,
     name: result.name,
-    
-  }
+    katipTitleChartVisible: result.katipTitleChartVisible ?? false, // Eğer yoksa false döndür
+  };
 }
 
 module.exports = {

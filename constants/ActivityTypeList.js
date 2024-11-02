@@ -143,11 +143,19 @@ const ActivityTypeList = {
 
   PERSON_SUSPENDED_LIST: {
     id: 28,
-    name: "Personel Uzaklaştırma",
+    name: "Uzaklaştırılmış Personel Listesi",
     field: "personID",
     filterType: "person",
     showPersonelHareketScreen: true,
   },
+  PERSON_SUSPEND: {
+    id: 29,
+    name: "Personeli Uzaklaştırma",
+    field: "personID",
+    filterType: "person",
+    showPersonelHareketScreen: true,
+  },
+  
 };
 
 // Dışa aktarım

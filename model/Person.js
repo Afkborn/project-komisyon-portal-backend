@@ -169,6 +169,9 @@ const personSchema = new Schema(
     birthDate: {
       type: Date,
     },
+    birthPlace: {
+      type: String,
+    },
     bloodType: {
       type: String,
       enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-", ""],
@@ -179,12 +182,24 @@ const personSchema = new Schema(
       enum: ["F", "Q", ""],
       default: "",
     },
+
+    // şehit gazi yakını
+    isMartyrRelative: {
+      type: Boolean,
+      default: false,
+    },
+
+    // engelli
+    isDisabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   options
 );
 
-// GPT ABİM MÜTHİŞ YAZDI BURAYI.
 // Buradaki virtual field'ı kullanarak, bir kişinin izinde olup olmadığını kontrol edebiliriz.
+// virtualField'lar, veritabanında saklanmazlar, sadece runtime'da kullanılırlar.
 personSchema.virtual("izindeMi").get(function () {
   const now = new Date();
   if (!this.izinler || this.izinler.length === 0) {
@@ -223,12 +238,23 @@ const YaziIsleriMuduru = Person.discriminator(
   })
 );
 
+const Mubasir = Person.discriminator(
+  "mubasir",
+  new Schema({
+    ikinciBirimID: {
+      type: Schema.Types.ObjectId,
+      ref: "Unit",
+      default: null,
+    },
+  })
+);
+
 module.exports = {
   Person,
   // Baskan,
   // UyeHakim,
   zabitkatibi: ZabitKatibi,
-  // Mubasir,
+  mubasir : Mubasir,
   // YaziİsleriMuduru,
   yaziislerimudürü: YaziIsleriMuduru,
 };

@@ -14,6 +14,8 @@ exports.InstitutionList = [
     types: [mahkeme, savcilik, diger],
     status: true,
     isDefault: true,
+    katipTitleChartVisible: true,
+    
   },
    {
      id: 2,
@@ -21,6 +23,7 @@ exports.InstitutionList = [
      types: [mahkeme, savcilik, diger],
      status: true,
      isDefault: false,
+     katipTitleChartVisible: true,
    },
    {
      id: 3,
@@ -28,6 +31,7 @@ exports.InstitutionList = [
      types: [mahkeme, savcilik, diger],
      status: true,
      isDefault: false,
+     katipTitleChartVisible: true,
    },
    {
      id: 4,
@@ -35,6 +39,7 @@ exports.InstitutionList = [
      types: [mahkeme, savcilik, diger],
      status: true,
      isDefault: false,
+     katipTitleChartVisible: true,
    },
    {
      id: 5,
@@ -42,6 +47,7 @@ exports.InstitutionList = [
      types: [mahkeme, savcilik, diger],
      status: true,
      isDefault: false,
+     katipTitleChartVisible: true,
    },
   {
     id: 6,
@@ -49,6 +55,7 @@ exports.InstitutionList = [
     types: [diger],
     status: true,
     isDefault: false,
+    katipTitleChartVisible: false,
   },
   {
     id: 7,
@@ -56,6 +63,7 @@ exports.InstitutionList = [
     types: [diger],
     status: true,
     isDefault: false,
+    katipTitleChartVisible: false,
   },
   {
     id: 8,
@@ -63,6 +71,7 @@ exports.InstitutionList = [
     types: [diger],
     status: true,
     isDefault: false,
+    katipTitleChartVisible: false,
   },
   {
     id: 9,
@@ -70,6 +79,7 @@ exports.InstitutionList = [
     types: [diger],
     status: true,
     isDefault: false,
+    katipTitleChartVisible: false,
   },
   {
     id: 10,
@@ -77,6 +87,7 @@ exports.InstitutionList = [
     types: [diger],
     status: true,
     isDefault: false,
+    katipTitleChartVisible: false,
   },
     {
     id: 11,
@@ -84,5 +95,6 @@ exports.InstitutionList = [
     types: [diger],
     status: true,
     isDefault: false,
+    katipTitleChartVisible: false,
   }
 ];

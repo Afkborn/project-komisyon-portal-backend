@@ -14,6 +14,7 @@ const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
 
+const {getInstitutionListByID} = require("../actions/InstitutionActions");
 // acele isler
 const {
   getUrgentExpiringTemporaryPersonnel,
@@ -553,6 +554,23 @@ router.get(
             persons = persons.concat(sorumluMudur);
           }
 
+          // örneğin bir mübaşir 2 birime bakabiliyor, 2 birime bakan mübaşirlerde ikinciBirimID alanı var
+          let sorumluMubasir = await Person.find({
+            kind: "mubasir",
+            ikinciBirimID: unit._id,
+            status: true,
+          })
+            .populate("title", "-_id -__v -deletable")
+            .populate("izinler", "-__v -personID")
+            .select(
+              "-__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi -birimID -gecmisBirimler"
+            );
+            
+          if (sorumluMubasir.length > 0) {
+            persons = persons.concat(sorumluMubasir);
+          }
+          
+
           // geçici personel olabiliyor.
           let geciciPersonel = await Person.find({
             temporaryBirimID: unit._id,
@@ -600,6 +618,7 @@ router.get(
 
 // geciciPersonel hesaba katılmıyor.
 // mahkeme ve savcılık katip sayısını dön
+// ünvan bazlı personel sayısını dön
 router.get(
   "/chartData",
   auth,
@@ -616,6 +635,17 @@ router.get(
         });
       }
 
+      // get institution 
+      
+      let institution = getInstitutionListByID(institutionId);
+      if (institution.katipTitleChartVisible == false){
+        return response.status(400).send({
+          success: false,
+          katipTitleChartVisible : false,
+          message: `Bu kurumda katip ve ünvan için tablo bulunmamaktadır.`,
+        });
+
+      }
       let units = await Unit.find({ institutionID: institutionId });
 
       // Process units to get institutionTypeId
