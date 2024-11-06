@@ -18,7 +18,10 @@ const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
 
-const { getInstitutionListByID } = require("../actions/InstitutionActions");
+const {
+  getInstitutionListByID,
+  filterInfazKorumaTitleChartVisibleInstitutions,
+} = require("../actions/InstitutionActions");
 // acele isler
 const {
   getUrgentExpiringTemporaryPersonnel,
@@ -251,6 +254,9 @@ router.get(
           izinBitis: person.izinler.find((leave) => {
             return now >= leave.startDate && now <= leave.endDate;
           }).endDate,
+          izinTur: person.izinler.find((leave) => {
+            return now >= leave.startDate && now <= leave.endDate;
+          }).reason,
         }));
       }
       let processEndDate = new Date();
@@ -623,7 +629,6 @@ router.get(
 // mahkeme ve savcılık katip sayısını dön
 // ünvan bazlı personel sayısını dön
 // bu işlem yaklaşık 100 ms sürüyor ancak sayfa her yenilendiğpinde tekrar ediyor. bundan dolayı cacheleme deneyelim.
-
 let cachedChartReportData = null;
 let lastChartDataCacheTime = 0;
 let lastCacheInstitutionId = null;
@@ -671,6 +676,7 @@ router.get(
           message: `Bu kurumda katip ve ünvan için tablo bulunmamaktadır.`,
         });
       }
+
       let units = await Unit.find({ institutionID: institutionId });
 
       // Process units to get institutionTypeId
@@ -789,6 +795,93 @@ router.get(
         message: error.message || Messages.PERSONS_NOT_FOUND,
       });
     }
+  }
+);
+
+// infaz korumalar için infaz koruma memur sayısını dön
+router.get(
+  "/infazKorumaMemurSayisi",
+  auth,
+  Logger("GET /mahkemeSavcilikKatipSayisi"),
+  async (request, response) => {
+    let processStartDate = new Date();
+    let institutionId = request.query.institutionId;
+
+    if (!institutionId) {
+      return response.status(400).send({
+        success: false,
+        message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+      });
+    }
+
+    // get institutio
+    let institution = getInstitutionListByID(institutionId);
+
+
+    if (institution.infazKorumaTitleChartVisible == false) {
+      return response.status(400).send({
+        success: false,
+        infazKorumaTitleChartVisible: false,
+        message: `Bu kurumda infaz koruma ve infaz baş koruma memurları için tablo bulunmamaktadır.`,
+      });
+    }
+
+    let institutions = filterInfazKorumaTitleChartVisibleInstitutions();
+
+    let infazKorumaSayi = [];
+
+    await Promise.all(
+      institutions.map(async (institution) => {
+        let units = await Unit.find({ institutionID: institution.id });
+        let infazKorumaMemurSayisi = 0;
+        let infazKorumaBasMemurSayisi = 0;
+        await Promise.all(
+          units.map(async (unit) => {
+            let infazKorumaMemurCount = await Person.countDocuments({
+              birimID: unit._id,
+              kind: "infazvekorumamemuru",
+              status: true,
+            });
+
+            let infazKorumaBasMemurCount = await Person.countDocuments({
+              birimID: unit._id,
+              kind: "infazvekorumabasmemuru",
+              status: true,
+            });
+
+            infazKorumaMemurSayisi += infazKorumaMemurCount;
+            infazKorumaBasMemurSayisi += infazKorumaBasMemurCount;
+          })
+        );
+
+        infazKorumaSayi.push({
+          institutionName: institution.name,
+          infazKorumaMemurSayisi: infazKorumaMemurSayisi,
+          infazKorumaBasMemurSayisi: infazKorumaBasMemurSayisi,
+        });
+      })
+    );
+
+    // sort infazKorumaTable by institutionName
+    infazKorumaSayi.sort((a, b) => {
+      return a.institutionName.localeCompare(b.institutionName);
+
+    });
+
+    let processEndDate = new Date();
+    let processTime = processEndDate - processStartDate;
+
+    response.send({
+      success: true,
+      infazKorumaTable: infazKorumaSayi,
+    });
+
+    console.log(
+      getTimeForLog() +
+        "[REPORT][infazKorumaMemurSayisi] Process Time: " +
+        processTime +
+        " ms"
+    );
   }
 );
 

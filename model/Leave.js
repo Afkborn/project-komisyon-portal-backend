@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Messages = require("../constants/Messages");
+
 const { Schema } = mongoose;
 
 const LeaveSchema = mongoose.Schema({
@@ -19,6 +20,17 @@ const LeaveSchema = mongoose.Schema({
   reason: {
     type: String,
     required: [true, Messages.REASON_REQUIRED],
+    enum: [
+      "YILLIK_IZIN",
+      "RAPOR_IZIN",
+      "UCRETSIZ_IZIN",
+      "MAZERET_IZIN",
+      "DOGUM_IZIN",
+      "OLUM_IZIN",
+      "EVLENME_IZIN",
+      "REFAKAT_IZIN",
+      "DIGER_IZIN",
+    ],
   },
   dayCount: {
     type: Number,

@@ -72,7 +72,7 @@ exports.END_DATE_REQUIRED = "Bitiş tarihi zorunludur";
 exports.LEAVES_NOT_FOUND = "İzinler bulunamadı";
 exports.LEAVE_NOT_SAVED = "İzin kaydedilemedi";
 exports.PERSON_ID_REQUIRED = "Personel ID zorunludur";
-
+exports.REASON_REQUIRED = "İzin Tipi zorunludur";
 
 // COMMON
 exports.REQUIRED_FIELD = "alanı zorunludur";

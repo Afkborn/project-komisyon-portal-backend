@@ -15,6 +15,7 @@ exports.InstitutionList = [
     status: true,
     isDefault: true,
     katipTitleChartVisible: true,
+    infazKorumaTitleChartVisible: false,
     
   },
    {
@@ -24,6 +25,7 @@ exports.InstitutionList = [
      status: true,
      isDefault: false,
      katipTitleChartVisible: true,
+     infazKorumaTitleChartVisible: false,
    },
    {
      id: 3,
@@ -32,6 +34,7 @@ exports.InstitutionList = [
      status: true,
      isDefault: false,
      katipTitleChartVisible: true,
+     infazKorumaTitleChartVisible: false,
    },
    {
      id: 4,
@@ -40,6 +43,7 @@ exports.InstitutionList = [
      status: true,
      isDefault: false,
      katipTitleChartVisible: true,
+     infazKorumaTitleChartVisible: false,
    },
    {
      id: 5,
@@ -48,6 +52,7 @@ exports.InstitutionList = [
      status: true,
      isDefault: false,
      katipTitleChartVisible: true,
+     infazKorumaTitleChartVisible: false,
    },
   {
     id: 6,
@@ -56,6 +61,7 @@ exports.InstitutionList = [
     status: true,
     isDefault: false,
     katipTitleChartVisible: false,
+    infazKorumaTitleChartVisible: true,
   },
   {
     id: 7,
@@ -64,6 +70,7 @@ exports.InstitutionList = [
     status: true,
     isDefault: false,
     katipTitleChartVisible: false,
+    infazKorumaTitleChartVisible: true,
   },
   {
     id: 8,
@@ -72,6 +79,7 @@ exports.InstitutionList = [
     status: true,
     isDefault: false,
     katipTitleChartVisible: false,
+    infazKorumaTitleChartVisible: true,
   },
   {
     id: 9,
@@ -80,6 +88,7 @@ exports.InstitutionList = [
     status: true,
     isDefault: false,
     katipTitleChartVisible: false,
+    infazKorumaTitleChartVisible: true,
   },
   {
     id: 10,
@@ -88,6 +97,7 @@ exports.InstitutionList = [
     status: true,
     isDefault: false,
     katipTitleChartVisible: false,
+    infazKorumaTitleChartVisible: true,
   },
     {
     id: 11,
@@ -96,5 +106,6 @@ exports.InstitutionList = [
     status: true,
     isDefault: false,
     katipTitleChartVisible: false,
+    infazKorumaTitleChartVisible: false,
   }
 ];

@@ -32,4 +32,23 @@ exports.ConstantTitles = [
     deletable: false,
     oncelikSirasi: 13,
   },
+
+  {
+    name: "İnfaz ve Koruma Memuru",
+    kind: "infazvekorumamemuru",
+    deletable: false,
+    oncelikSirasi: 25,
+  },
+  {
+    name: "İnfaz ve Koruma Memuru (657/4B)",
+    kind: "infazvekorumamemuru",
+    deletable: false,
+    oncelikSirasi: 25,
+  },
+  {
+    name: "İnfaz ve Koruma Başmemuru",
+    kind: "infazvekorumabasmemuru",
+    deletable: false,
+    oncelikSirasi: 23,
+  },
 ];

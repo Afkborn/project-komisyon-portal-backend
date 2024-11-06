@@ -146,7 +146,7 @@ const ActivityTypeList = {
     name: "Uzaklaştırılmış Personel Listesi",
     field: "personID",
     filterType: "person",
-    showPersonelHareketScreen: true,
+    
   },
   PERSON_SUSPEND: {
     id: 29,
