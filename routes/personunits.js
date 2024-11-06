@@ -1,7 +1,9 @@
 const Messages = require("../constants/Messages");
+const mongoose = require("mongoose");
 const express = require("express");
 const router = express.Router();
 const PersonUnit = require("../model/PersonUnit");
+const Unit = require("../model/Unit");
 const auth = require("../middleware/auth");
 // const {
 //   getUnitTypesByType,
@@ -32,7 +34,25 @@ router.post(
 
     const { personID, newUnitID, endDate, detail } = request.body;
 
-    // person objesinin birimID ve birimeBaslamaTarihi güncellenir.
+    // newUnitID'nin geçerli bir ID olup olmadığını kontrol et
+    if (!mongoose.Types.ObjectId.isValid(newUnitID)) {
+      return response.status(400).send({
+        success: false,
+        message: "Geçersiz birim ID'si.",
+      });
+    }
+
+    // newUnitID'nin olup olmadığını kontrol et yoksa hata dön
+    let unit = await Unit.findOne({
+      _id: newUnitID,
+    });
+    console.log(unit);
+    if (!unit) {
+      return response.status(404).send({
+        success: false,
+        message: Messages.UNIT_NOT_FOUND,
+      });
+    }
 
     let person = await Person.findOne({ _id: personID });
     if (!person) {

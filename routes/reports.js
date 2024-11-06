@@ -71,7 +71,9 @@ router.get(
     let processTime = processEndDate - processStartDate;
     console.log(
       getTimeForLog() +
-        "[REPORT][eksikKatipAramasiYapilacakBirimler] Process Time: " +
+        "USER " +
+        request.user.username +
+        " [REPORT][eksikKatipAramasiYapilacakBirimler] Process Time: " +
         processTime +
         " ms"
     );
@@ -143,7 +145,9 @@ router.get(
     let processTime = processEndDate - processStartDate;
     console.log(
       getTimeForLog() +
-        "[REPORT][eksikKatibiOlanBirimler] Process Time: " +
+        "USER " +
+        request.user.username +
+        " [REPORT][eksikKatibiOlanBirimler] Process Time: " +
         processTime +
         " ms"
     );
@@ -253,7 +257,9 @@ router.get(
       let processTime = processEndDate - processStartDate;
       console.log(
         getTimeForLog() +
-          "[REPORT][izinliPersoneller] Process Time: " +
+          "USER " +
+          request.user.username +
+          " [REPORT][izinliPersoneller] Process Time: " +
           processTime +
           " ms"
       );
@@ -395,7 +401,9 @@ router.get(
       let processTime = processEndDate - processStartDate;
       console.log(
         getTimeForLog() +
-          "[REPORT][toplamPersonelSayisi] Process Time: " +
+          "USER " +
+          request.user.username +
+          " [REPORT][toplamPersonelSayisi] Process Time: " +
           processTime +
           " ms"
       );
@@ -461,7 +469,9 @@ router.get(
       let processTime = processEndDate - processStartDate;
       console.log(
         getTimeForLog() +
-          "[REPORT][personelTabloKontrolEdilecekBirimler] Process Time: " +
+          "USER " +
+          request.user.username +
+          " [REPORT][personelTabloKontrolEdilecekBirimler] Process Time: " +
           processTime +
           " ms"
       );
@@ -595,7 +605,9 @@ router.get(
       let processTime = processEndDate - processStartDate;
       console.log(
         getTimeForLog() +
-          "[REPORT][personelTablo] Process Time: " +
+          "USER " +
+          request.user.username +
+          " [REPORT][personelTablo] Process Time: " +
           processTime +
           " ms"
       );
@@ -649,7 +661,9 @@ router.get(
         let processTime = processEndDate - processStartDate;
         console.log(
           getTimeForLog() +
-            "[CACHE][REPORT][mahkemeSavcilikKatipSayisi] Process Time: " +
+            "USER " +
+            request.user.username +
+            " [CACHE][REPORT][mahkemeSavcilikKatipSayisi] Process Time: " +
             processTime +
             " ms"
         );
@@ -738,7 +752,9 @@ router.get(
       let processTime = processEndDate - processStartDate;
       console.log(
         getTimeForLog() +
-          "[REPORT][mahkemeSavcilikKatipSayisi] Process Time: " +
+          "USER " +
+          request.user.username +
+          " [REPORT][izinliPersoneller] Process Time: " +
           processTime +
           " ms"
       );
@@ -866,7 +882,9 @@ router.get(
 
     console.log(
       getTimeForLog() +
-        "[REPORT][infazKorumaMemurSayisi] Process Time: " +
+        "USER " +
+        request.user.username +
+        " [REPORT][infazKorumaMemurSayisi] Process Time: " +
         processTime +
         " ms"
     );
@@ -905,7 +923,9 @@ router.get(
         let processTime = processEndDate - processStartDate;
         console.log(
           getTimeForLog() +
-            "[CACHE][REPORT][urgentJobs] Process Time: " +
+            "USER " +
+            request.user.username +
+            " [CACHE][REPORT][urgentjobs] Process Time: " +
             processTime +
             " ms"
         );
@@ -980,7 +1000,9 @@ router.get(
       let processTime = processEndDate - processStartDate;
       console.log(
         getTimeForLog() +
-          "[REPORT][urgentJobs] Process Time: " +
+          "USER " +
+          request.user.username +
+          " [REPORT][urgentjobs] Process Time: " +
           processTime +
           " ms"
       );
