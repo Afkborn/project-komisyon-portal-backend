@@ -168,9 +168,11 @@ router.get(
   async (request, response) => {
     try {
       let processStartDate = new Date();
+
       let institutionId = request.query.institutionId;
       let startDate = request.query.startDate;
       let endDate = request.query.endDate;
+      let reason = request.query.reason;
 
       if (!institutionId) {
         return response.status(400).send({
@@ -179,29 +181,16 @@ router.get(
         });
       }
 
-      // tüm personelleri getir, ne kadar verimli ilerde anlarız.
-      let persons = await Person.find({})
+      let units = await Unit.find({ institutionID: institutionId });
+
+      let persons = await Person.find({
+        status: true,
+        birimID: { $in: units.map((unit) => unit._id) },
+      })
         .populate("title", "-_id -__v -deletable")
         .populate("birimID", "-_id -__v -deletable")
         .populate("temporaryBirimID", "-_id -__v -deletable")
         .populate("izinler", "-__v -personID");
-
-      persons = persons.filter((person) => {
-        if (!person.birimID) {
-          return false;
-        }
-        if (person.status === false) {
-          return false;
-        }
-
-        return (
-          person.birimID.institutionID == institutionId ||
-          (person.temporaryBirimID &&
-            person.temporaryBirimID.institutionID == institutionId)
-        );
-      });
-
-      // İzinli personelleri filtrele
 
       // Tarihleri doğru formatta parse et
       let now = new Date();
@@ -212,53 +201,54 @@ router.get(
       let izinliPersonelList;
 
       if (start && end) {
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+
         // Belirli tarihler arasında izinde olan personelleri bul
         izinliPersonel = persons.filter((person) => {
           return person.izinler.some((leave) => {
-            return start <= leave.endDate && end >= leave.startDate;
+            const leaveStart = new Date(leave.startDate);
+            const leaveEnd = new Date(leave.endDate);
+            return (
+              startDate <= leaveEnd &&
+              endDate >= leaveStart &&
+              (!reason || leave.reason === reason)
+            );
           });
         });
-
-        izinliPersonelList = izinliPersonel.map((person) => ({
-          sicil: person.sicil,
-          ad: person.ad,
-          soyad: person.soyad,
-          birim: person.birimID.name,
-          unvan: person.title,
-          isTemporary: person.isTemporary,
-          izinBaslangic: person.izinler.find((leave) => {
-            return start <= leave.endDate && end >= leave.startDate;
-          }).startDate,
-          izinBitis: person.izinler.find((leave) => {
-            return start <= leave.endDate && end >= leave.startDate;
-          }).endDate,
-        }));
       } else {
         // Şu an izinde olan personelleri bul
         izinliPersonel = persons.filter((person) => {
           return person.izinler.some((leave) => {
-            return now >= leave.startDate && now <= leave.endDate;
+            const leaveStart = new Date(leave.startDate);
+            const leaveEnd = new Date(leave.endDate);
+            return (
+              leaveStart <= now &&
+              now <= leaveEnd &&
+              (!reason || leave.reason === reason)
+            );
           });
         });
-
-        izinliPersonelList = izinliPersonel.map((person) => ({
-          sicil: person.sicil,
-          ad: person.ad,
-          soyad: person.soyad,
-          birim: person.birimID.name,
-          unvan: person.title,
-          isTemporary: person.isTemporary,
-          izinBaslangic: person.izinler.find((leave) => {
-            return now >= leave.startDate && now <= leave.endDate;
-          }).startDate,
-          izinBitis: person.izinler.find((leave) => {
-            return now >= leave.startDate && now <= leave.endDate;
-          }).endDate,
-          izinTur: person.izinler.find((leave) => {
-            return now >= leave.startDate && now <= leave.endDate;
-          }).reason,
-        }));
       }
+
+      izinliPersonelList = izinliPersonel.map((person) => ({
+        sicil: person.sicil,
+        ad: person.ad,
+        soyad: person.soyad,
+        birim: person.birimID.name,
+        unvan: person.title,
+        isTemporary: person.isTemporary,
+        izinBaslangic: person.izinler.find((leave) => {
+          return now >= leave.startDate && now <= leave.endDate;
+        }).startDate,
+        izinBitis: person.izinler.find((leave) => {
+          return now >= leave.startDate && now <= leave.endDate;
+        }).endDate,
+        izinTur: person.izinler.find((leave) => {
+          return now >= leave.startDate && now <= leave.endDate;
+        }).reason,
+      }));
+
       let processEndDate = new Date();
       let processTime = processEndDate - processStartDate;
       console.log(
@@ -817,7 +807,6 @@ router.get(
     // get institutio
     let institution = getInstitutionListByID(institutionId);
 
-
     if (institution.infazKorumaTitleChartVisible == false) {
       return response.status(400).send({
         success: false,
@@ -865,7 +854,6 @@ router.get(
     // sort infazKorumaTable by institutionName
     infazKorumaSayi.sort((a, b) => {
       return a.institutionName.localeCompare(b.institutionName);
-
     });
 
     let processEndDate = new Date();
