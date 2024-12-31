@@ -92,6 +92,18 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
     });
 });
 
+const turkishToLowerCase = (text) => {
+  if (!text) return "";
+  return text
+    .replace(/Ğ/g, "ğ")
+    .replace(/Ü/g, "ü")
+    .replace(/Ş/g, "ş")
+    .replace(/İ/g, "i")
+    .replace(/Ö/g, "ö")
+    .replace(/Ç/g, "ç")
+    .replace(/ı/g, "i");
+};
+
 // get a person by ad soyad
 router.get(
   "/byAdSoyad",
@@ -106,10 +118,18 @@ router.get(
       });
     }
 
-    Person.find({
-      ad: { $regex: new RegExp(ad, "iu") },
-      soyad: { $regex: new RegExp(soyad, "iu") },
-    })
+    // Türkçe karakter uyumlu küçük harfe dönüştürme
+    const normalizedAd = turkishToLowerCase(ad);
+    const normalizedSoyad = turkishToLowerCase(soyad);
+
+    Person.find(
+      {
+        ad: { $regex: new RegExp(normalizedAd, "iu") },
+        soyad: { $regex: new RegExp(normalizedSoyad, "iu") },
+      },
+      null,
+      { collation: { locale: "tr", strength: 1 } }
+    )
       .populate("title", "-_id -__v -deletable")
       .populate("birimID", " -__v -deletable")
       .populate("ikinciBirimID", " -__v -deletable") // yaziislerimüdürü için 2. birim olursa populate ediyoruz.
@@ -382,7 +402,6 @@ router.get(
           null, // leaveID
           true // isVisible
         );
-
 
         response.send({
           success: true,

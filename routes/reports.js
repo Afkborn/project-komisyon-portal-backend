@@ -173,19 +173,19 @@ router.get(
     try {
       let processStartDate = new Date();
 
-      let institutionId = request.query.institutionId;
+      // let institutionId = request.query.institutionId;
       let startDate = request.query.startDate;
       let endDate = request.query.endDate;
       let reason = request.query.reason;
 
-      if (!institutionId) {
-        return response.status(400).send({
-          success: false,
-          message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
-        });
-      }
-
-      let units = await Unit.find({ institutionID: institutionId });
+      // if (!institutionId) {
+      //   return response.status(400).send({
+      //     success: false,
+      //     message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
+      //   });
+      // }
+      // { institutionID: institutionId }
+      let units = await Unit.find();
 
       let persons = await Person.find({
         status: true,
@@ -234,24 +234,25 @@ router.get(
           });
         });
       }
+      
 
-      izinliPersonelList = izinliPersonel.map((person) => ({
-        sicil: person.sicil,
-        ad: person.ad,
-        soyad: person.soyad,
-        birim: person.birimID.name,
-        unvan: person.title,
-        isTemporary: person.isTemporary,
-        izinBaslangic: person.izinler.find((leave) => {
+      izinliPersonelList = izinliPersonel.map((person) => {
+        const currentLeave = person.izinler.find((leave) => {
           return now >= leave.startDate && now <= leave.endDate;
-        }).startDate,
-        izinBitis: person.izinler.find((leave) => {
-          return now >= leave.startDate && now <= leave.endDate;
-        }).endDate,
-        izinTur: person.izinler.find((leave) => {
-          return now >= leave.startDate && now <= leave.endDate;
-        }).reason,
-      }));
+        });
+
+        return {
+          sicil: person.sicil,
+          ad: person.ad,
+          soyad: person.soyad,
+          birim: person.birimID.name,
+          unvan: person.title,
+          isTemporary: person.isTemporary,
+          izinBaslangic: currentLeave ? currentLeave.startDate : null,
+          izinBitis: currentLeave ? currentLeave.endDate : null,
+          izinTur: currentLeave ? currentLeave.reason : null,
+        };
+      });
 
       let processEndDate = new Date();
       let processTime = processEndDate - processStartDate;
@@ -839,11 +840,11 @@ router.get(
       institutions.map(async (institution) => {
         let units = await Unit.find({ institutionID: institution.id });
         let infazKorumaMemurSayisi = 0;
-        let infazKorumaBasMemurSayisi = 0;
+        let infazKorumaBasMemurSayisi = 0; 
         await Promise.all(
           units.map(async (unit) => {
             let infazKorumaMemurCount = await Person.countDocuments({
-              birimID: unit._id,
+              birimID: unit._id, 
               kind: "infazvekorumamemuru",
               status: true,
             });
@@ -911,7 +912,7 @@ router.get(
           success: false,
           message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
         });
-      }
+      } 
 
       if (
         cacheEnabled &&
