@@ -549,6 +549,7 @@ router.get(
       // get title without _id -v
       .populate("title", "-_id -__v -deletable")
       .populate("izinler", "-__v -personID")
+      .populate("calistigiKisi", "-__v -personID")
       .select("-kind")
       .then((persons) => {
         if (!persons) {

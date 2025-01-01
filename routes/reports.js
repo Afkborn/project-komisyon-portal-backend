@@ -18,6 +18,11 @@ const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
 
+
+const {
+  getUnitTypeByUnitTypeId,
+} = require("../actions/UnitTypeActions");
+
 const {
   getInstitutionListByID,
   filterInfazKorumaTitleChartVisibleInstitutions,
@@ -234,7 +239,6 @@ router.get(
           });
         });
       }
-      
 
       izinliPersonelList = izinliPersonel.map((person) => {
         const currentLeave = person.izinler.find((leave) => {
@@ -333,23 +337,82 @@ router.get(
           titlePersonCountList.push({
             title: title.name,
             personCount: 1,
+            oncelikSirasi: title.oncelikSirasi,
           });
         } else {
           titlePersonCount.personCount++;
         }
       }
 
+      // titlePersonCountList'u title.oncelikSriasi ile sırala
+      titlePersonCountList.sort((a, b) => {
+        return a.oncelikSirasi - b.oncelikSirasi;
+      });
+
       // birim bazlı personel sayılarınıda bulup ekleyelim. Örneğin 1. ağır ceza mahkemesi 3 gibi
-      let unitList = await Unit.find();
+      let unitList = await Unit.find({
+        institutionID: institutionId,
+      });
+
+      unitList = unitList.map((unit) => {
+        const unitType = getUnitTypeByUnitTypeId(unit.unitTypeID);
+        return { ...unit._doc, unitType };
+      });
+
+      
+
+      // unitList'i unitType.oncelikSirasina göre sort et
+      unitList.sort((a, b) => {
+        if (a.unitType.oncelikSirasi !== b.unitType.oncelikSirasi) {
+          return a.unitType.oncelikSirasi - b.unitType.oncelikSirasi;
+        }
+        return a.series - b.series;
+      });
+
+
+
+      
+
       let unitPersonCountList = [];
       for (let i = 0; i < unitList.length; i++) {
         let unit = unitList[i];
-        let unitPersonCount = await Person.countDocuments({
+        let unitPersons = await Person.find({
           birimID: unit._id,
+        });
+
+        // şimdide bu birimdeki personellerin ünvanlarını bulup ekleyelim
+        let unitTitlePersonCountList = [];
+        for (let j = 0; j < unitPersons.length; j++) {
+          let unitPerson = unitPersons[j];
+          let title = titleList.find((title) =>
+            title._id.equals(new ObjectId(unitPerson.title))
+          );
+
+          if (!title) {
+            continue;
+          }
+
+          let unitTitlePersonCount = unitTitlePersonCountList.find(
+            (unitTitlePersonCount) => unitTitlePersonCount.title == title.name
+          );
+
+          if (!unitTitlePersonCount) {
+            unitTitlePersonCountList.push({
+              title: title.name,
+              personCount: 1,
+              oncelikSirasi: title.oncelikSirasi,
+            });
+          } else {
+            unitTitlePersonCount.personCount++;
+          }
+        }
+        unitTitlePersonCountList.sort((a, b) => {
+          return a.oncelikSirasi - b.oncelikSirasi;
         });
         unitPersonCountList.push({
           unit: unit.name,
-          personCount: unitPersonCount,
+          personCount: unitPersons.length,
+          titlePersonCountList: unitTitlePersonCountList,
         });
       }
 
@@ -840,11 +903,11 @@ router.get(
       institutions.map(async (institution) => {
         let units = await Unit.find({ institutionID: institution.id });
         let infazKorumaMemurSayisi = 0;
-        let infazKorumaBasMemurSayisi = 0; 
+        let infazKorumaBasMemurSayisi = 0;
         await Promise.all(
           units.map(async (unit) => {
             let infazKorumaMemurCount = await Person.countDocuments({
-              birimID: unit._id, 
+              birimID: unit._id,
               kind: "infazvekorumamemuru",
               status: true,
             });
@@ -912,7 +975,7 @@ router.get(
           success: false,
           message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
         });
-      } 
+      }
 
       if (
         cacheEnabled &&

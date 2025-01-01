@@ -2,7 +2,7 @@ const Messages = require("../constants/Messages");
 const express = require("express");
 const router = express.Router();
 const Unit = require("../model/Unit");
-const { Person, zabitkatibi } = require("../model/Person");
+const { Person } = require("../model/Person");
 const auth = require("../middleware/auth");
 const {
   getUnitTypesByType,
