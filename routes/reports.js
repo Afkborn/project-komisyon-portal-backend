@@ -1084,4 +1084,14 @@ router.get(
   }
 );
 
+// Rapor endpointleri burada eklenir
+router.get("/personnel-count", async (req, res) => {
+  try {
+    const count = await Person.countDocuments();
+    res.json({ success: true, count });
+  } catch (error) {
+    res.status(500).json({ success: false, message: Messages.ERROR });
+  }
+});
+
 module.exports = router;

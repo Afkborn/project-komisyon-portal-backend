@@ -141,6 +141,43 @@ router.get("/details", auth, (request, response) => {
     });
 });
 
+// update user with id
+router.put("/:id", auth, Logger("PUT users/:id"), (request, response) => {
+  if (request.user.role !== "admin") {
+    return response.status(403).send({
+      message: Messages.USER_NOT_AUTHORIZED,
+    });
+  }
+
+  // eğer password değişiyoprsa hashle
+  if (request.body.password) {
+    request.body.password = toSHA256(request.body.password);
+  }
+
+  User.findByIdAndUpdate(request.params.id, request.body, {
+    new: true, // Return the updated document
+    runValidators: true, // Validate the update operation
+    useFindAndModify: false,
+  })
+    .then((user) => {
+      if (!user) {
+        return response.status(404).send({
+          message: Messages.USER_NOT_FOUND,
+        });
+      }
+      response.status(200).send({
+        message: Messages.USER_UPDATED,
+        user,
+      });
+    })
+    .catch((error) => {
+      response.status(500).send({
+        message: Messages.USER_NOT_UPDATED,
+        error,
+      });
+    });
+});
+
 // update user
 router.put("/", auth, Logger("PUT users/"), (request, response) => {
   User.findOneAndUpdate({ username: request.user.username }, request.body, {
