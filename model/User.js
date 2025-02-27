@@ -20,9 +20,15 @@ const UserSchema = mongoose.Schema(
       type: String,
       required: [true, Messages.PASSWORD_REQUIRED],
     },
-    role: {
-      type: String,
+    roles: {
+      type: [String],
       required: [true, Messages.ROLE_REQUIRED],
+      validate: {
+        validator: function(roles) {
+          return roles.length > 0;
+        },
+        message: 'En az bir rol gereklidir'
+      }
     },
     email: {
       type: String,

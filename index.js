@@ -45,6 +45,8 @@ app.use("/api/leaves", leaves);
 const reports = require("./routes/reports");
 app.use("/api/reports", reports);
 
+const roles = require("./routes/roles");
+app.use("/api/roles", roles);
 
 const activities = require("./routes/activities");
 app.use("/api/activities", activities);

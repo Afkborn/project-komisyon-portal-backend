@@ -7,8 +7,9 @@ const getTimeForLog = require("../common/time");
 const auth = require("../middleware/auth");
 const toSHA256 = require("../common/hashing");
 const Logger = require("../middleware/logger");
-
+const checkRoles = require("../middleware/checkRoles");
 // login user
+
 router.post("/login", (request, response) => {
   const requiredFields = ["username", "password"];
   const missingFields = requiredFields.filter((field) => !request.body[field]);
@@ -36,7 +37,7 @@ router.post("/login", (request, response) => {
         {
           id: user._id,
           username: user.username,
-          role: user.role,
+          roles: user.roles, // role yerine roles
         },
         "RANDOM-TOKEN",
         { expiresIn: "7d" }
@@ -68,14 +69,9 @@ router.post("/login", (request, response) => {
 router.post(
   "/register",
   auth,
+  checkRoles(["admin"]), // admin rolüne sahip olanlar kullanabilir
   Logger("POST users/register"),
   (request, response) => {
-    if (request.user.role !== "admin") {
-      return response.status(403).send({
-        message: Messages.USER_NOT_AUTHORIZED,
-      });
-    }
-
     const requiredFields = ["username", "password", "name", "surname"];
     const missingFields = requiredFields.filter(
       (field) => !request.body[field]
@@ -93,7 +89,7 @@ router.post(
       name: request.body.name,
       surname: request.body.surname,
       password: password,
-      role: request.body.role,
+      roles: request.body.roles || ["user"], // varsayılan rol
     });
 
     if (request.body.email) {
@@ -142,41 +138,41 @@ router.get("/details", auth, (request, response) => {
 });
 
 // update user with id
-router.put("/:id", auth, Logger("PUT users/:id"), (request, response) => {
-  if (request.user.role !== "admin") {
-    return response.status(403).send({
-      message: Messages.USER_NOT_AUTHORIZED,
-    });
-  }
+router.put(
+  "/:id",
+  auth,
+  checkRoles(["admin"]),
+  Logger("PUT users/:id"),
+  (request, response) => {
+    // eğer password değişiyoprsa hashle
+    if (request.body.password) {
+      request.body.password = toSHA256(request.body.password);
+    }
 
-  // eğer password değişiyoprsa hashle
-  if (request.body.password) {
-    request.body.password = toSHA256(request.body.password);
-  }
-
-  User.findByIdAndUpdate(request.params.id, request.body, {
-    new: true, // Return the updated document
-    runValidators: true, // Validate the update operation
-    useFindAndModify: false,
-  })
-    .then((user) => {
-      if (!user) {
-        return response.status(404).send({
-          message: Messages.USER_NOT_FOUND,
-        });
-      }
-      response.status(200).send({
-        message: Messages.USER_UPDATED,
-        user,
-      });
+    User.findByIdAndUpdate(request.params.id, request.body, {
+      new: true, // Return the updated document
+      runValidators: true, // Validate the update operation
+      useFindAndModify: false,
     })
-    .catch((error) => {
-      response.status(500).send({
-        message: Messages.USER_NOT_UPDATED,
-        error,
+      .then((user) => {
+        if (!user) {
+          return response.status(404).send({
+            message: Messages.USER_NOT_FOUND,
+          });
+        }
+        response.status(200).send({
+          message: Messages.USER_UPDATED,
+          user,
+        });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: Messages.USER_NOT_UPDATED,
+          error,
+        });
       });
-    });
-});
+  }
+);
 
 // update user
 router.put("/", auth, Logger("PUT users/"), (request, response) => {
@@ -292,60 +288,62 @@ router.delete("/", auth, Logger("DELETE users/"), (request, response) => {
 });
 
 // delete user with id
-router.delete("/:id", auth, Logger("DELETE users/:id"), (request, response) => {
-  if (request.user.role !== "admin") {
-    return response.status(403).send({
-      message: Messages.USER_NOT_AUTHORIZED,
-    });
-  }
-  User.findByIdAndDelete(request.params.id)
-    .then((user) => {
-      if (!user) {
-        return response.status(404).send({
-          message: Messages.USER_NOT_FOUND,
+router.delete(
+  "/:id",
+  auth,
+  checkRoles(["admin"]),
+  Logger("DELETE users/:id"),
+  (request, response) => {
+    User.findByIdAndDelete(request.params.id)
+      .then((user) => {
+        if (!user) {
+          return response.status(404).send({
+            message: Messages.USER_NOT_FOUND,
+          });
+        }
+        response.status(200).send({
+          message: Messages.USER_DELETED,
         });
-      }
-      response.status(200).send({
-        message: Messages.USER_DELETED,
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: Messages.USER_NOT_DELETED,
+          error,
+        });
       });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: Messages.USER_NOT_DELETED,
-        error,
-      });
-    });
-});
+  }
+);
 
 // get all users
-router.get("/", auth, Logger("GET users/"), (request, response) => {
-  if (request.user.role !== "admin") {
-    return response.status(403).send({
-      message: Messages.USER_NOT_AUTHORIZED,
-    });
-  }
-  User.find()
-    .then((users) => {
-      // remove password field from response
-      users = users.map((user) => {
-        user = user.toObject();
-        delete user.password;
-        delete user.__v;
-        return user;
-      });
+router.get(
+  "/",
+  auth,
+  checkRoles(["admin"]),
+  Logger("GET users/"),
+  (request, response) => {
+    User.find()
+      .then((users) => {
+        // remove password field from response
+        users = users.map((user) => {
+          user = user.toObject();
+          delete user.password;
+          delete user.__v;
+          return user;
+        });
 
-      response.status(200).send({
-        message: Messages.USERS_LIST,
-        users,
+        response.status(200).send({
+          message: Messages.USERS_LIST,
+          users,
+        });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: Messages.USERS_GET_FAILED,
+          error,
+        });
       });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: Messages.USERS_GET_FAILED,
-        error,
-      });
-    });
-});
+  }
+);
 
 // get all users name and surname
 router.get("/names", auth, Logger("GET users/names"), (request, response) => {
