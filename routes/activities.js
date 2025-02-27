@@ -10,11 +10,8 @@ const Activity = require("../model/Activity");
 const {
   getActivityWithID,
   getActivitiesWithFilterTypes,
-  getActivityWithPersonelHaraketScreen
+  getActivityWithPersonelHaraketScreen,
 } = require("../actions/ActivityActions");
-
-
-
 
 // get last activities
 router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
@@ -110,6 +107,15 @@ router.get(
   Logger("GET /activities/"),
   async (request, response) => {
     try {
+      let { page = 1, limit = 100 } = request.query; // Varsayılan değerler: page=1, limit=100
+      page = parseInt(page) || 1;
+      limit = parseInt(limit) || 100;
+
+      const totalRecords = await Activity.countDocuments({
+        userID: request.params.userID,
+      });
+      const pageCount = Math.ceil(totalRecords / limit);
+
       const activities = await Activity.find({
         userID: request.params.userID,
       })
@@ -119,19 +125,23 @@ router.get(
         .populate("personUnitID", "name")
         .populate("leaveID", "")
         .populate("personID", "sicil ad soyad")
-        .select("-__v");
+        .select("-__v")
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .sort({ createdAt: -1 });
 
       // Her activity içinde dönüp typeID'yi RequestTypeList'ten alınan değerle değiştiriyoruz
       const responseActivities = activities.map((element) => {
-        const activityObj = element.toObject(); // Mongoose belgesini düz nesneye çevir
+        const activityObj = element.toObject();
         let type = getActivityWithID(activityObj.typeID);
-        activityObj.type = type; // Yeni 'type' alanını ekle
-        delete activityObj.typeID; // Eski 'typeID' alanını sil
-        return activityObj; // Yeni nesneyi döndür
+        activityObj.type = type;
+        delete activityObj.typeID;
+        return activityObj;
       });
 
       response.json({
         success: true,
+        pageCount: pageCount,
         length: responseActivities.length,
         activityList: responseActivities,
       });
