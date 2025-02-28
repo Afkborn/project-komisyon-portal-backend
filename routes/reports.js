@@ -995,52 +995,73 @@ router.get(
         units,
         14
       );
-      expiringTemporaryPersonel.forEach((person) => {
+      for (const person of expiringTemporaryPersonel) {
+        // Title bilgisini al
+        const personWithTitle = await Person.findById(person._id).populate(
+          "title",
+          "name -_id"
+        );
+
         urgentJobs.push({
           urgentJobType: "Geçici Personel Karar Süresi",
-          urgentJobEndDate: new Date(person.temporaryEndDate), // Date objesine çevir
+          urgentJobEndDate: new Date(person.temporaryEndDate),
           urgentJobDetail: person.temporaryReason,
           personID: person._id,
           sicil: person.sicil,
           ad: person.ad,
           soyad: person.soyad,
+          title: personWithTitle.title?.name, // Optional chaining ile güvenli erişim
         });
-      });
+      }
 
       let expiringLeavePersonel = await getUrgentExpiringLeaves(units, 14);
-      expiringLeavePersonel.forEach((person) => {
+      for (const person of expiringLeavePersonel) {
         const currentLeave = person.izinler.find((leave) => {
           return new Date() >= leave.startDate && new Date() <= leave.endDate;
         });
 
         if (currentLeave) {
+          // Title bilgisini al
+          const personWithTitle = await Person.findById(person._id).populate(
+            "title",
+            "name -_id"
+          );
+
           urgentJobs.push({
             urgentJobType: "İzin Bitiş Süresi",
-            urgentJobEndDate: new Date(currentLeave.endDate), // Date objesine çevir
+            urgentJobEndDate: new Date(currentLeave.endDate),
             urgentJobDetail: currentLeave.izinNedeni,
             personID: person._id,
             sicil: person.sicil,
             ad: person.ad,
             soyad: person.soyad,
+            title: personWithTitle.title?.name,
           });
         }
-      });
+      }
 
       let expiringSuspensionPersonel = await getUrgentExpiringSuspensions(
         units,
         14
       );
-      expiringSuspensionPersonel.forEach((person) => {
+      for (const person of expiringSuspensionPersonel) {
+        // Title bilgisini al
+        const personWithTitle = await Person.findById(person._id).populate(
+          "title",
+          "name -_id"
+        );
+
         urgentJobs.push({
           urgentJobType: "Uzaklaştırma Bitiş Süresi",
-          urgentJobEndDate: new Date(person.suspensionEndDate), // Date objesine çevir
+          urgentJobEndDate: new Date(person.suspensionEndDate),
           urgentJobDetail: person.suspensionReason,
           personID: person._id,
           sicil: person.sicil,
           ad: person.ad,
           soyad: person.soyad,
+          title: personWithTitle.title?.name,
         });
-      });
+      }
 
       // Bitiş tarihine göre sırala (yakın tarihler önce)
       urgentJobs.sort((a, b) => a.urgentJobEndDate - b.urgentJobEndDate);
