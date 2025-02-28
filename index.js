@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const cors = require('cors');
+const cors = require("cors");
 const bodyParser = require("body-parser");
 const mongoDbConnect = require("./database/mongoDb");
 const getTimeForLog = require("./common/time");
@@ -16,7 +16,6 @@ app.use(
 app.use(cors()); // CORS'u etkinleştirir
 
 app.use(bodyParser.json());
-
 
 const users = require("./routes/users");
 app.use("/api/users", users);
@@ -53,11 +52,9 @@ app.use("/api/activities", activities);
 
 mongoDbConnect();
 
-
-const checkConstantTitle = require("./actions/DatabaseActions").checkConstantTitle;
+const checkConstantTitle =
+  require("./actions/DatabaseActions").checkConstantTitle;
 checkConstantTitle();
-
-
 
 app.listen(port, () => {
   console.log(getTimeForLog() + `Listening on port ${port}`);

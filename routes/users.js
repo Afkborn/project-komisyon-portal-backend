@@ -96,8 +96,8 @@ router.post(
       user.email = request.body.email;
     }
 
-    if (request.body.phone) {
-      user.phone = request.body.phone;
+    if (request.body.phoneNumber) {
+      user.phoneNumber = request.body.phoneNumber;
     }
 
     user

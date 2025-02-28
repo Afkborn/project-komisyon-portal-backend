@@ -35,6 +35,12 @@ const UserSchema = mongoose.Schema(
     },
     phoneNumber: {
       type: String,
+      validate: {
+        validator: function (v) {
+          return /^\d{10}$/.test(v);
+        },
+        message: (props) => Messages.VALID_PHONE(props.value),
+      },
     },
   },
   {

@@ -18,10 +18,7 @@ const UnitTypeList = require("../constants/UnitTypeList").UnitTypeList;
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
 
-
-const {
-  getUnitTypeByUnitTypeId,
-} = require("../actions/UnitTypeActions");
+const { getUnitTypeByUnitTypeId } = require("../actions/UnitTypeActions");
 
 const {
   getInstitutionListByID,
@@ -359,8 +356,6 @@ router.get(
         return { ...unit._doc, unitType };
       });
 
-      
-
       // unitList'i unitType.oncelikSirasina göre sort et
       unitList.sort((a, b) => {
         if (a.unitType.oncelikSirasi !== b.unitType.oncelikSirasi) {
@@ -368,10 +363,6 @@ router.get(
         }
         return a.series - b.series;
       });
-
-
-
-      
 
       let unitPersonCountList = [];
       for (let i = 0; i < unitList.length; i++) {
@@ -999,6 +990,7 @@ router.get(
       let units = await Unit.find({ institutionID: institutionId });
       let urgentJobs = [];
 
+      // Tüm acil işleri topla
       let expiringTemporaryPersonel = await getUrgentExpiringTemporaryPersonnel(
         units,
         14
@@ -1006,10 +998,8 @@ router.get(
       expiringTemporaryPersonel.forEach((person) => {
         urgentJobs.push({
           urgentJobType: "Geçici Personel Karar Süresi",
-          urgentJobEndDate: person.temporaryEndDate,
+          urgentJobEndDate: new Date(person.temporaryEndDate), // Date objesine çevir
           urgentJobDetail: person.temporaryReason,
-
-          // person
           personID: person._id,
           sicil: person.sicil,
           ad: person.ad,
@@ -1017,23 +1007,23 @@ router.get(
         });
       });
 
-      let expiringLeavePersonel = await getUrgentExpiringLeaves(units, 14); // 14 gün
+      let expiringLeavePersonel = await getUrgentExpiringLeaves(units, 14);
       expiringLeavePersonel.forEach((person) => {
-        urgentJobs.push({
-          urgentJobType: "İzin Bitiş Süresi",
-          urgentJobEndDate: person.izinler.find((leave) => {
-            return new Date() >= leave.startDate && new Date() <= leave.endDate;
-          }).endDate,
-          urgentJobDetail: person.izinler.find((leave) => {
-            return new Date() >= leave.startDate && new Date() <= leave.endDate;
-          }).izinNedeni,
-
-          // person
-          personID: person._id,
-          sicil: person.sicil,
-          ad: person.ad,
-          soyad: person.soyad,
+        const currentLeave = person.izinler.find((leave) => {
+          return new Date() >= leave.startDate && new Date() <= leave.endDate;
         });
+
+        if (currentLeave) {
+          urgentJobs.push({
+            urgentJobType: "İzin Bitiş Süresi",
+            urgentJobEndDate: new Date(currentLeave.endDate), // Date objesine çevir
+            urgentJobDetail: currentLeave.izinNedeni,
+            personID: person._id,
+            sicil: person.sicil,
+            ad: person.ad,
+            soyad: person.soyad,
+          });
+        }
       });
 
       let expiringSuspensionPersonel = await getUrgentExpiringSuspensions(
@@ -1043,16 +1033,17 @@ router.get(
       expiringSuspensionPersonel.forEach((person) => {
         urgentJobs.push({
           urgentJobType: "Uzaklaştırma Bitiş Süresi",
-          urgentJobEndDate: person.suspensionEndDate,
+          urgentJobEndDate: new Date(person.suspensionEndDate), // Date objesine çevir
           urgentJobDetail: person.suspensionReason,
-
-          // person
           personID: person._id,
           sicil: person.sicil,
           ad: person.ad,
           soyad: person.soyad,
         });
       });
+
+      // Bitiş tarihine göre sırala (yakın tarihler önce)
+      urgentJobs.sort((a, b) => a.urgentJobEndDate - b.urgentJobEndDate);
 
       let processEndDate = new Date();
       lastUrgentJobsCacheTime = currentTime;

@@ -107,9 +107,9 @@ router.get(
   Logger("GET /activities/"),
   async (request, response) => {
     try {
-      let { page = 1, limit = 100 } = request.query; // Varsayılan değerler: page=1, limit=100
+      let { page = 1, limit = 30 } = request.query; // Varsayılan değerler: page=1, limit=30
       page = parseInt(page) || 1;
-      limit = parseInt(limit) || 100;
+      limit = parseInt(limit) || 30;
 
       const totalRecords = await Activity.countDocuments({
         userID: request.params.userID,
