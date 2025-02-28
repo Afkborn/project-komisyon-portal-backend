@@ -22,22 +22,23 @@ async function getUrgentExpiringLeaves(units, day = 14) {
   }).populate("izinler", "-__v -personID");
 
   let now = new Date();
+
+  // şu an izinli olanları al
   let izinliPersonel = persons.filter((person) => {
-    return person.izinler.some((leave) => {
-      return now >= leave.startDate && now <= leave.endDate;
-    });
+    return person.izinler.some(
+      (leave) => now >= leave.startDate && now <= leave.endDate
+    );
   });
 
-  // izinliPersonel içinde dön, bitiş tarihi day gün sonra olacak olanları al
+  // sadece şu an aktif izni olanları al ve onların bitiş tarihi 14 gün içinde mi kontrol et
   izinliPersonel = izinliPersonel.filter((person) => {
-    return person.izinler.some((leave) => {
-      return leave.endDate - now <= day * 24 * 60 * 60 * 1000;
-    });
+    return person.izinler
+      .filter((leave) => now >= leave.startDate && now <= leave.endDate) // sadece aktif izinler
+      .some((leave) => leave.endDate - now <= day * 24 * 60 * 60 * 1000);
   });
 
   return izinliPersonel;
 }
-
 
 // uzaklaştırması olup bitiş tarihi yaklaşanlar
 async function getUrgentExpiringSuspensions(units, day = 14) {
@@ -52,7 +53,6 @@ async function getUrgentExpiringSuspensions(units, day = 14) {
 
   return persons;
 }
-
 
 module.exports = {
   getUrgentExpiringTemporaryPersonnel,
