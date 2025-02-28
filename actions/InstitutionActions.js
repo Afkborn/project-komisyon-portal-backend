@@ -21,6 +21,7 @@ function getInstitutionListByID(typeId) {
   return {
     id: result.id,
     name: result.name,
+    types: result.types,
     katipTitleChartVisible: result.katipTitleChartVisible ?? false, // Eğer yoksa false döndür
     infazKorumaTitleChartVisible: result.infazKorumaTitleChartVisible ?? false, // Eğer yoksa false dö
   };
@@ -33,6 +34,9 @@ function filterInfazKorumaTitleChartVisibleInstitutions() {
     (institution) => institution.infazKorumaTitleChartVisible
   );
 }
+
+
+
 
 module.exports = {
   getInstitutionListByID,

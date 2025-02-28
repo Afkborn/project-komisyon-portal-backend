@@ -8,10 +8,12 @@ const {
   getUnitTypesByType,
   getUnitTypeByUnitTypeId,
 } = require("../actions/UnitTypeActions");
+
 const Logger = require("../middleware/logger");
 
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
+const { getInstitutionListByID } = require("../actions/InstitutionActions");
 
 // get all units
 // institutionTypeId params is optional
@@ -73,6 +75,7 @@ router.get(
 
         response.send({
           success: true,
+          institution: getInstitutionListByID(institutionId),
           unitList: units,
         });
       })
@@ -164,7 +167,6 @@ router.delete("/:id", auth, Logger("DELETE /units"), (request, response) => {
   Person.find({ birimID: id })
     .then((persons) => {
       if (persons.length > 0) {
-
         return response.status(400).send({
           success: false,
           message: Messages.UNIT_NOT_DELETABLE_REASON_PERSON,
