@@ -4,8 +4,21 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const mongoDbConnect = require("./database/mongoDb");
 const getTimeForLog = require("./common/time");
+const { initRedis } = require("./config/redis");
 require("dotenv").config();
 const port = process.env.PORT;
+
+// Redis bağlantısını başlat - utils/redis.js'deki bağlantıyı kullanmayacağız
+initRedis().then((isConnected) => {
+  if (isConnected) {
+    console.log(getTimeForLog() + "Redis servisi hazır");
+  } else {
+    console.warn(
+      getTimeForLog() +
+        "Redis servisi hazır değil, bazı özellikler sınırlı olabilir"
+    );
+  }
+});
 
 app.use(
   bodyParser.urlencoded({

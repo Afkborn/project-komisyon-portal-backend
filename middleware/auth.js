@@ -1,35 +1,46 @@
 const jwt = require("jsonwebtoken");
-const User = require("../model/User");
-const Messages = require("../constants/Messages");
+const { isValidToken } = require("../config/redis");
+const getTimeForLog = require("../common/time");
 
-module.exports = async (request, response, next) => {
+module.exports = async (req, res, next) => {
   try {
-    const token = await request.headers.authorization.split(" ")[1];
-    const decodedToken = jwt.verify(token, "RANDOM-TOKEN");
-    const user = decodedToken;
-    if (user.exp < Date.now() / 1000) {
-      return response.status(401).json({
-        error: "Token expired",
+    // Authorization header kontrolü
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        message: "Authorization başlığında geçerli bir Bearer token bulunamadı",
       });
     }
-    await User.findOne({ username: user.username })
-      .then((user) => {
-        // OK
-        return user;
-      })
-      .catch((err) => {
-        response.status(404).send({
-          message: Messages.USER_NOT_FOUND,
-          err,
-        });
-        return; // to prevent further execution
-      });
 
-    request.user = user;
+    // Token'ı header'dan al (substring metodu split'ten daha güvenilir)
+    const token = authHeader.substring(7);
+
+    if (!token || token.trim() === "") {
+      return res.status(401).json({
+        message: "Geçerli bir token sağlanmadı",
+      });
+    }
+
+    // Token blacklist kontrolü
+    const tokenValid = await isValidToken(token);
+    if (!tokenValid) {
+      return res.status(401).json({
+        message: "Geçersiz token - oturum sonlandırılmış",
+      });
+    }
+
+    // Token doğrulama
+    const decodedToken = jwt.verify(token, "RANDOM-TOKEN");
+
+    // Kullanıcı bilgisini request'e ekle
+    req.user = decodedToken;
+
     next();
-  } catch (err) {
-    response.status(401).json({
-      error: "Authentication failed",
+  } catch (error) {
+    console.error(getTimeForLog() + "Auth middleware error:", error.message);
+    res.status(401).json({
+      message: "Kimlik doğrulama başarısız",
+      error: error.message || error,
     });
   }
 };

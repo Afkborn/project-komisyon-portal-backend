@@ -90,3 +90,11 @@ exports.TITLE_NOT_SAVED = "Ünvan kaydedilemedi";
 exports.TITLE_HAS_PERSON = "Ünvan görevliye atanmış, silinemez";
 exports.TITLE_NOT_DELETABLE_REASON_PERSON = "Ünvan görevliye atanmış, silinemez";
 
+// Redis ve Auth için yeni mesajlar
+module.exports.LOGOUT_SUCCESSFUL = "Başarıyla çıkış yapıldı";
+module.exports.TOO_MANY_ATTEMPTS = "Çok fazla başarısız giriş denemesi";
+module.exports.ACCOUNT_LOCKED = "Hesabınız geçici olarak kilitlendi";
+module.exports.SERVER_ERROR = "Sunucu hatası oluştu";
+module.exports.PASSWORD_CHANGED_LOGIN_REQUIRED = "Şifreniz başarıyla değiştirildi. Tüm cihazlarda yeniden giriş yapmanız gerekecek.";
+module.exports.TOKEN_EXPIRED = "Oturumunuz sona erdi. Lütfen tekrar giriş yapın.";
+
