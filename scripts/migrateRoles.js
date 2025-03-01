@@ -34,7 +34,7 @@ async function migrateRoles() {
       } else if (!user.roles || user.roles.length === 0) {
         // Eğer roles yoksa veya boşsa, varsayılan rol ata
         console.log(`Adding default role to user ${user.username}`);
-        user.roles = ['komisyonkatibi'];
+        user.roles = ['komisyonkatip'];
         await user.save();
         migratedCount++;
         console.log(`✓ Added default role to: ${user.username} (${migratedCount}/${users.length})`);

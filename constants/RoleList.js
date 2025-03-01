@@ -5,6 +5,7 @@ exports.RoleList = [
   { id: 2, name: "komisyonuye", label: "Komisyon Üyesi" },
   { id: 3, name: "komisyonbaskan", label: "Komisyon Başkanı" },
   { id: 5, name: "komisyonkatip", label: "Komisyon Katibi" },
+  { id: 8, name: "komisyonmudur", label: "Komisyon Müdürü" },
 
   // SEGBİS
   { id: 6, name: "segbis-uzman", label: "SEGBİS Uzman" },

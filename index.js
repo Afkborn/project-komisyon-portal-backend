@@ -29,7 +29,7 @@ app.use(
 app.use(cors()); // CORS'u etkinleştirir
 
 app.use(bodyParser.json());
-
+ 
 const users = require("./routes/users");
 app.use("/api/users", users);
 

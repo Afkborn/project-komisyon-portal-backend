@@ -29,14 +29,149 @@ router.post("/login", async (request, response) => {
       });
     }
 
+    // Redis'ten mevcut token versiyonunu oku ya da yeni bir tane oluştur
+    const { redisClient, isConnected } = require("../config/redis");
+
+    // Önce kullanıcının kilitli olup olmadığını kontrol et
+    const MAX_LOGIN_ATTEMPTS = 5; // Maksimum hatalı giriş denemesi
+    const LOCKOUT_DURATION = 30 * 60; // 30 dakika (saniye cinsinden)
+
+    let attempts = 0;
+    let lockedUntil = null;
+    let redisAvailable = false;
+
+    if (redisClient && isConnected()) {
+      try {
+        const rc = redisClient();
+        redisAvailable = true;
+
+        // Multi-get ile tek seferde hem deneme sayısını hem de kilit durumunu kontrol et
+        // Bu sayede Redis'e yapılan istek sayısını azaltıyoruz
+        const [currentAttempts, lockTimestamp] = await Promise.all([
+          rc.get(`loginAttempts:${user.username}`),
+          rc.get(`loginLock:${user.username}`),
+        ]);
+
+        // Redis'te veri bulunursa kullan, bulunmazsa varsayılan değerleri kullan
+        if (currentAttempts) {
+          attempts = parseInt(currentAttempts);
+        }
+
+        if (lockTimestamp) {
+          const now = Math.floor(Date.now() / 1000);
+          const lockTime = parseInt(lockTimestamp);
+ 
+          if (now < lockTime) {
+            // Kilit süresi henüz geçmemiş
+            const remainingSeconds = lockTime - now;
+            const remainingMinutes = Math.ceil(remainingSeconds / 60);
+
+            return response.status(429).send({
+              message: `Çok fazla hatalı giriş denemesi. Hesabınız geçici olarak kilitlendi. ${remainingMinutes} dakika sonra tekrar deneyiniz.`,
+              lockedUntil: new Date(lockTime * 1000),
+              remainingAttempts: 0,
+            });
+          } else {
+            // Kilit süresi geçmiş, kilidi kaldır
+            await rc.del(`loginLock:${user.username}`);
+            await rc.del(`loginAttempts:${user.username}`);
+            attempts = 0;
+          }
+        }
+      } catch (redisError) {
+        console.error(getTimeForLog() + "Redis lock check error:", redisError);
+        redisAvailable = false;
+        // Redis hata verirse, güvenli modda devam et
+        attempts = 0; // Redis olmadan hata sayısını takip edemeyiz, en güvenlisi sıfırlamaktır
+      }
+    }
+
+    // Şifre yanlış ise
     if (user.password !== toSHA256(request.body.password)) {
+      attempts++; // Hatalı giriş sayısını artır
+
+      // Eğer Redis bağlantısı varsa, hatalı giriş sayısını artır
+      if (redisAvailable) {
+        try {
+          const rc = redisClient();
+
+          // Hatalı giriş sayısını güncelle
+          const key = `loginAttempts:${user.username}`;
+          const value = attempts.toString();
+          await rc.setEx(key, LOCKOUT_DURATION, value);
+
+          // Eğer maksimum denemeye ulaşıldıysa hesabı kilitle
+          if (attempts >= MAX_LOGIN_ATTEMPTS) {
+            const lockUntil = Math.floor(Date.now() / 1000) + LOCKOUT_DURATION;
+            await rc.setEx(
+              `loginLock:${user.username}`,
+              LOCKOUT_DURATION,
+              lockUntil.toString()
+            );
+
+            console.log(
+              getTimeForLog() +
+                `User ${user.username} account locked until ${new Date(
+                  lockUntil * 1000
+                )}`
+            );
+
+            return response.status(429).send({
+              message: `Çok fazla hatalı giriş denemesi. Hesabınız 30 dakika süreyle kilitlendi.`,
+              lockedUntil: new Date(lockUntil * 1000),
+              remainingAttempts: 0,
+            });
+          }
+
+          console.log(
+            getTimeForLog() +
+              `Login attempts for ${user.username} updated to ${attempts}`
+          );
+        } catch (redisError) {
+          console.error(getTimeForLog() + "Redis error:", redisError);
+          // Redis hata verirse, şifre kontrol sonucu ile devam et
+        }
+      } else {
+        console.log(
+          getTimeForLog() +
+            `Redis unavailable, cannot track login attempts for ${user.username}`
+        );
+      }
+
+      // Redis kullanılamasa bile kalan hak mesajını göster
+      // Fakat Redis yoksa veya hata verirse kilitleme yapamayacağımızdan her zaman en az 1 hak kalacak
+      const remainingAttempts = redisAvailable
+        ? Math.max(0, MAX_LOGIN_ATTEMPTS - attempts)
+        : 1;
+      const attemptsMessage =
+        remainingAttempts > 0
+          ? `Kalan giriş hakkı: ${remainingAttempts}`
+          : "Çok fazla hatalı giriş denemesi. Hesabınız kilitlendi.";
+
       return response.status(401).send({
-        message: Messages.PASSWORD_INCORRECT,
+        message: `${Messages.PASSWORD_INCORRECT}. ${attemptsMessage}`,
+        remainingAttempts: remainingAttempts,
       });
     }
 
-    // Redis'ten mevcut token versiyonunu oku ya da yeni bir tane oluştur
-    const { redisClient, isConnected } = require("../config/redis");
+    // Şifre doğru ise, hatalı giriş sayısını ve kilidi sıfırla
+    if (redisAvailable) {
+      try {
+        const rc = redisClient();
+        await rc.del(`loginAttempts:${user.username}`);
+        await rc.del(`loginLock:${user.username}`);
+        console.log(
+          getTimeForLog() +
+            `Login attempts and locks reset for ${user.username} after successful login`
+        );
+      } catch (redisError) {
+        console.error(
+          getTimeForLog() + "Redis error when resetting login attempts:",
+          redisError
+        );
+      }
+    }
+
     let tokenVersion = Date.now();
 
     // Eğer Redis bağlantısı varsa, mevcut versiyon kontrol edilir
