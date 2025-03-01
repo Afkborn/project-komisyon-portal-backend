@@ -34,7 +34,7 @@ router.post("/login", async (request, response) => {
 
     // Önce kullanıcının kilitli olup olmadığını kontrol et
     const MAX_LOGIN_ATTEMPTS = 5; // Maksimum hatalı giriş denemesi
-    const LOCKOUT_DURATION = 30 * 60; // 30 dakika (saniye cinsinden)
+    const LOCKOUT_DURATION = 5 * 60; // 30 dakika (saniye cinsinden)
 
     let attempts = 0;
     let lockedUntil = null;
@@ -60,7 +60,7 @@ router.post("/login", async (request, response) => {
         if (lockTimestamp) {
           const now = Math.floor(Date.now() / 1000);
           const lockTime = parseInt(lockTimestamp);
- 
+
           if (now < lockTime) {
             // Kilit süresi henüz geçmemiş
             const remainingSeconds = lockTime - now;
