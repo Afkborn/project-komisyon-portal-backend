@@ -418,6 +418,7 @@ router.get(
 );
 
 // get isDisabled true persons
+// engelli personel
 router.get(
   "/disabled",
   auth,
@@ -425,7 +426,7 @@ router.get(
   (request, response) => {
     let institutionId = request.query.institutionId;
 
-    Person.find({ isDisabled: true })
+    Person.find({ isDisabled: true, status: true })
       .select(
         "-_id -__v -goreveBaslamaTarihi -kind -gecmisBirimler -calistigiKisi -birimeBaslamaTarihi"
       )
@@ -478,6 +479,7 @@ router.get(
 );
 
 // get isMartyrRelative true persons
+// ŞEHİT GAZİ YAKINI PERSONEL
 router.get(
   "/martyrRelative",
   auth,
@@ -485,7 +487,7 @@ router.get(
   (request, response) => {
     let institutionId = request.query.institutionId;
 
-    Person.find({ isMartyrRelative: true })
+    Person.find({ isMartyrRelative: true, status: true })
       .select(
         "-_id -__v -goreveBaslamaTarihi -kind -gecmisBirimler -calistigiKisi -birimeBaslamaTarihi"
       )

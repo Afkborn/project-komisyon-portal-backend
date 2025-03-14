@@ -89,6 +89,9 @@ const personSchema = new Schema(
     deactivationDate: {
       type: Date,
     },
+    deactivationComment: {
+      type: String,
+    },
 
     // geçici görevlendirme
     isTemporary: {
