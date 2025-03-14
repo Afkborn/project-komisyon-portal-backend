@@ -165,10 +165,10 @@ const isValidToken = async (token) => {
     const currentVersion = await redisClient.get(`user:${userId}:tokenVersion`);
 
     // Token versiyonu kontrol loglaması
-    console.log(
-      getTimeForLog() +
-        `Token validation - userId: ${userId}, tokenVer: ${tokenVersion}, currentVer: ${currentVersion}`
-    );
+    // console.log(
+    //   getTimeForLog() +
+    //     `Token validation - userId: ${userId}, tokenVer: ${tokenVersion}, currentVer: ${currentVersion}`
+    // );
 
     // Versiyon kontrolü - eğer Redis'te versiyon yoksa geçerli kabul et
     if (!currentVersion) {
@@ -181,12 +181,12 @@ const isValidToken = async (token) => {
 
     // Token versiyonu kontrolü - token versiyonu, Redis'teki versiyondan küçükse geçersiz
     const isValid = parseInt(tokenVersion) >= parseInt(currentVersion);
-    console.log(
-      getTimeForLog() +
-        `Token validation result: ${
-          isValid ? "Valid" : "Invalid"
-        } (${tokenVersion} >= ${currentVersion})`
-    );
+    // console.log(
+    //   getTimeForLog() +
+    //     `Token validation result: ${
+    //       isValid ? "Valid" : "Invalid"
+    //     } (${tokenVersion} >= ${currentVersion})`
+    // );
 
     return isValid;
   } catch (error) {

@@ -29,7 +29,7 @@ app.use(
 app.use(cors()); // CORS'u etkinleştirir
 
 app.use(bodyParser.json());
- 
+
 const users = require("./routes/users");
 app.use("/api/users", users);
 
@@ -62,6 +62,9 @@ app.use("/api/roles", roles);
 
 const activities = require("./routes/activities");
 app.use("/api/activities", activities);
+
+const rss_proxy = require("./routes/rss_proxy");
+app.use("/api/rss_proxy", rss_proxy);
 
 mongoDbConnect();
 

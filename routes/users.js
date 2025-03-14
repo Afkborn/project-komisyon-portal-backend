@@ -184,10 +184,10 @@ router.post("/login", async (request, response) => {
       }
     }
 
-    console.log(
-      getTimeForLog() +
-        `Creating token for ${user.username} with version ${tokenVersion}`
-    );
+    // console.log(
+    //   getTimeForLog() +
+    //     `Creating token for ${user.username} with version ${tokenVersion}`
+    // );
 
     // Tokena versiyon ekle
     const token = jwt.sign(
@@ -612,19 +612,19 @@ router.post("/validate-token", async (request, response) => {
       // Token'ı doğrula
       const decodedToken = jwt.verify(token, "RANDOM-TOKEN");
 
-      console.log(
-        getTimeForLog() +
-          `Validating token for user ${decodedToken.username} (${decodedToken.id})`
-      );
+      // console.log(
+      //   getTimeForLog() +
+      //     `Validating token for user ${decodedToken.username} (${decodedToken.id})`
+      // );
 
       // Token'ın blacklist'te olup olmadığını ve versiyon kontrolünü yap
       const tokenValid = await isValidToken(token);
 
       if (!tokenValid) {
-        console.log(
-          getTimeForLog() +
-            `Token validation failed for ${decodedToken.username}`
-        );
+        // console.log(
+        //   getTimeForLog() +
+        //     `Token validation failed for ${decodedToken.username}`
+        // );
         return response.status(401).send({
           success: false,
           message: "Token geçersiz veya oturum sonlandırılmış",
@@ -632,10 +632,10 @@ router.post("/validate-token", async (request, response) => {
         });
       }
 
-      console.log(
-        getTimeForLog() +
-          `Token validated successfully for ${decodedToken.username}`
-      );
+      // console.log(
+      //   getTimeForLog() +
+      //     `Token validated successfully for ${decodedToken.username}`
+      // );
 
       // Token geçerliyse kullanıcı bilgilerini döndür (password hariç)
       response.status(200).send({
