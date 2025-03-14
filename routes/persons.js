@@ -661,6 +661,9 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
 
     // YAZI İŞLERİ MÜDÜRÜ ve MÜBAŞİR
     ikinciBirimID,
+
+    // ZABİT KATİBİ ve MÜBAŞİR
+    nobetTutuyorMu
   } = request.body;
 
   // Ad ilk harfi büyük, diğerleri küçük olacak şekilde düzenleme
@@ -714,11 +717,11 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
   };
 
   if (kind === "zabitkatibi") {
-    newPerson = new Model({ ...commonFields, durusmaKatibiMi, calistigiKisi });
+    newPerson = new Model({ ...commonFields, durusmaKatibiMi, calistigiKisi, nobetTutuyorMu });
   } else if (kind === "yaziislerimudürü") {
     newPerson = new Model({ ...commonFields, ikinciBirimID });
   } else if (kind === "mubasir") {
-    newPerson = new Model({ ...commonFields, ikinciBirimID });
+    newPerson = new Model({ ...commonFields, ikinciBirimID, nobetTutuyorMu });
   } else {
     newPerson = new Model(commonFields);
   }

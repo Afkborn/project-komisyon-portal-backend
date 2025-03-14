@@ -95,4 +95,28 @@ exports.PersonAttributeList = [
     required: false,
     desc: "Personel'in klavye türü İzin Verilen Değerler: F, Q",
   },
+  {
+    id: 13,
+    name: "Şehit Gazi Yakını",
+    csvHeaderName: "isMartyrRelative",
+    type: "boolean",
+    required: false,
+    desc: "Personel'in şehit gazi yakını olup olmadığı ( 1 = evet, 0 = hayır )",
+  },
+  {
+    id: 14,
+    name: "Engelli Durumu",
+    csvHeaderName: "isDisabled",
+    type: "boolean",
+    required: false,
+    desc: "Personel'in engelli olup olmadığı ( 1 = evet, 0 = hayır )",
+  },
+  {
+    id: 15,
+    name:"Nöbet Tutuyor Mu",
+    csvHeaderName:"nobetTutuyorMu",
+    type:"boolean",
+    required:false,
+    desc:"Personel'in nöbet tutup tutmadığı (1 = evet, 0 = hayır ) (Zabit Katibi ve Mübaşir için)"
+  }
 ];

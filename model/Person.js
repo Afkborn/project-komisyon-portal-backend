@@ -227,6 +227,7 @@ const ZabitKatibi = Person.discriminator(
       ref: "Person",
       default: null,
     },
+    nobetTutuyorMu: { type: Boolean, default: false },
   })
 );
 
@@ -248,7 +249,9 @@ const Mubasir = Person.discriminator(
       type: Schema.Types.ObjectId,
       ref: "Unit",
       default: null,
+      
     },
+    nobetTutuyorMu: { type: Boolean, default: false },
   })
 );
 
@@ -257,7 +260,7 @@ module.exports = {
   // Baskan,
   // UyeHakim,
   zabitkatibi: ZabitKatibi,
-  mubasir : Mubasir,
+  mubasir: Mubasir,
   // YaziİsleriMuduru,
   yaziislerimudürü: YaziIsleriMuduru,
 };
