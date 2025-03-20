@@ -189,6 +189,13 @@ const ActivityTypeList = {
     name: "Şehit Gazi Yakını Personel Listesi",
     filterType: "report",
   },
+
+  SEGBIS_PERSONEL_LIST : {
+    id: 32,
+    app: "SEGBİS",
+    name: "Mahkeme Personel Listeleme",
+    filterType: "SEGBİS",
+  }
 };
 
 // Dışa aktarım

@@ -23,6 +23,7 @@
     "mongoose": "^8.4.0",
     "redis": "^4.6.7",
     "rss-parser": "^3.13.0",
+    "sqlite3": "^5.1.7",
     "winston": "^3.14.2"
   },
   "devDependencies": {

@@ -66,6 +66,12 @@ app.use("/api/activities", activities);
 const rss_proxy = require("./routes/rss_proxy");
 app.use("/api/rss_proxy", rss_proxy);
 
+const segbis = require("./routes/segbis");
+app.use("/api/segbis", segbis);
+
+const segbisRouter = require("./routes/segbis");
+app.use("/api/segbis", segbisRouter);
+
 mongoDbConnect();
 
 const checkConstantTitle =

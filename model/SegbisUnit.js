@@ -16,6 +16,10 @@ const SegbisUnitSchema = mongoose.Schema(
         ref: "SegbisPerson",
       },
     ],
+    sqliteId: {
+      type: Number,
+      index: true, // İndeksleme ekleyerek sorguları hızlandırıyoruz
+    },
   },
   {
     timestamps: true,
