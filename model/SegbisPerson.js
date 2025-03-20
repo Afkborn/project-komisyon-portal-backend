@@ -2,10 +2,7 @@ const mongoose = require("mongoose");
 
 const SegbisPersonSchema = mongoose.Schema(
   {
-    ad: {
-      type: String,
-    },
-    soyad: {
+    name: {
       type: String,
     },
     title: {

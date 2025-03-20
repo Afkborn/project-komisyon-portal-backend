@@ -199,13 +199,12 @@ router.get(
         .lean();
 
       // Frontend için uygun formata dönüştür
-      const formattedPersonnel = personnel.map((person, index) => ({
-        id: person._id,
-        name: `${person.ad} ${person.soyad}`,
+      const formattedPersonnel = personnel.map((person) => ({
+        // id: person._id,
+        name: person.name,
         title: person.title ? person.title.name : "Belirtilmemiş",
-        phone: formatPhoneNumber(person.phoneNumber),
-        email: generateEmail(person.ad, person.soyad),
-        unitId: person.mahkeme_id,
+        phone: person.phoneNumber,
+        // unitId: person.mahkeme_id,
       }));
 
       res.status(200).json({
@@ -234,49 +233,5 @@ router.get(
     }
   }
 );
-
-// Yardımcı fonksiyonlar
-function formatPhoneNumber(phoneNumber) {
-  if (!phoneNumber) return "Belirtilmemiş";
-
-  // Numara 10 haneli olacak şekilde (veritabanında bu şekilde saklıyoruz)
-  const match = phoneNumber.match(/^(\d{3})(\d{3})(\d{4})$/);
-  if (match) {
-    return `0${match[1]} ${match[2]} ${match[3]}`;
-  }
-  return phoneNumber; // Eğer format uymuyorsa orijinali döndür
-}
-
-function generateEmail(firstName, lastName) {
-  if (!firstName || !lastName) return "Belirtilmemiş";
-
-  // Türkçe karakterleri değiştir
-  const turkishToEnglish = {
-    ç: "c",
-    ğ: "g",
-    ı: "i",
-    ö: "o",
-    ş: "s",
-    ü: "u",
-    Ç: "C",
-    Ğ: "G",
-    İ: "I",
-    Ö: "O",
-    Ş: "S",
-    Ü: "U",
-  };
-
-  let email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@adalet.gov.tr`;
-
-  // Türkçe karakterleri değiştir
-  Object.keys(turkishToEnglish).forEach((key) => {
-    email = email.replace(new RegExp(key, "g"), turkishToEnglish[key]);
-  });
-
-  // Boşlukları kaldır
-  email = email.replace(/\s+/g, "");
-
-  return email;
-}
 
 module.exports = router;

@@ -184,29 +184,6 @@ const formatPhoneNumber = (phone) => {
   return digitsOnly;
 };
 
-// İsim ve soyadı ayırma
-const extractNameParts = (fullName) => {
-  if (!fullName || typeof fullName !== "string") {
-    return { ad: "", soyad: "" };
-  }
-
-  const trimmedName = fullName.trim();
-  if (!trimmedName) {
-    return { ad: "", soyad: "" };
-  }
-
-  // Son kelimeyi soyad, geri kalanı ad olarak al
-  const parts = trimmedName.split(" ");
-  if (parts.length === 1) {
-    return { ad: parts[0], soyad: "" };
-  }
-
-  const soyad = parts.pop();
-  const ad = parts.join(" ");
-
-  return { ad, soyad };
-};
-
 // Mahkemeleri SQLite'dan MongoDB'ye aktarma
 const migrateCourts = async (db, allTitles) => {
   return new Promise((resolve, reject) => {
@@ -291,8 +268,8 @@ const migratePersonnel = async (db, courtMap, allTitles) => {
             continue; // Bu personeli atla
           }
 
-          // Ad ve soyadı ayır
-          const { ad, soyad } = extractNameParts(row.ad);
+          // Ad ve soyadı ayırma kaldırıldı, doğrudan name olarak kullan
+          const fullName = row.ad ? row.ad.trim() : "";
 
           // Ünvan ID'sini bul - Şimdi async olduğu için await ile çağırıyoruz
           const titleId = await findTitleId(row.gorev, allTitles);
@@ -306,8 +283,7 @@ const migratePersonnel = async (db, courtMap, allTitles) => {
 
           const personData = {
             _id: new mongoose.Types.ObjectId(),
-            ad: ad,
-            soyad: soyad,
+            name: fullName, // Ad ve soyad birleşik olarak kaydedildi
             title: titleId, // Her durumda bir title ID'si olacak
             phoneNumber: phoneNumber,
             mahkeme_id: mahkemeId,
