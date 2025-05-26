@@ -3,6 +3,7 @@ const getTimeForLog = require("../common/time");
 const constantTitles = require("../constants/Titles").ConstantTitles;
 
 const User = require("../model/User");
+const toSHA256 = require("../common/hashing");
 
 const checkConstantTitle = () => {
   let totalCount = constantTitles.length;
@@ -47,7 +48,7 @@ const createAdminUser = () => {
     username: "admin",
     name: "Yönetici",
     surname: "Kullanıcı",
-    password: "admin123",
+    password: toSHA256("123456"), // Şifreyi SHA256 ile hashle
     roles: [
       "admin", // Admin rolü
     ],
