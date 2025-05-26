@@ -2,6 +2,8 @@ const Title = require("../model/Title");
 const getTimeForLog = require("../common/time");
 const constantTitles = require("../constants/Titles").ConstantTitles;
 
+const User = require("../model/User");
+
 const checkConstantTitle = () => {
   let totalCount = constantTitles.length;
   let succesfullCount = 0;
@@ -38,6 +40,41 @@ const checkConstantTitle = () => {
     getTimeForLog() +
       `Total Title: ${totalCount}, Succesfull: ${succesfullCount}, Alread Exist: ${alreadExistCount}, Failed: ${failedCount}`
   );
+};
+
+const createAdminUser = () => {
+  const adminUser = {
+    username: "admin",
+    name: "Yönetici",
+    surname: "Kullanıcı",
+    password: "admin123",
+    roles: [
+      "admin", // Admin rolü
+    ],
+  };
+
+  // eğer veritabanı boşsa admin kullanıcısını oluştur
+  User.countDocuments({})
+    .then((count) => {
+      if (count === 0) {
+        // Eğer veritabanında hiç kullanıcı yoksa admin kullanıcısını oluştur
+        User.create(adminUser)
+          .then(() => {
+            console.log(getTimeForLog() + "Admin user created successfully.");
+          })
+          .catch((error) => {
+            console.error(
+              getTimeForLog() + "Error creating admin user:",
+              error
+            );
+          });
+      } else {
+        console.log(getTimeForLog() + "Admin user already exists.");
+      }
+    })
+    .catch((error) => {
+      console.error(getTimeForLog() + "Error checking user count:", error);
+    });
 };
 
 module.exports = {

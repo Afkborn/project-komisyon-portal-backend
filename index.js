@@ -81,6 +81,10 @@ const checkConstantTitle =
 checkConstantTitle(); // Sabit unvanları kontrol et ve ekle, projenin çalışması için gereklidir
 
 
+// eğer hiç user yoksa admin user oluştur
+const createAdminUser =
+  require("./actions/DatabaseActions").createAdminUser;
+
 //  Sunucuyu başlat
 app.listen(port, () => {
   console.log(getTimeForLog() + `Listening on port ${port}`);
