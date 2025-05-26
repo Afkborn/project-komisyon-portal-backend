@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require("axios");
 const Parser = require("rss-parser");
 
-// RSS Parser yapılandırması
+// RSS Parser 
 const parser = new Parser({
   customFields: {
     item: [
@@ -16,11 +16,8 @@ const parser = new Parser({
   },
 });
 
-/**
- * @route   GET /api/rss-proxy
- * @desc    RSS beslemelerini getir ve JSON'a dönüştür
- * @access  Public
- */
+
+
 router.get("/", async (req, res) => {
   try {
     const { url } = req.query;

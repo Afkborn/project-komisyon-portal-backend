@@ -236,7 +236,7 @@ router.post(
       });
     }
 
-    const requiredFields = ["username", "password", "name", "surname"];
+    const requiredFields = ["username", "password", "name", "surname", "roles"];
     const missingFields = requiredFields.filter(
       (field) => !request.body[field]
     );
@@ -253,7 +253,7 @@ router.post(
       name: request.body.name,
       surname: request.body.surname,
       password: password,
-      role: request.body.role,
+      roles: request.body.roles,
     });
 
     if (request.body.email) {
@@ -301,7 +301,7 @@ router.get("/details", auth, (request, response) => {
     });
 });
 
-// YOL DÜZELTMESİ: Parola değişikliği rotasını yol değişkenli rotalardan ÖNCE tanımla
+
 // change user password
 router.put(
   "/password",

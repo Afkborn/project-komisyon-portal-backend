@@ -13,4 +13,9 @@ exports.RoleList = [
 
   // SANTRAL
   { id: 4, name: "santral-memur", label: "Santral Memuru" },
+
+
+  
+  // Personel Bilgi Sistemi
+  {id: 10, name: "pbs-genel", label: "Personel Bilgi Sistemi Genel Yetkili"},
 ];
