@@ -374,6 +374,15 @@ router.put("/:id", auth, Logger("PUT users/:id"), (request, response) => {
       message: Messages.USER_NOT_AUTHORIZED,
     });
   }
+
+  // eğer istek body'de password varsa, onu SHA256 ile hashle
+  if (request.body.password) {
+    request.body.password = toSHA256(request.body.password);
+  }
+
+  
+
+
   User.findByIdAndUpdate(request.params.id, request.body, {
     new: true, // Return the updated document
     runValidators: true, // Validate the update operation
