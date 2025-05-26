@@ -6,7 +6,7 @@ const mongoDbConnect = require("./database/mongoDb");
 const getTimeForLog = require("./common/time");
 const { initRedis } = require("./config/redis");
 require("dotenv").config();
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 
 // Redis bağlantısını başlat
 initRedis().then((isConnected) => {

@@ -57,6 +57,9 @@ cp .env.example .env
 npm start
 ```
 
+Uygulama başarıyla başlatıldıktan sonra, .env'de belirtiğiniz port üzerinden API'ye http://localhost:{PORT} adresinden erişebilirsiniz.
+MongoDB'de herhangi bir user bulunmadığı durumda username "admin", password "123456" olan bir kullanıcı oluşturulacaktır.
+```bash
 
 ## Lisans
 
