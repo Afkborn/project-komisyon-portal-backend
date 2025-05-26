@@ -79,4 +79,5 @@ const createAdminUser = () => {
 
 module.exports = {
   checkConstantTitle,
+  createAdminUser
 };

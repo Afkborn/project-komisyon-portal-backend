@@ -84,6 +84,7 @@ checkConstantTitle(); // Sabit unvanları kontrol et ve ekle, projenin çalışm
 // eğer hiç user yoksa admin user oluştur
 const createAdminUser =
   require("./actions/DatabaseActions").createAdminUser;
+createAdminUser(); // Admin kullanıcısını oluştur, projenin çalışması için gereklidir
 
 //  Sunucuyu başlat
 app.listen(port, () => {
