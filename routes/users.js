@@ -7,7 +7,13 @@ const getTimeForLog = require("../common/time");
 const auth = require("../middleware/auth");
 const toSHA256 = require("../common/hashing");
 const Logger = require("../middleware/logger");
-const { invalidateAllUserTokens } = require("../config/redis");
+const {
+  redisClient,
+  isConnected,
+  invalidateAllUserTokens,
+  addToBlacklist,
+  isValidToken,
+} = require("../config/redis");
 
 // login user
 router.post("/login", async (request, response) => {
@@ -29,12 +35,9 @@ router.post("/login", async (request, response) => {
       });
     }
 
-    // Redis'ten mevcut token versiyonunu oku ya da yeni bir tane oluştur
-    const { redisClient, isConnected } = require("../config/redis");
-
     // Önce kullanıcının kilitli olup olmadığını kontrol et
     const MAX_LOGIN_ATTEMPTS = 5; // Maksimum hatalı giriş denemesi
-    const LOCKOUT_DURATION = 5 * 60; // 30 dakika (saniye cinsinden)
+    const LOCKOUT_DURATION = 5 * 60; // 5 dakika (saniye cinsinden)
 
     let attempts = 0;
     let lockedUntil = null;
@@ -301,7 +304,6 @@ router.get("/details", auth, (request, response) => {
     });
 });
 
-
 // change user password
 router.put(
   "/password",
@@ -379,9 +381,6 @@ router.put("/:id", auth, Logger("PUT users/:id"), (request, response) => {
   if (request.body.password) {
     request.body.password = toSHA256(request.body.password);
   }
-
-  
-
 
   User.findByIdAndUpdate(request.params.id, request.body, {
     new: true, // Return the updated document
@@ -557,9 +556,6 @@ router.post(
       const decoded = jwt.decode(token);
       const expiresIn = decoded.exp - Math.floor(Date.now() / 1000);
 
-      // Redis config'den addToBlacklist fonksiyonunu import et
-      const { addToBlacklist } = require("../config/redis");
-
       // Token'ı blacklist'e ekle
       const result = await addToBlacklist(token, expiresIn);
 
@@ -613,9 +609,6 @@ router.post("/validate-token", async (request, response) => {
         valid: false,
       });
     }
-
-    // Redis config'den isValidToken fonksiyonunu import et
-    const { isValidToken } = require("../config/redis");
 
     try {
       // Token'ı doğrula

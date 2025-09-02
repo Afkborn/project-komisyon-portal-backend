@@ -193,18 +193,14 @@ router.get(
         });
       }
 
-      // Birime ait personelleri getir
-      const personnel = await SegbisPerson.find({ mahkeme_id: unitId })
-        .populate("title", "name") // Title referansını çöz ve name alanını getir
-        .lean();
+  // Birime ait personelleri getir
+  const personnel = await SegbisPerson.find({ mahkeme_id: unitId }).lean();
 
       // Frontend için uygun formata dönüştür
       const formattedPersonnel = personnel.map((person) => ({
-        // id: person._id,
         name: person.name,
-        title: person.title ? person.title.name : "Belirtilmemiş",
+        title: person.title || "Belirtilmemiş",
         phone: person.phoneNumber,
-        // unitId: person.mahkeme_id,
       }));
 
       res.status(200).json({

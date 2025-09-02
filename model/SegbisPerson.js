@@ -1,14 +1,15 @@
 const mongoose = require("mongoose");
+const Messages = require("../constants/Messages");
 
 const SegbisPersonSchema = mongoose.Schema(
   {
     name: {
       type: String,
+      default: "İsimsiz",
     },
     title: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Title",
-      required: [true, "Ünvan gereklidir"],
+      type: String,
+      default: "Görevli",
     },
     phoneNumber: {
       type: String,

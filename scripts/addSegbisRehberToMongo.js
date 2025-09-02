@@ -12,7 +12,7 @@ const path = require("path");
 const fs = require("fs");
 const SegbisUnit = require("../model/SegbisUnit");
 const SegbisPerson = require("../model/SegbisPerson");
-const Title = require("../model/Title");
+// ...existing code...
 require("dotenv").config();
 
 // SQLite veritabanı yolu
@@ -54,115 +54,11 @@ const openDatabase = () => {
   });
 };
 
-// Tüm ünvanları getir (cache için)
-const getAllTitles = async () => {
-  try {
-    const titles = await Title.find({}).lean();
-    console.log(`${titles.length} adet ünvan veritabanından yüklendi`);
-    return titles;
-  } catch (error) {
-    console.error("Ünvanlar yüklenirken hata:", error);
-    return [];
-  }
-};
+// ...existing code...
 
-// Ünvan eşleştirme - Geliştirilmiş versiyon
-const findTitleId = async (titleText, allTitles) => {
-  if (!titleText) {
-    // Title belirtilmemişse bilinmiyor title'ını bul veya oluştur
-    return await findOrCreateUnknownTitle(allTitles);
-  }
+// ...existing code...
 
-  // Gelen metin uppercase olduğu için lowercase yapıp arama yapalım
-  const normalizedText = titleText.toLowerCase().trim();
-
-  // İlk önce tam eşleşme arayalım
-  const exactMatch = allTitles.find(
-    (t) =>
-      t.name.toLowerCase() === normalizedText ||
-      t.kind.toLowerCase() === normalizedText
-  );
-
-  if (exactMatch) return exactMatch._id;
-
-  // Tam eşleşme bulunamadı, içerik eşleşmesi arayalım
-  const partialMatch = allTitles.find(
-    (t) =>
-      t.name.toLowerCase().includes(normalizedText) ||
-      normalizedText.includes(t.name.toLowerCase()) ||
-      t.kind.toLowerCase().includes(normalizedText) ||
-      normalizedText.includes(t.kind.toLowerCase())
-  );
-
-  if (partialMatch) return partialMatch._id;
-
-  // Özel durumlar - görev adlarını standartlaştırma
-  if (
-    normalizedText.includes("zabit") ||
-    normalizedText.includes("zabıt") ||
-    normalizedText.includes("katip") ||
-    normalizedText.includes("kâtip")
-  ) {
-    const katipTitle = allTitles.find(
-      (t) =>
-        t.name.toLowerCase().includes("kâtib") ||
-        t.name.toLowerCase().includes("katib")
-    );
-    if (katipTitle) return katipTitle._id;
-  }
-
-  if (normalizedText.includes("müdür")) {
-    const mudurTitle = allTitles.find((t) =>
-      t.name.toLowerCase().includes("müdür")
-    );
-    if (mudurTitle) return mudurTitle._id;
-  }
-
-  if (
-    normalizedText.includes("mübaşir") ||
-    normalizedText.includes("mubasir")
-  ) {
-    const mubasirTitle = allTitles.find((t) =>
-      t.name.toLowerCase().includes("mübaşir")
-    );
-    if (mubasirTitle) return mubasirTitle._id;
-  }
-
-  // Hiçbir eşleşme bulunamadı, "Bilinmiyor" ünvanını bul veya oluştur
-  return await findOrCreateUnknownTitle(allTitles);
-};
-
-// "Bilinmiyor" ünvanını bul veya oluştur - Yeni fonksiyon
-const findOrCreateUnknownTitle = async (allTitles) => {
-  // Önce mevcut Bilinmiyor ünvanını ara
-  const unknownTitle = allTitles.find(
-    (t) =>
-      t.name.toLowerCase() === "bilinmiyor" ||
-      t.kind.toLowerCase() === "bilinmiyor"
-  );
-
-  if (unknownTitle) return unknownTitle._id;
-
-  // Bilinmiyor ünvanı bulunamadıysa oluştur
-  try {
-    console.log("Bilinmiyor ünvanı oluşturuluyor...");
-    const newUnknownTitle = await Title.create({
-      name: "Bilinmiyor",
-      kind: "bilinmiyor",
-      deletable: false,
-      oncelikSirasi: 999,
-    });
-
-    // Cache'i güncelle
-    allTitles.push(newUnknownTitle);
-
-    console.log("Bilinmiyor ünvanı oluşturuldu:", newUnknownTitle._id);
-    return newUnknownTitle._id;
-  } catch (error) {
-    console.error("Bilinmiyor ünvanı oluşturulurken hata:", error);
-    throw new Error("Title kaydedilemiyor ve zorunlu alan");
-  }
-};
+// ...existing code...
 
 // Telefon numarasını formatlama
 const formatPhoneNumber = (phone) => {
@@ -234,8 +130,40 @@ const migrateCourts = async (db, allTitles) => {
   });
 };
 
+// Ünvan ve isim formatlama fonksiyonu
+function formatTitleOrName(str) {
+  if (!str) return "";
+  // mb, mbş, müb, ' mbş' gibi varyasyonlar için kontrol
+  const normalized = str.toLowerCase().replace(/\s+/g, "").replace(/ş/g, "ş");
+  if (
+    normalized === "mb" ||
+    normalized === "mbş" ||
+    normalized === "müb" ||
+    normalized === "mbasir" ||
+    normalized === "mubasir" ||
+    normalized === "mübaşir" ||
+    normalized === "mub" ||
+    normalized === "mbas" ||
+    normalized === "mbasir" ||
+    normalized === "mbş" ||
+    normalized === "mbş".replace(/\s+/g, "")
+  ) {
+    return "Mübaşir";
+  }
+  // Başında/sonunda boşluk varsa da yakala
+  if (
+    /^mbş$|^mb$|^müb$|^mbasir$|^mubasir$|^mübaşir$|^mub$|^mbas$/i.test(
+      normalized
+    )
+  ) {
+    return "Mübaşir";
+  }
+  // İlk harf büyük, gerisi küçük
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
 // Personelleri SQLite'dan MongoDB'ye aktarma
-const migratePersonnel = async (db, courtMap, allTitles) => {
+const migratePersonnel = async (db, courtMap) => {
   return new Promise((resolve, reject) => {
     db.all("SELECT * FROM Personel", async (err, rows) => {
       if (err) {
@@ -251,7 +179,6 @@ const migratePersonnel = async (db, courtMap, allTitles) => {
 
         const personnel = [];
         const unknownCourtIds = new Set();
-        const unknownTitleIds = new Set();
 
         // SQLite verileri MongoDB formatına dönüştür
         for (const row of rows) {
@@ -269,22 +196,23 @@ const migratePersonnel = async (db, courtMap, allTitles) => {
           }
 
           // Ad ve soyadı ayırma kaldırıldı, doğrudan name olarak kullan
-          const fullName = row.ad ? row.ad.trim() : "";
+          const fullName = formatTitleOrName(row.ad ? row.ad.trim() : "");
 
-          // Ünvan ID'sini bul - Şimdi async olduğu için await ile çağırıyoruz
-          const titleId = await findTitleId(row.gorev, allTitles);
-          if (!titleId) {
-            unknownTitleIds.add(row.gorev);
-            continue; // Bu personeli atla
-          }
+          // Ünvanı özel kurala göre string olarak al
+          const title = formatTitleOrName(row.gorev ? row.gorev.trim() : "");
 
           // Telefon numarasını formatla
           const phoneNumber = formatPhoneNumber(row.telefon_no);
 
+          if (!phoneNumber) {
+            console.warn(`Geçersiz telefon numarası: ${row.telefon_no}`);
+            continue; // Bu personeli atla
+          }
+
           const personData = {
             _id: new mongoose.Types.ObjectId(),
             name: fullName, // Ad ve soyad birleşik olarak kaydedildi
-            title: titleId, // Her durumda bir title ID'si olacak
+            title: title, // Artık string olarak aktarılıyor
             phoneNumber: phoneNumber,
             mahkeme_id: mahkemeId,
             is_default: row.is_default === 1,
@@ -316,12 +244,7 @@ const migratePersonnel = async (db, courtMap, allTitles) => {
           );
         }
 
-        if (unknownTitleIds.size > 0) {
-          console.warn(`Eşlenemeyen ${unknownTitleIds.size} görev/ünvan var:`);
-          console.warn(
-            `Örnekler: ${[...unknownTitleIds].slice(0, 5).join(", ")}`
-          );
-        }
+        // ...existing code...
 
         resolve(personnel.length);
       } catch (error) {
@@ -343,31 +266,11 @@ const startMigration = async () => {
     // SQLite veritabanına bağlan
     db = await openDatabase();
 
-    // Tüm ünvanları getir
-    const allTitles = await getAllTitles();
-
-    // Artık eksik ünvan kontrolünü findTitleId fonksiyonu içinde yapıyoruz
-    // Bu kısım artık gerekli değil:
-    // const unknownTitle = allTitles.find(
-    //   (t) => t.name.toLowerCase() === "bilinmiyor"
-    // );
-    // if (!unknownTitle) {
-    //   console.log('"Bilinmiyor" ünvanı bulunamadı, ekleniyor...');
-    //   const newUnknownTitle = new Title({
-    //     name: "Bilinmiyor",
-    //     kind: "Bilinmiyor",
-    //     deletable: false,
-    //     oncelikSirasi: 999,
-    //   });
-    //   await newUnknownTitle.save();
-    //   allTitles.push(newUnknownTitle);
-    // }
-
     // Mahkemeleri aktar ve mahkeme ID mapping'i al
-    const courtMap = await migrateCourts(db, allTitles);
+    const courtMap = await migrateCourts(db);
 
     // Personelleri aktar
-    const personnelCount = await migratePersonnel(db, courtMap, allTitles);
+    const personnelCount = await migratePersonnel(db, courtMap);
 
     console.log("Aktarım işlemi başarıyla tamamlandı.");
     console.log(
