@@ -190,12 +190,36 @@ const ActivityTypeList = {
     filterType: "report",
   },
 
-  SEGBIS_PERSONEL_LIST : {
+  SEGBIS_PERSONEL_LIST: {
     id: 32,
     app: "SEGBİS",
     name: "Mahkeme Personel Listeleme",
     filterType: "SEGBİS",
-  }
+  },
+  SEGBIS_PERSONEL_ADD: {
+    id: 33,
+    app: "SEGBİS",
+    name: "Mahkeme Personel Ekleme",
+    filterType: "SEGBİS",
+  },
+  SEGBIS_PERSONEL_DELETE: {
+    id: 34,
+    app: "SEGBİS",
+    name: "Mahkeme Personel Silme",
+    filterType: "SEGBİS",
+  },
+  SEGBIS_PERSONEL_UPDATE: {
+    id: 35,
+    app: "SEGBİS",
+    name: "Mahkeme Personel Güncelleme",
+    filterType: "SEGBİS",
+  },
+  SEGBIS_UNIT_ADD: {
+    id: 36,
+    app: "SEGBİS",
+    name: "Mahkeme Birim Ekleme",
+    filterType: "SEGBİS",
+  },
 };
 
 // Dışa aktarım

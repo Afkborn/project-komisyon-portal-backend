@@ -5,6 +5,7 @@ const SegbisPerson = require("../model/SegbisPerson");
 const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
 const { NumberPlateList } = require("../constants/NumberPlateList");
+const { CourthousePhones } = require("../constants/CourthousePhones");
 const { Regions } = require("../constants/Regions");
 
 const { recordActivity } = require("../actions/ActivityActions");
@@ -32,12 +33,12 @@ function getPlateCode(input) {
   }
 
   // Il adının içinde herhangi bir kelime eşleşiyor mu kontrol et
-  const keys = Object.keys(NumberPlateList);
-  for (const key of keys) {
-    if (cityName.includes(key)) {
-      return NumberPlateList[key];
-    }
-  }
+  // const keys = Object.keys(NumberPlateList);
+  // for (const key of keys) {
+  //   if (cityName.includes(key)) {
+  //     return NumberPlateList[key];
+  //   }
+  // }
 
   return "00"; // Eşleşme yoksa
 }
@@ -62,13 +63,13 @@ function getRegion(cityName) {
     }
   }
 
-  // İçerik eşleşmesi
-  const keys = Object.keys(Regions);
-  for (const key of keys) {
-    if (normalizedCity.includes(key)) {
-      return Regions[key];
-    }
-  }
+  // // İçerik eşleşmesi
+  // const keys = Object.keys(Regions);
+  // for (const key of keys) {
+  //   if (normalizedCity.includes(key)) {
+  //     return Regions[key];
+  //   }
+  // }
 
   return "Diğer";
 }
@@ -88,11 +89,18 @@ router.get("/cities", auth, Logger("GET /segbis/cities"), async (req, res) => {
       const code = getPlateCode(city);
       const region = getRegion(city);
 
+      // ADANA ve ADANA BAM için telefon numarası ekle
+      let phone = null;
+      if (CourthousePhones[city.toLocaleUpperCase("tr-TR")]) {
+        phone = CourthousePhones[city.toLocaleUpperCase("tr-TR")];
+      }
+
       return {
         id: index + 1,
         name: city,
         code: code,
         region: region,
+        phone: phone,
       };
     });
 
@@ -198,9 +206,12 @@ router.get(
 
       // Frontend için uygun formata dönüştür
       const formattedPersonnel = personnel.map((person) => ({
-        name: person.name,
+        _id: person._id,
+        name: person.name || "Belirtilmemiş",
         title: person.title || "Belirtilmemiş",
         phone: person.phoneNumber,
+        createdAt : person.createdAt,
+        isDefault: person.is_default || false,
       }));
 
       res.status(200).json({
@@ -225,6 +236,215 @@ router.get(
       res.status(500).json({
         success: false,
         message: "Personel listelenirken bir hata oluştu",
+      });
+    }
+  }
+);
+
+// Birime personel ekle
+router.post(
+  "/units/:unitId/personel",
+  auth,
+  Logger("POST /segbis/units/:unitId/personel"),
+  async (req, res) => {
+    try {
+      const unitId = req.params.unitId;
+      const { name, title, phoneNumber, is_default } = req.body;
+
+      // Birim var mı kontrol et
+      const unit = await SegbisUnit.findById(unitId);
+      if (!unit) {
+        return res.status(404).json({
+          success: false,
+          message: `${unitId} ID'li birim bulunamadı`,
+        });
+      }
+
+      // Personel oluştur
+      const newPerson = new SegbisPerson({
+        name,
+        title,
+        phoneNumber,
+        mahkeme_id: unitId,
+        is_default: is_default || false,
+      });
+
+      await newPerson.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Personel başarıyla eklendi",
+        person: {
+          id: newPerson._id,
+          name: newPerson.name,
+          title: newPerson.title,
+          phone: newPerson.phoneNumber,
+          isDefault: newPerson.is_default,
+        },
+      });
+
+      recordActivity(
+        req.user.id,
+        RequestTypeList.SEGBIS_PERSONEL_ADD,
+        null,
+        `${unit.il} ${unit.ad} birimine yeni personel eklendi: ${name}`,
+        unitId
+      );
+    } catch (error) {
+      console.error("Personel eklenirken hata oluştu:", error);
+      res.status(500).json({
+        success: false,
+        message: "Personel eklenirken bir hata oluştu",
+      });
+    }
+  }
+);
+
+// Birimden personel sil
+router.delete(
+  "/units/:unitId/personel/:personId",
+  auth,
+  Logger("DELETE /segbis/units/:unitId/personel/:personId"),
+  async (req, res) => {
+    try {
+      const { unitId, personId } = req.params;
+
+      // Personel var mı kontrol et
+      const person = await SegbisPerson.findOne({ _id: personId, mahkeme_id: unitId });
+      if (!person) {
+        return res.status(404).json({
+          success: false,
+          message: "Personel bulunamadı",
+        });
+      }
+
+      await SegbisPerson.deleteOne({ _id: personId });
+
+      res.status(200).json({
+        success: true,
+        message: "Personel başarıyla silindi",
+      });
+
+      recordActivity(
+        req.user.id,
+        RequestTypeList.SEGBIS_PERSONEL_DELETE,
+        null,
+        `${unitId} biriminden personel silindi: ${person.name}`,
+        unitId
+      );
+    } catch (error) {
+      console.error("Personel silinirken hata oluştu:", error);
+      res.status(500).json({
+        success: false,
+        message: "Personel silinirken bir hata oluştu",
+      });
+    }
+  }
+);
+
+// Personel güncelle
+router.put(
+  "/units/:unitId/personel/:personId",
+  auth,
+  Logger("PUT /segbis/units/:unitId/personel/:personId"),
+  async (req, res) => {
+    try {
+      const { unitId, personId } = req.params;
+      const { name, title, phoneNumber, is_default } = req.body;
+
+      // Personel var mı kontrol et
+      const person = await SegbisPerson.findOne({ _id: personId, mahkeme_id: unitId });
+      if (!person) {
+        return res.status(404).json({
+          success: false,
+          message: "Personel bulunamadı",
+        });
+      }
+
+      // Alanları güncelle
+      if (name !== undefined) person.name = name;
+      if (title !== undefined) person.title = title;
+      if (phoneNumber !== undefined) person.phoneNumber = phoneNumber;
+      if (is_default !== undefined) person.is_default = is_default;
+
+      await person.save();
+
+      res.status(200).json({
+        success: true,
+        message: "Personel başarıyla güncellendi",
+        person: {
+          id: person._id,
+          name: person.name,
+          title: person.title,
+          phone: person.phoneNumber,
+          isDefault: person.is_default,
+        },
+      });
+
+      recordActivity(
+        req.user.id,
+        RequestTypeList.SEGBIS_PERSONEL_UPDATE,
+        null,
+        `${unitId} birimindeki personel güncellendi: ${person.name}`,
+        unitId
+      );
+    } catch (error) {
+      console.error("Personel güncellenirken hata oluştu:", error);
+      res.status(500).json({
+        success: false,
+        message: "Personel güncellenirken bir hata oluştu",
+      });
+    }
+  }
+);
+
+// Yeni birim ekle
+router.post(
+  "/units",
+  auth,
+  Logger("POST /segbis/units"),
+  async (req, res) => {
+    try {
+      const { ad, il } = req.body;
+
+      // Zorunlu alanlar kontrolü
+      if (!ad || !il) {
+        return res.status(400).json({
+          success: false,
+          message: "Birim adı ve il alanı zorunludur",
+        });
+      }
+
+      // Birim oluştur
+      const newUnit = new SegbisUnit({
+        ad,
+        il,
+      });
+
+      await newUnit.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Birim başarıyla eklendi",
+        unit: {
+          id: newUnit._id,
+          ad: newUnit.ad,
+          il: newUnit.il,
+        },
+      });
+
+      recordActivity(
+        req.user.id,
+        RequestTypeList.SEGBIS_UNIT_ADD,
+        null,
+        `${il} iline yeni birim eklendi: ${ad}`,
+        newUnit._id
+      );
+    } catch (error) {
+      console.error("Birim eklenirken hata oluştu:", error);
+      res.status(500).json({
+        success: false,
+        message: "Birim eklenirken bir hata oluştu",
       });
     }
   }
