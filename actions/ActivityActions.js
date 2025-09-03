@@ -56,5 +56,16 @@ function getActivityWithPersonelHaraketScreen() {
     .map((key) => ActivityTypeList[key]); // Uyanları döndür
 }
 
+function getActivitiesWithApp(app) {
+  return Object.keys(ActivityTypeList)
+    .filter((key) => ActivityTypeList[key].app === app) // Uygulama adına uyanları filtrele
+    .map((key) => ActivityTypeList[key]); // Uyanları döndür
+}
 
-module.exports = { recordActivity, getActivityWithID, getActivitiesWithFilterTypes, getActivityWithPersonelHaraketScreen };
+module.exports = {
+  recordActivity,
+  getActivityWithID,
+  getActivitiesWithFilterTypes,
+  getActivityWithPersonelHaraketScreen,
+  getActivitiesWithApp,
+};

@@ -11,6 +11,7 @@ const {
   getActivityWithID,
   getActivitiesWithFilterTypes,
   getActivityWithPersonelHaraketScreen,
+  getActivitiesWithApp,
 } = require("../actions/ActivityActions");
 
 // get last activities
@@ -19,6 +20,7 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
   page = parseInt(page) || 1; // Geçerli bir sayfa numarası değilse, 1 olarak al
   limit = parseInt(limit) || 10; // Geçerli bir limit numarası değilse, 10 olarak al
 
+  app = request.query.app; // Uygulama adını al
   userID = request.query.userID; // Kullanıcı ID'sini al
   filterType = request.query.filterType; // Filtre tipini al
 
@@ -42,6 +44,7 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
     let activityFilter = {
       isVisible: true,
     };
+
     if (userID) {
       activityFilter.userID = userID;
     }
@@ -65,6 +68,12 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
     if (personelHareketleri) {
       let activityType = getActivityWithPersonelHaraketScreen(filterType);
       activityFilter.typeID = { $in: activityType.map((type) => type.id) };
+    }
+
+    // uygulama filtresi sayesinde EPSİS'de SEGBİS'e ait loglar listelenmiyor 
+    if (app){
+      let activityTypes = getActivitiesWithApp(app);
+      activityFilter.typeID = { $in: activityTypes.map((type) => type.id) };
     }
 
     const activities = await Activity.find(activityFilter)
