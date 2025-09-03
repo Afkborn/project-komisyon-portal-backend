@@ -68,6 +68,9 @@ app.use("/api/activities", activities); // Aktivite işlemleri
 const rss_proxy = require("./routes/rss_proxy");
 app.use("/api/rss_proxy", rss_proxy); // RSS proxy işlemleri
 
+const barolevha_proxy = require("./routes/barolevha_proxy");
+app.use("/api/barolevha_proxy", barolevha_proxy); // Baro Levha Proxy işlemleri
+
 const segbis = require("./routes/segbis");
 app.use("/api/segbis", segbis); // SEGBİS işlemleri
 
