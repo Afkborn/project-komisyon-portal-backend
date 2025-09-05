@@ -2,16 +2,39 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 
+require("dotenv/config");
+const PROXY_ENABLED = process.env.PROXY_ENABLED == "true";
+const PROXY_URL = process.env.PROXY_URL;
+const PROXY_PORT = process.env.PROXY_PORT;
+const PROXY_USERNAME = process.env.PROXY_USERNAME;
+
+
 // Baro Levha Proxy Endpoint
 router.post("/list", async (req, res) => {
   try {
-    const { action, name, surname, sicil } = req.body;
+    const { name, surname, sicil } = req.body;
 
     const params = new URLSearchParams();
-    params.append("action", action || "list");
+    params.append("action", "list");
     params.append("name", name || "");
     params.append("surname", surname || "");
     params.append("sicil", sicil || "");
+    let proxy = null;
+    // İsteği proxy üzerinden yap
+    if (PROXY_ENABLED) {
+      console.log("PROXY ENABLED, PASSWORD: " + process.env.PROXY_PASSWORD);
+      proxy = {
+        protocol: "http",
+        host: PROXY_URL,
+        port: parseInt(PROXY_PORT),
+        auth: {
+          username: PROXY_USERNAME,
+          password: process.env.PROXY_PASSWORD,
+        },
+      };
+    }
+    console.log("PROXY_ENABLED:", PROXY_ENABLED);
+    console.log("Using proxy:", proxy);
 
     const response = await axios.post(
       "https://eskisehirbarosu.org.tr/ajax/baro-levha.php",
@@ -19,6 +42,7 @@ router.post("/list", async (req, res) => {
       {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         responseType: "text",
+        proxy: PROXY_ENABLED ? proxy : false,
       }
     );
 

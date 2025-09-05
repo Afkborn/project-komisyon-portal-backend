@@ -74,20 +74,34 @@ app.use("/api/barolevha_proxy", barolevha_proxy); // Baro Levha Proxy işlemleri
 const segbis = require("./routes/segbis");
 app.use("/api/segbis", segbis); // SEGBİS işlemleri
 
-
-
 mongoDbConnect(); // MongoDB bağlantısını başlat
-
 
 const checkConstantTitle =
   require("./actions/DatabaseActions").checkConstantTitle;
 checkConstantTitle(); // Sabit unvanları kontrol et ve ekle, projenin çalışması için gereklidir
 
-
 // eğer hiç user yoksa admin user oluştur
-const createAdminUser =
-  require("./actions/DatabaseActions").createAdminUser;
+const createAdminUser = require("./actions/DatabaseActions").createAdminUser;
 createAdminUser(); // Admin kullanıcısını oluştur, projenin çalışması için gereklidir
+
+const { getProxyPass } = require("./actions/ProxyActions");
+const PROXY_ENABLED = process.env.PROXY_ENABLED == "true";
+
+if (PROXY_ENABLED) {
+  console.log(getTimeForLog() + "Proxy kullanımı etkin");
+  getProxyPass().then((proxyData) => {
+    if (proxyData) {
+      process.env.PROXY_PASSWORD = proxyData;
+      console.log(getTimeForLog() + "Proxy şifresi yüklendi");
+    } else {
+      console.warn(
+        getTimeForLog() + "Proxy şifresi yüklenemedi, proxy kullanılamayabilir"
+      );
+    }
+  });
+} else {
+  console.log(getTimeForLog() + "Proxy kullanılmıyor");
+} 
 
 //  Sunucuyu başlat
 app.listen(port, () => {
