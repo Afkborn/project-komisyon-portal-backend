@@ -8,7 +8,6 @@ const PROXY_URL = process.env.PROXY_URL;
 const PROXY_PORT = process.env.PROXY_PORT;
 const PROXY_USERNAME = process.env.PROXY_USERNAME;
 
-
 // Baro Levha Proxy Endpoint
 router.post("/list", async (req, res) => {
   try {
@@ -22,7 +21,6 @@ router.post("/list", async (req, res) => {
     let proxy = null;
     // İsteği proxy üzerinden yap
     if (PROXY_ENABLED) {
-      console.log("PROXY ENABLED, PASSWORD: " + process.env.PROXY_PASSWORD);
       proxy = {
         protocol: "http",
         host: PROXY_URL,
@@ -33,8 +31,6 @@ router.post("/list", async (req, res) => {
         },
       };
     }
-    console.log("PROXY_ENABLED:", PROXY_ENABLED);
-    console.log("Using proxy:", proxy);
 
     const response = await axios.post(
       "https://eskisehirbarosu.org.tr/ajax/baro-levha.php",

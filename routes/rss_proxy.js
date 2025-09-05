@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require("axios");
 const Parser = require("rss-parser");
 
-// RSS Parser 
+// RSS Parser
 const parser = new Parser({
   customFields: {
     item: [
@@ -16,7 +16,13 @@ const parser = new Parser({
   },
 });
 
+// PROXY
 
+require("dotenv/config");
+const PROXY_ENABLED = process.env.PROXY_ENABLED == "true";
+const PROXY_URL = process.env.PROXY_URL;
+const PROXY_PORT = process.env.PROXY_PORT;
+const PROXY_USERNAME = process.env.PROXY_USERNAME;
 
 router.get("/", async (req, res) => {
   try {
@@ -39,13 +45,30 @@ router.get("/", async (req, res) => {
       });
     }
 
+    let proxy = null;
+    // İsteği proxy üzerinden yap
+    if (PROXY_ENABLED) {
+      proxy = {
+        protocol: "http",
+        host: PROXY_URL,
+        port: parseInt(PROXY_PORT),
+        auth: {
+          username: PROXY_USERNAME,
+          password: process.env.PROXY_PASSWORD,
+        },
+      };
+    }
+
+    // console.log("proxy config:", PROXY_ENABLED ? proxy : "No Proxy");
+    // console.log("proxy pass env:", process.env.PROXY_PASSWORD ? "SET" : "NOT SET");
     // RSS içeriğini doğrudan çek
     const response = await axios.get(url, {
-      timeout: 10000, // 10 saniye timeout
+      timeout: 10000, // 10 saniye timeout 
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       },
+      proxy: PROXY_ENABLED ? proxy : false,
     });
 
     // RSS'i parse et

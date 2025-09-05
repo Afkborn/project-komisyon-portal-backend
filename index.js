@@ -105,5 +105,5 @@ if (PROXY_ENABLED) {
 
 //  Sunucuyu başlat
 app.listen(port, () => {
-  console.log(getTimeForLog() + `Listening on port ${port}`);
+  console.log(getTimeForLog() + `Listening on port ${port}`); 
 });
