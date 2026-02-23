@@ -38,7 +38,7 @@ router.get("/", auth, Logger("GET /persons/"), (request, response) => {
   }
   Person.find({ status: true })
     .select(
-      "-_id -__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi"
+      "-_id -__v -kind -calistigiKisi "
     )
     .populate("title", "-_id -__v -deletable")
     .populate("izinler", "-__v -personID")
@@ -310,6 +310,30 @@ router.get(
       .populate("temporaryBirimID", "-__v -deletable")
       .then((persons) => {
         persons = persons.map((person) => person.toObject());
+        
+        // Geçici birim boş olan personelleri filtrele ve uyarı ver
+        const personsWithTemporaryUnit = [];
+        const warnings = [];
+        
+        persons.forEach((person) => {
+          if (!person.temporaryBirimID) {
+            console.warn(
+              `${person.sicil} sicil sayılı personel geçici personel olarak işaretlenmiş ancak birimi mevcut değil, geçici birimi ekleyin`
+            );
+            warnings.push({
+              sicil: person.sicil,
+              ad: person.ad,
+              soyad: person.soyad,
+              message: `${person.sicil} sicil sayılı personel geçici personel olarak işaretlenmiş ancak birimi mevcut değil, geçici birimi ekleyin`
+            });
+          } else {
+            personsWithTemporaryUnit.push(person);
+          }
+        });
+        
+        // Sadece geçici birim olan personelleri kullan
+        persons = personsWithTemporaryUnit;
+        
         // filter persons by institutionId
         if (institutionId) {
           persons = persons.filter((person) => {
@@ -346,6 +370,7 @@ router.get(
         response.send({
           success: true,
           personList: persons,
+          warnings: warnings.length > 0 ? warnings : null,
         });
       })
       .catch((error) => {
@@ -655,6 +680,12 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     temporaryEndDate,
     temporaryBirimID,
 
+    // yarı zamanlı çalışma
+    isPartTime,
+    partTimeStartDate,
+    partTimeEndDate,
+    partTimeReason,
+
     //  ZABIT KATİBİ
     durusmaKatibiMi,
     calistigiKisi,
@@ -712,6 +743,10 @@ router.post("/", auth, Logger("POST /persons/"), async (request, response) => {
     temporaryReason,
     temporaryEndDate,
     temporaryBirimID,
+    isPartTime,
+    partTimeStartDate,
+    partTimeEndDate,
+    partTimeReason,
     title: title._id,
     kind,
   };
@@ -764,6 +799,28 @@ router.put(
           success: false,
           message: Messages.PERSON_NOT_FOUND,
         });
+      }
+
+      // Status false yapılırsa geçici görevlendirme ve yarı zamanlı bilgisini temizle
+      if (updateData.status === false) {
+        updateData.isTemporary = false;
+        updateData.temporaryReason = null;
+        updateData.temporaryEndDate = null;
+        updateData.temporaryBirimID = null;
+        updateData.isPartTime = false;
+        updateData.partTimeReason = null;
+        updateData.partTimeStartDate = null;
+        updateData.partTimeEndDate = null;
+      }
+
+      // Birime başlama tarihi kontrolü
+      const goreveBaslamaTarihi = updateData.goreveBaslamaTarihi || person.goreveBaslamaTarihi;
+      if (updateData.birimeBaslamaTarihi && goreveBaslamaTarihi) {
+        const birimeBaslamaTarihi = new Date(updateData.birimeBaslamaTarihi);
+        const goreveBaslamaTarihiDate = new Date(goreveBaslamaTarihi);
+        if (birimeBaslamaTarihi < goreveBaslamaTarihiDate) {
+          throw new Error("Birime başlama tarihi, göreve başlama tarihinden önce olamaz.");
+        }
       }
 
       let Model = Person;
@@ -819,10 +876,36 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
   Person.findById(id)
     .then((person) => {
       if (!person) {
-        return response.status(404).send({
+        response.status(404).send({
           success: false,
           message: Messages.PERSON_NOT_FOUND,
         });
+        return null;
+      }
+
+      // Status false yapılırsa geçici görevlendirme ve yarı zamanlı bilgisini temizle
+      if (updateData.status === false) {
+        updateData.isTemporary = false;
+        updateData.temporaryReason = null;
+        updateData.temporaryEndDate = null;
+        updateData.temporaryBirimID = null;
+        updateData.isPartTime = false;
+        updateData.partTimeReason = null;
+        updateData.partTimeStartDate = null;
+        updateData.partTimeEndDate = null;
+      }
+
+      // Birime başlama tarihi kontrolü
+      const goreveBaslamaTarihi = updateData.goreveBaslamaTarihi || person.goreveBaslamaTarihi;
+      if (updateData.birimeBaslamaTarihi && goreveBaslamaTarihi) {
+        const birimeBaslamaTarihi = new Date(updateData.birimeBaslamaTarihi);
+        const goreveBaslamaTarihiDate = new Date(goreveBaslamaTarihi);
+        if (birimeBaslamaTarihi < goreveBaslamaTarihiDate) {
+          return response.status(400).send({
+            success: false,
+            message: "Birime başlama tarihi, göreve başlama tarihinden önce olamaz.",
+          });
+        }
       }
 
       let Model = Person;
@@ -879,7 +962,9 @@ router.put("/:id", auth, Logger("PUT /persons/"), async (request, response) => {
       });
     })
     .catch((error) => {
-      response.status(500).send({
+      const statusCode = error.statusCode || 500;
+      response.status(statusCode).send({
+        success: false,
         message: error.message || Messages.PERSON_NOT_UPDATED,
       });
     });

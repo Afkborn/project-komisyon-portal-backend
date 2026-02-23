@@ -16,9 +16,11 @@ const {
 
 // get last activities
 router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
-  let { page = 1, limit = 10, maxPageCount } = request.query; // Varsayılan değerleri veriyoruz
+  let { page = 1, limit = 10, pageSize, maxPageCount } = request.query; // Varsayılan değerleri veriyoruz
   page = parseInt(page) || 1; // Geçerli bir sayfa numarası değilse, 1 olarak al
-  limit = parseInt(limit) || 10; // Geçerli bir limit numarası değilse, 10 olarak al
+  
+  // pageSize parametresi varsa onu kullan, yoksa limit kullan
+  limit = pageSize ? parseInt(pageSize) : parseInt(limit) || 10;
 
   app = request.query.app; // Uygulama adını al
   userID = request.query.userID; // Kullanıcı ID'sini al
@@ -30,17 +32,6 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
   personelHareketleri = request.query.personelHareketleri; // Personel Hareket Ekranı için
 
   try {
-    const totalRecords = await Activity.countDocuments(); // Toplam kayıt sayısı
-    let pageCount = Math.ceil(totalRecords / limit); // Toplam sayfa sayısını hesapla
-
-    // Eğer maxPageCount belirtilmişse ve pageCount'u aşıyorsa, pageCount'u maxPageCount ile sınırla
-    if (maxPageCount) {
-      maxPageCount = parseInt(maxPageCount);
-      if (!isNaN(maxPageCount) && maxPageCount > 0) {
-        pageCount = Math.min(pageCount, maxPageCount); // Maksimum sayfa sayısını aşma
-      }
-    }
-
     let activityFilter = {
       isVisible: true,
     };
@@ -74,6 +65,17 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
     if (app){
       let activityTypes = getActivitiesWithApp(app);
       activityFilter.typeID = { $in: activityTypes.map((type) => type.id) };
+    }
+
+    const totalRecords = await Activity.countDocuments(activityFilter); // Toplam kayıt sayısı FİLTRELENEN veriye göre hesapla
+    let pageCount = Math.ceil(totalRecords / limit); // Toplam sayfa sayısını hesapla
+
+    // Eğer maxPageCount belirtilmişse ve pageCount'u aşıyorsa, pageCount'u maxPageCount ile sınırla
+    if (maxPageCount) {
+      maxPageCount = parseInt(maxPageCount);
+      if (!isNaN(maxPageCount) && maxPageCount > 0) {
+        pageCount = Math.min(pageCount, maxPageCount); // Maksimum sayfa sayısını aşma
+      }
     }
 
     const activities = await Activity.find(activityFilter)
@@ -116,9 +118,11 @@ router.get(
   Logger("GET /activities/"),
   async (request, response) => {
     try {
-      let { page = 1, limit = 30 } = request.query; // Varsayılan değerler: page=1, limit=30
+      let { page = 1, limit = 30, pageSize } = request.query; // Varsayılan değerler: page=1, limit=30
       page = parseInt(page) || 1;
-      limit = parseInt(limit) || 30;
+      
+      // pageSize parametresi varsa onu kullan, yoksa limit kullan
+      limit = pageSize ? parseInt(pageSize) : parseInt(limit) || 30;
 
       const totalRecords = await Activity.countDocuments({
         userID: request.params.userID,

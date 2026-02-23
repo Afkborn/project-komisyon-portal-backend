@@ -14,6 +14,8 @@ const Logger = require("../middleware/logger");
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
 const { getInstitutionListByID } = require("../actions/InstitutionActions");
+const { InstitutionList } = require("../constants/InstitutionList");
+const { UnitTypeList } = require("../constants/UnitTypeList");
 
 // get all units
 // institutionTypeId params is optional
@@ -52,15 +54,101 @@ router.get("/", auth, Logger("GET /units"), (request, response) => {
   }
 });
 
+// search units by name or institution
+router.get(
+  "/search",
+  auth,
+  Logger("GET /units/search"),
+  (request, response) => {
+    const q = request.query.q;
+    let limit = parseInt(request.query.limit) || 10;
+
+    // Validation
+    if (!q || q.trim().length < 2) {
+      return response.status(400).send({
+        success: false,
+        message: "Arama metni en az 2 karakter olmalıdır.",
+      });
+    }
+
+    // Limit must be between 1 and 50
+    if (limit < 1) limit = 1;
+    if (limit > 50) limit = 50;
+
+    // Case-insensitive regex for partial match
+    const searchRegex = new RegExp(q, "i");
+
+    Unit.find({
+      name: searchRegex,
+    })
+      .limit(limit)
+      .then((units) => {
+        // Map units with institution and unitType information
+        const unitsWithDetails = units.map((unit) => {
+          const institution = InstitutionList.find(
+            (inst) => inst.id === unit.institutionID
+          );
+          const unitType = UnitTypeList.find(
+            (ut) => ut.id === unit.unitTypeID
+          );
+
+          return {
+            _id: unit._id,
+            name: unit.name,
+            unitType: unitType
+              ? {
+                  id: unitType.id,
+                  name: unitType.name,
+                }
+              : null,
+            institutionID: institution
+              ? {
+                  id: institution.id,
+                  name: institution.name,
+                }
+              : null,
+          };
+        });
+
+        // Count total records matching the search
+        Unit.countDocuments({ name: searchRegex })
+          .then((total) => {
+            response.send({
+              success: true,
+              data: {
+                units: unitsWithDetails,
+                count: unitsWithDetails.length,
+                total: total,
+              },
+            });
+          })
+          .catch((error) => {
+            response.status(500).send({
+              success: false,
+              message: error.message || Messages.UNITS_NOT_FOUND,
+            });
+          });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          success: false,
+          message: error.message || Messages.UNITS_NOT_FOUND,
+        });
+      });
+  }
+);
+
 // get all units
 // institutionId params is required
 // it will return all units of that institution
+// ÖNEMLİ: Bu route /institution/:institutionId/name önce tanımlanmalı!
 router.get(
   "/institution/:institutionId",
   auth,
   Logger("GET /units/institution"),
   (request, response) => {
     const institutionId = request.params.institutionId;
+    
     Unit.find({ institutionID: institutionId })
       .then((units) => {
         // unitlerinin her birine institutionTypeId ekleyelim.
@@ -76,6 +164,30 @@ router.get(
         response.send({
           success: true,
           institution: getInstitutionListByID(institutionId),
+          unitList: units,
+        });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: error.message || Messages.UNITS_NOT_FOUND,
+        });
+      });
+  }
+);
+
+// get all units name  with institution id
+// bu route'un amacı, institution id'si verilen unit'in adını ve id'sini döndürmek.
+// örneğin, institution id'si 1 olan unit'lerin adlarını ve id'lerini döndür.
+router.get(
+  "/institution/:institutionId/name",
+  auth,
+  Logger("GET /units/institution/name"),
+  (request, response) => {
+    const institutionId = request.params.institutionId;
+    Unit.find({ institutionID: institutionId }, { name: 1 })
+      .then((units) => {
+        response.send({
+          success: true,
           unitList: units,
         });
       })
@@ -207,29 +319,5 @@ router.delete("/:id", auth, Logger("DELETE /units"), (request, response) => {
       });
     });
 });
-
-// get all units name  with institution id
-// bu route'un amacı, institution id'si verilen unit'in adını ve id'sini döndürmek.
-// örneğin, institution id'si 1 olan unit'lerin adlarını ve id'lerini döndür.
-router.get(
-  "/institution/:institutionId/name",
-  auth,
-  Logger("GET /units/institution/name"),
-  (request, response) => {
-    const institutionId = request.params.institutionId;
-    Unit.find({ institutionID: institutionId }, { name: 1 })
-      .then((units) => {
-        response.send({
-          success: true,
-          unitList: units,
-        });
-      })
-      .catch((error) => {
-        response.status(500).send({
-          message: error.message || Messages.UNITS_NOT_FOUND,
-        });
-      });
-  }
-);
 
 module.exports = router;

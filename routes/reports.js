@@ -281,6 +281,74 @@ router.get(
   }
 );
 
+
+// yarı zamanlı çalışan personeller
+router.get(
+  "/partTimePersonnel",
+  auth,
+  Logger("GET /partTimePersonnel"),
+  async (request, response) => {
+    try {
+      let processStartDate = new Date();
+      let institutionId = request.query.institutionId;
+
+      let units = await Unit.find();
+      if (institutionId) {
+        units = units.filter((unit) => unit.institutionID == institutionId);
+      }
+
+      let persons = await Person.find({
+        isPartTime: true,
+        status: true,
+        birimID: { $in: units.map((unit) => unit._id) },
+      })
+        .populate("title", "-_id -__v -deletable")
+        .populate("birimID", "-_id -__v -deletable")
+        .populate("temporaryBirimID", "-_id -__v -deletable");
+
+      let partTimePersonnelList = persons.map((person) => {
+        return {
+          sicil: person.sicil,
+          ad: person.ad,
+          soyad: person.soyad,
+          birim: person.birimID?.name || "Birim Yok",
+          unvan: person.title,
+          isTemporary: person.isTemporary,
+          partTimeStartDate: person.partTimeStartDate,
+          partTimeEndDate: person.partTimeEndDate,
+          partTimeReason: person.partTimeReason,
+        };
+      });
+
+      let processEndDate = new Date();
+      let processTime = processEndDate - processStartDate;
+      console.log(
+        getTimeForLog() +
+          "USER " +
+          request.user.username +
+          " [REPORT][partTimePersonnel] Process Time: " +
+          processTime +
+          " ms"
+      );
+
+      recordActivity(
+        request.user.id,
+        RequestTypeList.REPORT_PARTTIMEPERSONNEL
+      );
+
+      response.send({
+        success: true,
+        partTimePersonnelList: partTimePersonnelList,
+      });
+    } catch (error) {
+      console.log(error);
+      response.status(500).send({
+        message: error.message || Messages.PERSONS_NOT_FOUND,
+      });
+    }
+  }
+);
+
 // geciciPersonel hesaba katılmıyor.
 // toplamPersonelSayisi
 router.get(

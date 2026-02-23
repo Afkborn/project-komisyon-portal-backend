@@ -168,7 +168,7 @@ exports.UnitTypeList = [
     eksikKatipKontrol: true,
     tabloMevcutMu: true,
     tabloHeaderName: "Asliye Ticaret Mahkemeleri",
-    baskanGerekliMi: false,
+    baskanGerekliMi: true,
     uyeHakimGerekliMi: false,
     hakimGerekliMi: true,
   },

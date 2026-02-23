@@ -121,6 +121,23 @@ const personSchema = new Schema(
       type: String,
     },
 
+    // yarı zamalı çalışma
+    isPartTime: {
+      type: Boolean,
+      default: false,
+    },
+    partTimeStartDate: {
+      type: Date,
+      default: null,
+    },
+    partTimeEndDate: {
+      type: Date,
+      default: null,
+    },
+    partTimeReason: {
+      type: String,
+    },
+
     izinler: [
       {
         type: Schema.Types.ObjectId,
@@ -198,7 +215,7 @@ const personSchema = new Schema(
       default: false,
     },
   },
-  options
+  options,
 );
 
 // Buradaki virtual field'ı kullanarak, bir kişinin izinde olup olmadığını kontrol edebiliriz.
@@ -228,7 +245,7 @@ const ZabitKatibi = Person.discriminator(
       default: null,
     },
     nobetTutuyorMu: { type: Boolean, default: false },
-  })
+  }),
 );
 
 const YaziIsleriMuduru = Person.discriminator(
@@ -239,7 +256,7 @@ const YaziIsleriMuduru = Person.discriminator(
       ref: "Unit",
       default: null,
     },
-  })
+  }),
 );
 
 const Mubasir = Person.discriminator(
@@ -249,10 +266,9 @@ const Mubasir = Person.discriminator(
       type: Schema.Types.ObjectId,
       ref: "Unit",
       default: null,
-      
     },
     nobetTutuyorMu: { type: Boolean, default: false },
-  })
+  }),
 );
 
 module.exports = {

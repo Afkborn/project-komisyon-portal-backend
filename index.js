@@ -8,22 +8,27 @@ const { initRedis } = require("./config/redis");
 require("dotenv").config();
 const port = process.env.PORT || 3000;
 
-// Redis bağlantısını başlat
-initRedis().then((isConnected) => {
-  if (isConnected) {
-    console.log(getTimeForLog() + "Redis servisi hazır");
-  } else {
-    console.warn(
-      getTimeForLog() +
-        "Redis servisi hazır değil, bazı özellikler sınırlı olabilir"
-    );
-  }
-});
+if (process.env.REDIS_ENABLED == "true") {
+  console.log(getTimeForLog() + "Redis kullanımı etkin");
+  // Redis bağlantısını başlat
+  initRedis().then((isConnected) => {
+    if (isConnected) {
+      console.log(getTimeForLog() + "Redis servisi hazır");
+    } else {
+      console.warn(
+        getTimeForLog() +
+          "Redis servisi hazır değil, bazı özellikler sınırlı olabilir",
+      );
+    }
+  });
+} else {
+  console.log(getTimeForLog() + "Redis kullanımı devre dışı");
+}
 
 app.use(
   bodyParser.urlencoded({
     extended: true,
-  })
+  }),
 );
 
 app.use(cors()); // CORS'u etkinleştirir
@@ -95,15 +100,15 @@ if (PROXY_ENABLED) {
       console.log(getTimeForLog() + "Proxy şifresi yüklendi");
     } else {
       console.warn(
-        getTimeForLog() + "Proxy şifresi yüklenemedi, proxy kullanılamayabilir"
+        getTimeForLog() + "Proxy şifresi yüklenemedi, proxy kullanılamayabilir",
       );
     }
   });
 } else {
   console.log(getTimeForLog() + "Proxy kullanılmıyor");
-} 
+}
 
 //  Sunucuyu başlat
 app.listen(port, () => {
-  console.log(getTimeForLog() + `Listening on port ${port}`); 
+  console.log(getTimeForLog() + `Listening on port ${port}`);
 });

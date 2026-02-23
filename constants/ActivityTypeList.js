@@ -220,6 +220,20 @@ const ActivityTypeList = {
     name: "Mahkeme Birim Ekleme",
     filterType: "SEGBİS",
   },
+  REPORT_PARTTIMEPERSONNEL: {
+    id: 37,
+    app: "EPSİS",
+    name: "Yarı Zamanlı Personel Listesi",
+    filterType: "report",
+  },
+  LEAVE_UPDATE: {
+    id: 38,
+    app: "EPSİS",
+    name: "İzin Güncelleme",
+    field: "personID",
+    filterType: "person",
+  },
+  
 };
 
 // Dışa aktarım

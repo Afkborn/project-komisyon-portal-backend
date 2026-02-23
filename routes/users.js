@@ -88,8 +88,9 @@ router.post("/login", async (request, response) => {
         attempts = 0; // Redis olmadan hata sayısını takip edemeyiz, en güvenlisi sıfırlamaktır
       }
     }
-
+    
     // Şifre yanlış ise
+    
     if (user.password !== toSHA256(request.body.password)) {
       attempts++; // Hatalı giriş sayısını artır
 
@@ -140,6 +141,8 @@ router.post("/login", async (request, response) => {
             `Redis unavailable, cannot track login attempts for ${user.username}`
         );
       }
+
+      
 
       // Redis kullanılamasa bile kalan hak mesajını göster
       // Fakat Redis yoksa veya hata verirse kilitleme yapamayacağımızdan her zaman en az 1 hak kalacak

@@ -85,6 +85,66 @@ router.post(
   }
 );
 
+// update a leave by ID
+router.put(
+  "/:ID",
+  auth,
+  Logger("PUT /leaves/"),
+  async (request, response) => {
+    const ID = request.params.ID;
+
+    try {
+      // İzin var mı kontrol et
+      const leave = await Leave.findById(ID);
+      if (!leave) {
+        return response.status(404).send({
+          success: false,
+          message: Messages.LEAVE_NOT_FOUND,
+        });
+      }
+
+      // Güncellenecek alanlar
+      const updateData = {};
+      if (request.body.startDate !== undefined)
+        updateData.startDate = request.body.startDate;
+      if (request.body.endDate !== undefined)
+        updateData.endDate = request.body.endDate;
+      if (request.body.reason !== undefined)
+        updateData.reason = request.body.reason;
+      if (request.body.comment !== undefined)
+        updateData.comment = request.body.comment;
+      if (request.body.dayCount !== undefined)
+        updateData.dayCount = request.body.dayCount;
+
+      // İzni güncelle
+      const updatedLeave = await Leave.findByIdAndUpdate(ID, updateData, {
+        new: true,
+      });
+
+      recordActivity(
+        request.user.id,
+        RequestTypeList.LEAVE_UPDATE,
+        leave.personID,
+        null,
+        null,
+        null,
+        null,
+        ID
+      );
+
+      response.send({
+        success: true,
+        message: "İzin başarıyla güncellendi",
+        data: updatedLeave,
+      });
+    } catch (error) {
+      response.status(500).send({
+        message: error.message || Messages.LEAVE_NOT_SAVED,
+      });
+    }
+  }
+);
+
 // delete a leave by ID
 router.delete("/:ID", auth, Logger("DELETE /leaves/"), (request, response) => {
   const ID = request.params.ID;
