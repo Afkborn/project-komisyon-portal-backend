@@ -232,6 +232,7 @@ const ActivityTypeList = {
     name: "İzin Güncelleme",
     field: "personID",
     filterType: "person",
+    showPersonelHareketScreen: true,
   },
 
   BINOT_CREATE_NOTE: {

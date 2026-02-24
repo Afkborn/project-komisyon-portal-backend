@@ -14,7 +14,15 @@ const {
   getActivitiesWithApp,
 } = require("../actions/ActivityActions");
 
-// get last activities
+// Helper function: raporları filtrele
+function getReportActivities() {
+  const ActivityTypeList = require("../constants/ActivityTypeList");
+  return Object.keys(ActivityTypeList)
+    .filter((key) => ActivityTypeList[key].filterType === "report")
+    .map((key) => ActivityTypeList[key]);
+}
+
+// get activities
 router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
   let { page = 1, limit = 10, pageSize, maxPageCount } = request.query; // Varsayılan değerleri veriyoruz
   page = parseInt(page) || 1; // Geçerli bir sayfa numarası değilse, 1 olarak al
@@ -25,6 +33,7 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
   app = request.query.app; // Uygulama adını al
   userID = request.query.userID; // Kullanıcı ID'sini al
   filterType = request.query.filterType; // Filtre tipini al
+  hideReports = request.query.hideReports; // Raporları gizle
 
   startDate = request.query.startDate; // Başlangıç tarihini al
   endDate = request.query.endDate; // Bitiş tarihini al
@@ -39,11 +48,7 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
     if (userID) {
       activityFilter.userID = userID;
     }
-    if (filterType) {
-      // get all activities with type
-      let activityType = getActivitiesWithFilterTypes(filterType);
-      activityFilter.typeID = { $in: activityType.map((type) => type.id) };
-    }
+    
     if (startDate) {
       activityFilter.createdAt = {
         $gte: new Date(startDate),
@@ -56,15 +61,39 @@ router.get("/", auth, Logger("GET /activities/"), async (request, response) => {
       };
     }
 
-    if (personelHareketleri) {
-      let activityType = getActivityWithPersonelHaraketScreen(filterType);
-      activityFilter.typeID = { $in: activityType.map((type) => type.id) };
+    // typeID filtreleri mantık: (filterType OR personelHareketleri) AND app, MINUS hideReports
+    let typeIds = null; // null = no typeID filter
+
+    // 1) filterType VEYA personelHareketleri ile BAŞLA (prioritized seçim)
+    if (filterType) {
+      typeIds = getActivitiesWithFilterTypes(filterType).map(t => t.id);
+    } else if (personelHareketleri) {
+      typeIds = getActivityWithPersonelHaraketScreen().map(t => t.id);
     }
 
-    // uygulama filtresi sayesinde EPSİS'de SEGBİS'e ait loglar listelenmiyor 
-    if (app){
-      let activityTypes = getActivitiesWithApp(app);
-      activityFilter.typeID = { $in: activityTypes.map((type) => type.id) };
+    // 2) app varsa KESIŞIM al (her iki durumda da)
+    if (app) {
+      const appIds = getActivitiesWithApp(app).map(t => t.id);
+      if (typeIds) {
+        typeIds = typeIds.filter(id => appIds.includes(id));
+      } else {
+        typeIds = appIds;
+      }
+    }
+
+    // 3) hideReports varsa HARİÇ TUT
+    if (hideReports === "true") {
+      const reportIds = getReportActivities().map(t => t.id);
+      if (typeIds) {
+        typeIds = typeIds.filter(id => !reportIds.includes(id));
+      } else {
+        activityFilter.typeID = { $nin: reportIds };
+      }
+    }
+
+    // Sonuç typeID filtresini uygula
+    if (typeIds) {
+      activityFilter.typeID = { $in: typeIds };
     }
 
     const totalRecords = await Activity.countDocuments(activityFilter); // Toplam kayıt sayısı FİLTRELENEN veriye göre hesapla
@@ -164,5 +193,7 @@ router.get(
     }
   }
 );
+
+
 
 module.exports = router;
