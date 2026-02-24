@@ -135,6 +135,9 @@ router.post("/add", auth, Logger("POST /biNot/add"), async (req, res) => {
 // GET /api/biNot/list
 router.get("/list", auth, Logger("GET /biNot/list"), async (req, res) => {
 	const userId = getUserId(req);
+    let { isPrivate, birimId } = req.query;
+    isPrivate = isPrivate === "true" ? true : isPrivate === "false" ? false : null;
+
 	if (!userId) {
 		return res.status(401).send({
 			success: false,
@@ -152,19 +155,51 @@ router.get("/list", auth, Logger("GET /biNot/list"), async (req, res) => {
 		}
 
 		const orFilters = [];
-		if (unitIds.length > 0) {
+
+		// isPrivate öncelikli kontrol (birimId göz ardı edilir)
+		if (isPrivate === true) {
+			// Sadece şahsi notlar
 			orFilters.push({
-				birimID: { $in: unitIds },
+				creator: userId,
+				isPrivate: true,
+			});
+		} else if (isPrivate === false) {
+			// Sadece birim notları (tüm birimler)
+			if (unitIds.length > 0) {
+				orFilters.push({
+					birimID: { $in: unitIds },
+					isPrivate: false,
+				});
+			}
+		} else if (birimId) {
+			// Sadece belirtilen birime ait notlar (isPrivate belirtilmemiş)
+			orFilters.push({
+				birimID: birimId,
 				isPrivate: false,
 			});
+		} else {
+			// Hiçbir parametre yoksa her ikisini de getir
+			if (unitIds.length > 0) {
+				orFilters.push({
+					birimID: { $in: unitIds },
+					isPrivate: false,
+				});
+			}
+			orFilters.push({
+				creator: userId,
+				isPrivate: true,
+			});
 		}
-		orFilters.push({
-			creator: userId,
-			isPrivate: true,
-		});
 
 		const list = await BiNotDerkenar.find({ $or: orFilters })
-			.populate("creator", "username name surname")
+			.populate({
+				path: "creator",
+				select: "username name surname",
+				populate: {
+					path: "person",
+					select: "sicil"
+				}
+			})
 			.populate("birimID", "name")
 			.sort({ createdAt: -1 })
 			.lean();
