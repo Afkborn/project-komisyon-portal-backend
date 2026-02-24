@@ -233,6 +233,33 @@ const ActivityTypeList = {
     field: "personID",
     filterType: "person",
   },
+
+  BINOT_CREATE_NOTE: {
+    id:39,
+    app: "BiNot",
+    name: "Not Oluşturma",
+    field: "derkenarID",
+  },
+
+  BINOT_COMPLETE_NOTE: {
+    id:40,
+    app: "BiNot",
+    name: "Not Tamamlama",
+    field: "derkenarID"
+  },
+
+  BINOT_DELETE_NOTE : {
+    id: 41,
+    app: "BiNot",
+    name: "Not Silme",
+    field: "derkenarID"
+  },
+
+  BINOT_LIST_NOTE : {
+    id:42,
+    app: "BiNot",
+    name: "Not Görütüleme",
+  }
   
 };
 

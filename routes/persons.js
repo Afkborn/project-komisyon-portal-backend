@@ -221,6 +221,58 @@ router.get(
   }
 );
 
+// get a person by id (Bu endpoint EPSİS taafından kullanılmıyor, sadece BiNot uygulaması tarafından kullanılıyor)
+router.get(
+  "/byId/:id",
+  auth,
+  Logger("GET /persons/byId"),
+  (request, response) => {
+    const id = request.params.id;
+
+    Person.findById(id)
+      .populate("title", "-_id -__v -deletable")
+      .populate("birimID", " -__v -deletable")
+      .populate("ikinciBirimID", " -__v -deletable")
+      //.populate("izinler", "-__v -personID")
+      .populate("temporaryBirimID", "-__v -deletable")
+      .populate({
+        path: "gecmisBirimler",
+        select: "-__v -personID -createdDate",
+        populate: {
+          path: "unitID",
+          select: "_id name",
+        },
+      })
+      // .populate({
+      //   path: "calistigiKisi",
+      //   populate: {
+      //     path: "title",
+      //     select: "-_id -__v -deletable",
+      //   },
+      // })
+      .then((person) => {
+        if (!person) {
+          return response.status(404).send({
+            success: false,
+            message: Messages.PERSON_NOT_FOUND,
+          });
+        }
+
+        response.send({
+          success: true,
+          person,
+        });
+      })
+      .catch((error) => {
+        response.status(500).send({
+          message: error.message || Messages.PERSON_NOT_FOUND,
+        });
+      });
+  }
+);
+
+
+
 // get a person attribute data
 router.get(
   "/attributeList",

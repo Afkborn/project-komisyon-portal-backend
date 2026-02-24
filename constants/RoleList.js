@@ -15,7 +15,8 @@ exports.RoleList = [
   { id: 4, name: "santral-memur", label: "Santral Memuru" },
 
 
-  
-  // Personel Bilgi Sistemi
-  // {id: 10, name: "pbs-genel", label: "Personel Bilgi Sistemi Genel Yetkili"},
+  // BİNOT
+  { id: 9, name: "binot-kullanici", label: "BİNOT Kullanıcı" },
+
+
 ];

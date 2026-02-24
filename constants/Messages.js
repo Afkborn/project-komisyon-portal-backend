@@ -74,6 +74,10 @@ exports.LEAVE_NOT_SAVED = "İzin kaydedilemedi";
 exports.PERSON_ID_REQUIRED = "Personel ID zorunludur";
 exports.REASON_REQUIRED = "İzin Tipi zorunludur";
 
+// BINOT
+exports.BINOT_NOTE_NOT_FOUND = "Not bulunamadı";
+exports.BINOT_NOTE_DELETED = "Not silindi";
+
 // COMMON
 exports.REQUIRED_FIELD = "alanı zorunludur";
 

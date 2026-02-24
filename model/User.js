@@ -42,6 +42,14 @@ const UserSchema = mongoose.Schema(
         message: (props) => Messages.VALID_PHONE(props.value),
       },
     },
+
+
+    // Person modeline referans, bu referans ile BİNOT uygulamasında birim takibi yapmayı hedefliyoruz
+    person: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Person", // person.js'deki model ismi
+    },
+
   },
   {
     timestamps: true,

@@ -79,6 +79,9 @@ app.use("/api/barolevha_proxy", barolevha_proxy); // Baro Levha Proxy işlemleri
 const segbis = require("./routes/segbis");
 app.use("/api/segbis", segbis); // SEGBİS işlemleri
 
+const biNot = require("./routes/biNot")
+app.use("/api/binot", biNot); // BiNot işlemleri
+
 mongoDbConnect(); // MongoDB bağlantısını başlat
 
 const checkConstantTitle =

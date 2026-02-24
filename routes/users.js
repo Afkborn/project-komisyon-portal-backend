@@ -2,6 +2,7 @@ const Messages = require("../constants/Messages");
 const express = require("express");
 const router = express.Router();
 const User = require("../model/User");
+const { Person } = require("../model/Person");
 const jwt = require("jsonwebtoken");
 const getTimeForLog = require("../common/time");
 const auth = require("../middleware/auth");
@@ -14,6 +15,25 @@ const {
   addToBlacklist,
   isValidToken,
 } = require("../config/redis");
+
+const personPopulate = {
+  path: "person",
+  select:
+    "sicil ad soyad birimID birimeBaslamaTarihi gecmisBirimler isTemporary temporaryBirimID",
+  populate: [
+    { path: "birimID", select: "_id name institutionID unitTypeID" },
+    { path: "ikinciBirimID", select: "_id name institutionID unitTypeID" },
+    { path: "temporaryBirimID", select: "_id name institutionID unitTypeID" },
+    {
+      path: "gecmisBirimler",
+      select: "-__v -personID -createdDate",
+      populate: {
+        path: "unitID",
+        select: "_id name",
+      },
+    },
+  ],
+};
 
 // login user
 router.post("/login", async (request, response) => {
@@ -88,9 +108,9 @@ router.post("/login", async (request, response) => {
         attempts = 0; // Redis olmadan hata sayısını takip edemeyiz, en güvenlisi sıfırlamaktır
       }
     }
-    
+
     // Şifre yanlış ise
-    
+
     if (user.password !== toSHA256(request.body.password)) {
       attempts++; // Hatalı giriş sayısını artır
 
@@ -110,14 +130,14 @@ router.post("/login", async (request, response) => {
             await rc.setEx(
               `loginLock:${user.username}`,
               LOCKOUT_DURATION,
-              lockUntil.toString()
+              lockUntil.toString(),
             );
 
             console.log(
               getTimeForLog() +
                 `User ${user.username} account locked until ${new Date(
-                  lockUntil * 1000
-                )}`
+                  lockUntil * 1000,
+                )}`,
             );
 
             return response.status(429).send({
@@ -129,7 +149,7 @@ router.post("/login", async (request, response) => {
 
           console.log(
             getTimeForLog() +
-              `Login attempts for ${user.username} updated to ${attempts}`
+              `Login attempts for ${user.username} updated to ${attempts}`,
           );
         } catch (redisError) {
           console.error(getTimeForLog() + "Redis error:", redisError);
@@ -138,11 +158,9 @@ router.post("/login", async (request, response) => {
       } else {
         console.log(
           getTimeForLog() +
-            `Redis unavailable, cannot track login attempts for ${user.username}`
+            `Redis unavailable, cannot track login attempts for ${user.username}`,
         );
       }
-
-      
 
       // Redis kullanılamasa bile kalan hak mesajını göster
       // Fakat Redis yoksa veya hata verirse kilitleme yapamayacağımızdan her zaman en az 1 hak kalacak
@@ -168,12 +186,12 @@ router.post("/login", async (request, response) => {
         await rc.del(`loginLock:${user.username}`);
         console.log(
           getTimeForLog() +
-            `Login attempts and locks reset for ${user.username} after successful login`
+            `Login attempts and locks reset for ${user.username} after successful login`,
         );
       } catch (redisError) {
         console.error(
           getTimeForLog() + "Redis error when resetting login attempts:",
-          redisError
+          redisError,
         );
       }
     }
@@ -183,7 +201,7 @@ router.post("/login", async (request, response) => {
     // Eğer Redis bağlantısı varsa, mevcut versiyon kontrol edilir
     if (redisClient && isConnected()) {
       const currentVersion = await redisClient().get(
-        `user:${user._id}:tokenVersion`
+        `user:${user._id}:tokenVersion`,
       );
       if (currentVersion) {
         tokenVersion = parseInt(currentVersion);
@@ -204,7 +222,7 @@ router.post("/login", async (request, response) => {
         ver: tokenVersion,
       },
       "RANDOM-TOKEN",
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     const clientIP =
@@ -212,7 +230,7 @@ router.post("/login", async (request, response) => {
     console.log(
       getTimeForLog() + "User",
       user.username,
-      "logged in with token [" + clientIP + "]"
+      "logged in with token [" + clientIP + "]",
     );
 
     response.status(200).send({
@@ -235,7 +253,7 @@ router.post(
   "/register",
   auth,
   Logger("POST users/register"),
-  (request, response) => {
+  async (request, response) => {
     if (!request.user.roles.includes("admin")) {
       return response.status(403).send({
         message: Messages.USER_NOT_AUTHORIZED,
@@ -244,7 +262,7 @@ router.post(
 
     const requiredFields = ["username", "password", "name", "surname", "roles"];
     const missingFields = requiredFields.filter(
-      (field) => !request.body[field]
+      (field) => !request.body[field],
     );
     if (missingFields.length > 0) {
       return response.status(400).send({
@@ -270,26 +288,37 @@ router.post(
       user.phone = request.body.phone;
     }
 
-    user
-      .save()
-      .then((result) => {
-        response.status(201).send({
-          message: Messages.USER_CREATED_SUCCESSFULLY,
-          result,
-        });
-      })
-      .catch((error) => {
-        response.status(500).send({
-          message: Messages.USER_CREATE_FAILED,
-          error,
-        });
+    // Person bağlama
+    try {
+      const personIdFromBody = request.body.personID || request.body.personId;
+      if (personIdFromBody) {
+        user.person = personIdFromBody;
+      } else if (request.body.sicil) {
+        // Sicil numarasıyla Person bulma (save öncesi await)
+        const person = await Person.findOne({ sicil: request.body.sicil });
+        if (person) {
+          user.person = person._id;
+        }
+      }
+
+      const result = await user.save();
+      response.status(201).send({
+        message: Messages.USER_CREATED_SUCCESSFULLY,
+        result,
       });
-  }
+    } catch (error) {
+      response.status(500).send({
+        message: Messages.USER_CREATE_FAILED,
+        error,
+      });
+    }
+  },
 );
 
 // get details from token
 router.get("/details", auth, (request, response) => {
   User.findOne({ username: request.user.username })
+    .populate(personPopulate) // BiNot uygulaması için
     .then((user) => {
       user = user.toObject();
       delete user.__v;
@@ -316,7 +345,7 @@ router.put(
     const requiredFields = ["oldPassword", "newPassword"];
 
     const missingFields = requiredFields.filter(
-      (field) => !request.body[field]
+      (field) => !request.body[field],
     );
     if (missingFields.length > 0) {
       return response.status(400).send({
@@ -346,13 +375,13 @@ router.put(
       // Bu kullanıcının tüm token'larını geçersiz kıl
       console.log(
         getTimeForLog() +
-          `Invalidating all tokens for user ${user._id} (${user.username})`
+          `Invalidating all tokens for user ${user._id} (${user.username})`,
       );
       const newVersion = await invalidateAllUserTokens(user._id);
 
       console.log(
         getTimeForLog() +
-          `User ${user.username} changed password and invalidated all tokens. New version: ${newVersion}`
+          `User ${user.username} changed password and invalidated all tokens. New version: ${newVersion}`,
       );
 
       response.status(200).send({
@@ -369,70 +398,100 @@ router.put(
         error: error.message,
       });
     }
-  }
+  },
 );
 
 // update user with id
-router.put("/:id", auth, Logger("PUT users/:id"), (request, response) => {
+router.put("/:id", auth, Logger("PUT users/:id"), async (request, response) => {
   if (!request.user.roles.includes("admin")) {
     return response.status(403).send({
       message: Messages.USER_NOT_AUTHORIZED,
     });
   }
 
-  // eğer istek body'de password varsa, onu SHA256 ile hashle
-  if (request.body.password) {
-    request.body.password = toSHA256(request.body.password);
-  }
+  try {
+    // eğer istek body'de password varsa, onu SHA256 ile hashle
+    if (request.body.password) {
+      request.body.password = toSHA256(request.body.password);
+    }
 
-  User.findByIdAndUpdate(request.params.id, request.body, {
-    new: true, // Return the updated document
-    runValidators: true, // Validate the update operation
-    useFindAndModify: false,
-  })
-    .then((user) => {
-      if (!user) {
-        return response.status(404).send({
-          message: Messages.USER_NOT_FOUND,
-        });
+    // Person bağlama
+    if (request.body.personID) {
+      request.body.person = request.body.personID;
+      delete request.body.personID; // cleanups
+    } else if (request.body.sicil) {
+      // Sicil numarasıyla Person bulma
+      const person = await Person.findOne({ sicil: request.body.sicil });
+      if (person) {
+        request.body.person = person._id;
       }
-      response.status(200).send({
-        message: Messages.USER_UPDATED,
-        user,
+      delete request.body.sicil; // cleanup
+    }
+
+    const user = await User.findByIdAndUpdate(request.params.id, request.body, {
+      new: true, // Return the updated document
+      runValidators: true, // Validate the update operation
+      useFindAndModify: false,
+    }).populate(personPopulate);
+
+    if (!user) {
+      return response.status(404).send({
+        message: Messages.USER_NOT_FOUND,
       });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: Messages.USER_NOT_UPDATED,
-        error,
-      });
+    }
+    response.status(200).send({
+      message: Messages.USER_UPDATED,
+      user,
     });
+  } catch (error) {
+    response.status(500).send({
+      message: Messages.USER_NOT_UPDATED,
+      error,
+    });
+  }
 });
 
 // update user
-router.put("/", auth, Logger("PUT users/"), (request, response) => {
-  User.findOneAndUpdate({ username: request.user.username }, request.body, {
-    new: true, // Return the updated document
-    runValidators: true, // Validate the update operation
-    useFindAndModify: false,
-  })
-    .then((user) => {
-      if (!user) {
-        return response.status(404).send({
-          message: Messages.USER_NOT_FOUND,
-        });
+router.put("/", auth, Logger("PUT users/"), async (request, response) => {
+  try {
+    // Person bağlama
+    if (request.body.personID) {
+      request.body.person = request.body.personID;
+      delete request.body.personID; // cleanup
+    } else if (request.body.sicil) {
+      // Sicil numarasıyla Person bulma
+      const person = await Person.findOne({ sicil: request.body.sicil });
+      if (person) {
+        request.body.person = person._id;
       }
-      response.status(200).send({
-        message: Messages.USER_UPDATED,
-        user,
+      delete request.body.sicil; // cleanup
+    }
+
+    const user = await User.findOneAndUpdate(
+      { username: request.user.username },
+      request.body,
+      {
+        new: true, // Return the updated document
+        runValidators: true, // Validate the update operation
+        useFindAndModify: false,
+      },
+    ).populate(personPopulate);
+
+    if (!user) {
+      return response.status(404).send({
+        message: Messages.USER_NOT_FOUND,
       });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: Messages.USER_NOT_UPDATED,
-        error,
-      });
+    }
+    response.status(200).send({
+      message: Messages.USER_UPDATED,
+      user,
     });
+  } catch (error) {
+    response.status(500).send({
+      message: Messages.USER_NOT_UPDATED,
+      error,
+    });
+  }
 });
 
 // delete user with username and password
@@ -568,7 +627,7 @@ router.post(
         console.log(
           getTimeForLog() + "User",
           request.user.username,
-          "logged out [" + clientIP + "]"
+          "logged out [" + clientIP + "]",
         );
 
         response.status(200).send({
@@ -585,7 +644,7 @@ router.post(
         error: error.message,
       });
     }
-  }
+  },
 );
 
 // validate token endpoint
@@ -658,7 +717,7 @@ router.post("/validate-token", async (request, response) => {
       // JWT doğrulama hatası (süresi dolmuş, hatalı format, vs.)
       console.error(
         getTimeForLog() + "JWT verification error:",
-        jwtError.message
+        jwtError.message,
       );
       return response.status(401).send({
         success: false,
