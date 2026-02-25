@@ -176,7 +176,6 @@ router.post("/add", auth, Logger("POST /biNot/add"), async (req, res) => {
       // Tek bir bildirim dökümanı oluştur
       await BiNotNotification.create({
         derkenarID: saved._id,
-        message: `${saved.title} için anımsatıcı oluşturuldu`,
         recipients,
         birimID: saved.birimID,
       });
@@ -276,6 +275,41 @@ router.get("/list", auth, Logger("GET /biNot/list"), async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    const noteIds = list.map((note) => note._id);
+    let notificationsByNoteId = {};
+
+    if (noteIds.length > 0) {
+      const notifications = await BiNotNotification.find({
+        derkenarID: { $in: noteIds },
+      })
+        .populate({
+          path: "recipients.user",
+          select: "username name surname",
+          populate: {
+            path: "person",
+            select: "sicil",
+          },
+        })
+        .populate("birimID", "name")
+        .sort({ createdAt: -1 })
+        .lean();
+
+      notificationsByNoteId = notifications.reduce((acc, notification) => {
+        const key = notification.derkenarID.toString();
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(notification);
+        return acc;
+      }, {});
+    }
+
+    const enrichedList = list.map((note) => {
+      const notifications = notificationsByNoteId[note._id.toString()] || [];
+      return {
+        ...note,
+        notifications,
+      };
+    });
+
     await recordActivity(
       userId,
       RequestTypeList.BINOT_LIST_NOTE,
@@ -285,8 +319,8 @@ router.get("/list", auth, Logger("GET /biNot/list"), async (req, res) => {
 
     return res.status(200).send({
       success: true,
-      length: list.length,
-      list,
+      length: enrichedList.length,
+      list: enrichedList,
     });
   } catch (error) {
     return res.status(500).send({
@@ -297,7 +331,7 @@ router.get("/list", auth, Logger("GET /biNot/list"), async (req, res) => {
 });
 
 // PUT /api/biNot/:id
-// Derkenarı düzenle (title, content, fileNumber, priority, isPrivate)
+// Derkenarı düzenle (title, content, fileNumber, priority, isPrivate, isCompleted)
 // NOT: AnımsatıcılarLA ilgili değişiklik yapılmaz
 router.put("/:id", auth, Logger("PUT /biNot/:id"), async (req, res) => {
   const userId = getUserId(req);
@@ -310,7 +344,8 @@ router.put("/:id", auth, Logger("PUT /biNot/:id"), async (req, res) => {
 
   try {
     const noteId = req.params.id;
-    const { title, content, fileNumber, priority, isPrivate } = req.body;
+    const { title, content, fileNumber, priority, isPrivate, isCompleted } =
+      req.body;
 
     // Derkenarı bul
     const note = await BiNotDerkenar.findById(noteId);
@@ -335,6 +370,7 @@ router.put("/:id", auth, Logger("PUT /biNot/:id"), async (req, res) => {
     if (fileNumber !== undefined) note.fileNumber = fileNumber;
     if (priority !== undefined) note.priority = priority;
     if (isPrivate !== undefined) note.isPrivate = isPrivate;
+    if (isCompleted !== undefined) note.isCompleted = isCompleted;
 
     const updated = await note.save();
 
@@ -425,13 +461,20 @@ router.get(
     }
 
     try {
+      const now = new Date();
+
       // recipients.user alanında bu userId'yi içeren bildirimleri bul
       const notifications = await BiNotNotification.find({
         "recipients.user": userId,
       })
         .populate({
           path: "derkenarID",
-          select: "title content fileNumber priority isCompleted",
+          select: "title content fileNumber priority isCompleted reminderDate",
+          match: {
+            hasReminder: true,
+            isCompleted: false,
+            reminderDate: { $exists: true, $ne: null, $lte: now },
+          },
         })
         .populate({
           path: "birimID",
@@ -442,7 +485,9 @@ router.get(
         .lean();
 
       // Çıktıda sadece kullanıcının kendi bilgisini göster
-      const userNotifications = notifications.map((notif) => {
+      const userNotifications = notifications
+        .filter((notif) => notif.derkenarID)
+        .map((notif) => {
         const userRecipient = notif.recipients.find(
           (r) => r.user.toString() === userId.toString(),
         );

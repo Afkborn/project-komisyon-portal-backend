@@ -6,7 +6,7 @@ const BiNotNotificationSchema = new Schema(
     derkenarID: { type: Schema.Types.ObjectId, ref: "BiNotDerkenar", required: true },
     
     // Bildirim içeriği (Örn: "2024/150 Esas sayılı dosyanın karar süresi doldu")
-    message: { type: String, required: true },
+    // message: { type: String, required: true },
     
     // Recipients dizisi: her alıcı kendi isRead & readAt bilgisine sahip
     recipients: [
