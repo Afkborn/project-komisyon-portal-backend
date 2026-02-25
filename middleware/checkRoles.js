@@ -20,16 +20,16 @@ const checkRoles = (requiredRoles) => {
       });
     }
 
-    console.log(
-      "checkRoles middleware çalıştı. Kullanıcı roller (string):",
-      req.user.roles,
-    );
-    console.log("Kullanıcı rol ID'leri (number):", userRoleIds);
-    console.log("Gerekli rol ID'leri:", requiredRoles);
+    // console.log(
+    //   "checkRoles middleware çalıştı. Kullanıcı roller (string):",
+    //   req.user.roles,
+    // );
+    // console.log("Kullanıcı rol ID'leri (number):", userRoleIds);
+    // console.log("Gerekli rol ID'leri:", requiredRoles);
 
     // Admin (ID: 1) her zaman tüm yetkilere sahiptir
     if (userRoleIds.includes(1)) {
-      console.log("Admin rolüne sahip - Erişim izin verildi");
+      // console.log("Admin rolüne sahip - Erişim izin verildi");
       return next();
     }
 
@@ -39,13 +39,13 @@ const checkRoles = (requiredRoles) => {
     );
 
     if (!hasRequiredRole) {
-      console.log("Gerekli rol bulunamadı - Erişim reddedildi");
+      // console.log("Gerekli rol bulunamadı - Erişim reddedildi");
       return res.status(403).send({
         message: Messages.USER_NOT_AUTHORIZED,
       });
     }
 
-    console.log("Gerekli rol bulundu - Erişim izin verildi");
+    // console.log("Gerekli rol bulundu - Erişim izin verildi");
     next();
   };
 };

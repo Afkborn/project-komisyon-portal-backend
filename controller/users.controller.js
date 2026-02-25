@@ -393,20 +393,42 @@ exports.updateUserById = async (request, response) => {
       request.body.password = toSHA256(request.body.password);
     }
 
-    if (request.body.personID) {
-      request.body.person = request.body.personID;
-      delete request.body.personID;
-    } else if (request.body.sicil) {
-      const person = await Person.findOne({ sicil: request.body.sicil });
+    // Boş string'leri silmek için $unset operatörü hazırla
+    const updateData = { ...request.body };
+    const unsetData = {};
+
+    if (request.body.email === "") {
+      unsetData.email = "";
+      delete updateData.email;
+    }
+    if (request.body.phoneNumber === "") {
+      unsetData.phoneNumber = "";
+      delete updateData.phoneNumber;
+    }
+
+    if (updateData.personID) {
+      updateData.person = updateData.personID;
+      delete updateData.personID;
+    } else if (updateData.sicil) {
+      const person = await Person.findOne({ sicil: updateData.sicil });
       if (person) {
-        request.body.person = person._id;
+        updateData.person = person._id;
       }
-      delete request.body.sicil;
+      delete updateData.sicil;
+    }
+
+    // MongoDB update query oluştur
+    const updateQuery = {};
+    if (Object.keys(updateData).length > 0) {
+      updateQuery.$set = updateData;
+    }
+    if (Object.keys(unsetData).length > 0) {
+      updateQuery.$unset = unsetData;
     }
 
     const user = await User.findByIdAndUpdate(
       request.params.id,
-      request.body,
+      updateQuery,
       {
         new: true,
         runValidators: true,
@@ -440,20 +462,42 @@ exports.updateUserById = async (request, response) => {
 // Mevcut kullanıcıyı güncelle
 exports.updateUser = async (request, response) => {
   try {
-    if (request.body.personID) {
-      request.body.person = request.body.personID;
-      delete request.body.personID;
-    } else if (request.body.sicil) {
-      const person = await Person.findOne({ sicil: request.body.sicil });
+    // Boş string'leri silmek için $unset operatörü hazırla
+    const updateData = { ...request.body };
+    const unsetData = {};
+
+    if (request.body.email === "") {
+      unsetData.email = "";
+      delete updateData.email;
+    }
+    if (request.body.phoneNumber === "") {
+      unsetData.phoneNumber = "";
+      delete updateData.phoneNumber;
+    }
+
+    if (updateData.personID) {
+      updateData.person = updateData.personID;
+      delete updateData.personID;
+    } else if (updateData.sicil) {
+      const person = await Person.findOne({ sicil: updateData.sicil });
       if (person) {
-        request.body.person = person._id;
+        updateData.person = person._id;
       }
-      delete request.body.sicil;
+      delete updateData.sicil;
+    }
+
+    // MongoDB update query oluştur
+    const updateQuery = {};
+    if (Object.keys(updateData).length > 0) {
+      updateQuery.$set = updateData;
+    }
+    if (Object.keys(unsetData).length > 0) {
+      updateQuery.$unset = unsetData;
     }
 
     const user = await User.findOneAndUpdate(
       { username: request.user.username },
-      request.body,
+      updateQuery,
       {
         new: true,
         runValidators: true,
