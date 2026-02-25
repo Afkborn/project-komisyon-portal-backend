@@ -333,12 +333,13 @@ async function updateNote(req, res) {
       });
     }
 
-    if (note.creator.toString() !== userId.toString()) {
-      return res.status(403).send({
-        success: false,
-        message: Messages.USER_NOT_AUTHORIZED,
-      });
-    }
+    // Notu sadece oluşturan kişi düzenleyebilir
+    // if (note.creator.toString() !== userId.toString()) {
+    //   return res.status(403).send({
+    //     success: false,
+    //     message: Messages.USER_NOT_AUTHORIZED,
+    //   });
+    // }
 
     if (title !== undefined) note.title = title;
     if (content !== undefined) note.content = content;
