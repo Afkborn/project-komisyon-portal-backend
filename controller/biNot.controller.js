@@ -392,12 +392,12 @@ async function deleteNote(req, res) {
       });
     }
 
-    if (note.creator.toString() !== userId.toString()) {
-      return res.status(403).send({
-        success: false,
-        message: Messages.USER_NOT_AUTHORIZED,
-      });
-    }
+    // if (note.creator.toString() !== userId.toString()) {
+    //   return res.status(403).send({
+    //     success: false,
+    //     message: Messages.USER_NOT_AUTHORIZED,
+    //   });
+    // }
 
     await BiNotNotification.deleteMany({ derkenarID: note._id });
     await BiNotDerkenar.deleteOne({ _id: note._id });
