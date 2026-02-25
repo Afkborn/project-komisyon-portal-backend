@@ -1,13 +1,9 @@
 const Messages = require("../constants/Messages");
-const express = require("express");
-const router = express.Router();
 const User = require("../model/User");
 const { Person } = require("../model/Person");
 const jwt = require("jsonwebtoken");
 const getTimeForLog = require("../common/time");
-const auth = require("../middleware/auth");
 const toSHA256 = require("../common/hashing");
-const Logger = require("../middleware/logger");
 const {
   redisClient,
   isConnected,
@@ -35,8 +31,9 @@ const personPopulate = {
   ],
 };
 
-// login user
-router.post("/login", async (request, response) => {
+// POST /users/login
+// Kullanıcı girişi
+exports.login = async (request, response) => {
   const requiredFields = ["username", "password"];
   const missingFields = requiredFields.filter((field) => !request.body[field]);
   if (missingFields.length > 0) {
@@ -51,13 +48,13 @@ router.post("/login", async (request, response) => {
 
     if (!user) {
       return response.status(404).send({
+        success: false,
         message: Messages.USER_NOT_FOUND,
       });
     }
 
-    // Önce kullanıcının kilitli olup olmadığını kontrol et
-    const MAX_LOGIN_ATTEMPTS = 5; // Maksimum hatalı giriş denemesi
-    const LOCKOUT_DURATION = 5 * 60; // 5 dakika (saniye cinsinden)
+    const MAX_LOGIN_ATTEMPTS = 5;
+    const LOCKOUT_DURATION = 5 * 60;
 
     let attempts = 0;
     let lockedUntil = null;
@@ -68,14 +65,11 @@ router.post("/login", async (request, response) => {
         const rc = redisClient();
         redisAvailable = true;
 
-        // Multi-get ile tek seferde hem deneme sayısını hem de kilit durumunu kontrol et
-        // Bu sayede Redis'e yapılan istek sayısını azaltıyoruz
         const [currentAttempts, lockTimestamp] = await Promise.all([
           rc.get(`loginAttempts:${user.username}`),
           rc.get(`loginLock:${user.username}`),
         ]);
 
-        // Redis'te veri bulunursa kullan, bulunmazsa varsayılan değerleri kullan
         if (currentAttempts) {
           attempts = parseInt(currentAttempts);
         }
@@ -85,17 +79,16 @@ router.post("/login", async (request, response) => {
           const lockTime = parseInt(lockTimestamp);
 
           if (now < lockTime) {
-            // Kilit süresi henüz geçmemiş
             const remainingSeconds = lockTime - now;
             const remainingMinutes = Math.ceil(remainingSeconds / 60);
 
             return response.status(429).send({
+              success: false,
               message: `Çok fazla hatalı giriş denemesi. Hesabınız geçici olarak kilitlendi. ${remainingMinutes} dakika sonra tekrar deneyiniz.`,
               lockedUntil: new Date(lockTime * 1000),
               remainingAttempts: 0,
             });
           } else {
-            // Kilit süresi geçmiş, kilidi kaldır
             await rc.del(`loginLock:${user.username}`);
             await rc.del(`loginAttempts:${user.username}`);
             attempts = 0;
@@ -104,27 +97,20 @@ router.post("/login", async (request, response) => {
       } catch (redisError) {
         console.error(getTimeForLog() + "Redis lock check error:", redisError);
         redisAvailable = false;
-        // Redis hata verirse, güvenli modda devam et
-        attempts = 0; // Redis olmadan hata sayısını takip edemeyiz, en güvenlisi sıfırlamaktır
+        attempts = 0;
       }
     }
 
-    // Şifre yanlış ise
-
     if (user.password !== toSHA256(request.body.password)) {
-      attempts++; // Hatalı giriş sayısını artır
+      attempts++;
 
-      // Eğer Redis bağlantısı varsa, hatalı giriş sayısını artır
       if (redisAvailable) {
         try {
           const rc = redisClient();
-
-          // Hatalı giriş sayısını güncelle
           const key = `loginAttempts:${user.username}`;
           const value = attempts.toString();
           await rc.setEx(key, LOCKOUT_DURATION, value);
 
-          // Eğer maksimum denemeye ulaşıldıysa hesabı kilitle
           if (attempts >= MAX_LOGIN_ATTEMPTS) {
             const lockUntil = Math.floor(Date.now() / 1000) + LOCKOUT_DURATION;
             await rc.setEx(
@@ -141,6 +127,7 @@ router.post("/login", async (request, response) => {
             );
 
             return response.status(429).send({
+              success: false,
               message: `Çok fazla hatalı giriş denemesi. Hesabınız 30 dakika süreyle kilitlendi.`,
               lockedUntil: new Date(lockUntil * 1000),
               remainingAttempts: 0,
@@ -153,7 +140,6 @@ router.post("/login", async (request, response) => {
           );
         } catch (redisError) {
           console.error(getTimeForLog() + "Redis error:", redisError);
-          // Redis hata verirse, şifre kontrol sonucu ile devam et
         }
       } else {
         console.log(
@@ -162,8 +148,6 @@ router.post("/login", async (request, response) => {
         );
       }
 
-      // Redis kullanılamasa bile kalan hak mesajını göster
-      // Fakat Redis yoksa veya hata verirse kilitleme yapamayacağımızdan her zaman en az 1 hak kalacak
       const remainingAttempts = redisAvailable
         ? Math.max(0, MAX_LOGIN_ATTEMPTS - attempts)
         : 1;
@@ -173,12 +157,12 @@ router.post("/login", async (request, response) => {
           : "Çok fazla hatalı giriş denemesi. Hesabınız kilitlendi.";
 
       return response.status(401).send({
+        success: false,
         message: `${Messages.PASSWORD_INCORRECT}. ${attemptsMessage}`,
         remainingAttempts: remainingAttempts,
       });
     }
 
-    // Şifre doğru ise, hatalı giriş sayısını ve kilidi sıfırla
     if (redisAvailable) {
       try {
         const rc = redisClient();
@@ -198,7 +182,6 @@ router.post("/login", async (request, response) => {
 
     let tokenVersion = Date.now();
 
-    // Eğer Redis bağlantısı varsa, mevcut versiyon kontrol edilir
     if (redisClient && isConnected()) {
       const currentVersion = await redisClient().get(
         `user:${user._id}:tokenVersion`,
@@ -208,12 +191,6 @@ router.post("/login", async (request, response) => {
       }
     }
 
-    // console.log(
-    //   getTimeForLog() +
-    //     `Creating token for ${user.username} with version ${tokenVersion}`
-    // );
-
-    // Tokena versiyon ekle
     const token = jwt.sign(
       {
         id: user._id,
@@ -234,6 +211,7 @@ router.post("/login", async (request, response) => {
     );
 
     response.status(200).send({
+      success: true,
       message: Messages.LOGIN_SUCCESSFUL,
       _id: user._id,
       username: user.username,
@@ -242,35 +220,33 @@ router.post("/login", async (request, response) => {
   } catch (error) {
     console.error(getTimeForLog() + "Login error:", error);
     response.status(500).send({
+      success: false,
       message: "Giriş yapılırken bir hata oluştu",
       error: error.message,
     });
   }
-});
+};
 
-// register endpoint
-router.post(
-  "/register",
-  auth,
-  Logger("POST users/register"),
-  async (request, response) => {
-    if (!request.user.roles.includes("admin")) {
-      return response.status(403).send({
-        message: Messages.USER_NOT_AUTHORIZED,
-      });
-    }
+// POST /users/register
+// Yeni kullanıcı oluştur (Admin)
+exports.register = async (request, response) => {
+  if (!request.user.roles.includes("admin")) {
+    return response.status(403).send({
+      success: false,
+      message: Messages.USER_NOT_AUTHORIZED,
+    });
+  }
 
-    const requiredFields = ["username", "password", "name", "surname", "roles"];
-    const missingFields = requiredFields.filter(
-      (field) => !request.body[field],
-    );
-    if (missingFields.length > 0) {
-      return response.status(400).send({
-        success: false,
-        message: `${missingFields.join(", ")} ${Messages.REQUIRED_FIELD}`,
-      });
-    }
+  const requiredFields = ["username", "password", "name", "surname", "roles"];
+  const missingFields = requiredFields.filter((field) => !request.body[field]);
+  if (missingFields.length > 0) {
+    return response.status(400).send({
+      success: false,
+      message: `${missingFields.join(", ")} ${Messages.REQUIRED_FIELD}`,
+    });
+  }
 
+  try {
     const password = toSHA256(request.body.password);
     const user = new User({
       username: request.body.username,
@@ -288,214 +264,228 @@ router.post(
       user.phone = request.body.phone;
     }
 
-    // Person bağlama
-    try {
-      const personIdFromBody = request.body.personID || request.body.personId;
-      if (personIdFromBody) {
-        user.person = personIdFromBody;
-      } else if (request.body.sicil) {
-        // Sicil numarasıyla Person bulma (save öncesi await)
-        const person = await Person.findOne({ sicil: request.body.sicil });
-        if (person) {
-          user.person = person._id;
-        }
+    const personIdFromBody = request.body.personID || request.body.personId;
+    if (personIdFromBody) {
+      user.person = personIdFromBody;
+    } else if (request.body.sicil) {
+      const person = await Person.findOne({ sicil: request.body.sicil });
+      if (person) {
+        user.person = person._id;
       }
-
-      const result = await user.save();
-      response.status(201).send({
-        message: Messages.USER_CREATED_SUCCESSFULLY,
-        result,
-      });
-    } catch (error) {
-      response.status(500).send({
-        message: Messages.USER_CREATE_FAILED,
-        error,
-      });
     }
-  },
-);
 
-// get details from token
-router.get("/details", auth, (request, response) => {
-  User.findOne({ username: request.user.username })
-    .populate(personPopulate) // BiNot uygulaması için
-    .then((user) => {
-      user = user.toObject();
-      delete user.__v;
-      delete user.password;
-      response.status(200).send({
-        message: Messages.USER_DETAILS,
-        user: user,
-      });
-    })
-    .catch((error) => {
-      response.status(404).send({
-        message: Messages.USER_NOT_FOUND,
-        error,
-      });
+    const result = await user.save();
+    response.status(201).send({
+      success: true,
+      message: Messages.USER_CREATED_SUCCESSFULLY,
+      result,
     });
-});
+  } catch (error) {
+    console.log(error);
+    response.status(500).send({
+      success: false,
+      message: Messages.USER_CREATE_FAILED,
+      error,
+    });
+  }
+};
 
-// change user password
-router.put(
-  "/password",
-  auth,
-  Logger("PUT users/password"),
-  async (request, response) => {
-    const requiredFields = ["oldPassword", "newPassword"];
-
-    const missingFields = requiredFields.filter(
-      (field) => !request.body[field],
+// GET /users/details
+// Token'dan detayları al
+exports.getDetails = async (request, response) => {
+  try {
+    const user = await User.findOne({ username: request.user.username }).populate(
+      personPopulate,
     );
-    if (missingFields.length > 0) {
-      return response.status(400).send({
+
+    const userData = user.toObject();
+    delete userData.__v;
+    delete userData.password;
+
+    response.status(200).send({
+      success: true,
+      message: Messages.USER_DETAILS,
+      user: userData,
+    });
+  } catch (error) {
+    console.log(error);
+    response.status(404).send({
+      success: false,
+      message: Messages.USER_NOT_FOUND,
+      error,
+    });
+  }
+};
+
+// PUT /users/password
+// Şifreyi değiştir
+exports.changePassword = async (request, response) => {
+  const requiredFields = ["oldPassword", "newPassword"];
+  const missingFields = requiredFields.filter((field) => !request.body[field]);
+  if (missingFields.length > 0) {
+    return response.status(400).send({
+      success: false,
+      message: `${missingFields.join(", ")} ${Messages.REQUIRED_FIELD}`,
+    });
+  }
+
+  try {
+    const user = await User.findOne({ username: request.user.username });
+
+    if (!user) {
+      return response.status(404).send({
         success: false,
-        message: `${missingFields.join(", ")} ${Messages.REQUIRED_FIELD}`,
+        message: Messages.USER_NOT_FOUND,
       });
     }
 
-    try {
-      const user = await User.findOne({ username: request.user.username });
-
-      if (!user) {
-        return response.status(404).send({
-          message: Messages.USER_NOT_FOUND,
-        });
-      }
-
-      if (user.password !== toSHA256(request.body.oldPassword)) {
-        return response.status(401).send({
-          message: Messages.PASSWORD_INCORRECT,
-        });
-      }
-
-      user.password = toSHA256(request.body.newPassword);
-      const updatedUser = await user.save();
-
-      // Bu kullanıcının tüm token'larını geçersiz kıl
-      console.log(
-        getTimeForLog() +
-          `Invalidating all tokens for user ${user._id} (${user.username})`,
-      );
-      const newVersion = await invalidateAllUserTokens(user._id);
-
-      console.log(
-        getTimeForLog() +
-          `User ${user.username} changed password and invalidated all tokens. New version: ${newVersion}`,
-      );
-
-      response.status(200).send({
-        message: Messages.PASSWORD_CHANGED,
-        user: {
-          _id: updatedUser._id,
-          username: updatedUser.username,
-        },
-      });
-    } catch (error) {
-      console.error(getTimeForLog() + "Password change error:", error);
-      response.status(500).send({
-        message: Messages.PASSWORD_NOT_CHANGED,
-        error: error.message,
+    if (user.password !== toSHA256(request.body.oldPassword)) {
+      return response.status(401).send({
+        success: false,
+        message: Messages.PASSWORD_INCORRECT,
       });
     }
-  },
-);
 
-// update user with id
-router.put("/:id", auth, Logger("PUT users/:id"), async (request, response) => {
+    user.password = toSHA256(request.body.newPassword);
+    const updatedUser = await user.save();
+
+    console.log(
+      getTimeForLog() +
+        `Invalidating all tokens for user ${user._id} (${user.username})`,
+    );
+    const newVersion = await invalidateAllUserTokens(user._id);
+
+    console.log(
+      getTimeForLog() +
+        `User ${user.username} changed password and invalidated all tokens. New version: ${newVersion}`,
+    );
+
+    response.status(200).send({
+      success: true,
+      message: Messages.PASSWORD_CHANGED,
+      user: {
+        _id: updatedUser._id,
+        username: updatedUser.username,
+      },
+    });
+  } catch (error) {
+    console.error(getTimeForLog() + "Password change error:", error);
+    response.status(500).send({
+      success: false,
+      message: Messages.PASSWORD_NOT_CHANGED,
+      error: error.message,
+    });
+  }
+};
+
+// PUT /users/:id
+// Kullanıcıyı güncelle (Admin)
+exports.updateUserById = async (request, response) => {
   if (!request.user.roles.includes("admin")) {
     return response.status(403).send({
+      success: false,
       message: Messages.USER_NOT_AUTHORIZED,
     });
   }
 
   try {
-    // eğer istek body'de password varsa, onu SHA256 ile hashle
     if (request.body.password) {
       request.body.password = toSHA256(request.body.password);
     }
 
-    // Person bağlama
     if (request.body.personID) {
       request.body.person = request.body.personID;
-      delete request.body.personID; // cleanups
+      delete request.body.personID;
     } else if (request.body.sicil) {
-      // Sicil numarasıyla Person bulma
       const person = await Person.findOne({ sicil: request.body.sicil });
       if (person) {
         request.body.person = person._id;
       }
-      delete request.body.sicil; // cleanup
+      delete request.body.sicil;
     }
 
-    const user = await User.findByIdAndUpdate(request.params.id, request.body, {
-      new: true, // Return the updated document
-      runValidators: true, // Validate the update operation
-      useFindAndModify: false,
-    }).populate(personPopulate);
-
-    if (!user) {
-      return response.status(404).send({
-        message: Messages.USER_NOT_FOUND,
-      });
-    }
-    response.status(200).send({
-      message: Messages.USER_UPDATED,
-      user,
-    });
-  } catch (error) {
-    response.status(500).send({
-      message: Messages.USER_NOT_UPDATED,
-      error,
-    });
-  }
-});
-
-// update user
-router.put("/", auth, Logger("PUT users/"), async (request, response) => {
-  try {
-    // Person bağlama
-    if (request.body.personID) {
-      request.body.person = request.body.personID;
-      delete request.body.personID; // cleanup
-    } else if (request.body.sicil) {
-      // Sicil numarasıyla Person bulma
-      const person = await Person.findOne({ sicil: request.body.sicil });
-      if (person) {
-        request.body.person = person._id;
-      }
-      delete request.body.sicil; // cleanup
-    }
-
-    const user = await User.findOneAndUpdate(
-      { username: request.user.username },
+    const user = await User.findByIdAndUpdate(
+      request.params.id,
       request.body,
       {
-        new: true, // Return the updated document
-        runValidators: true, // Validate the update operation
+        new: true,
+        runValidators: true,
         useFindAndModify: false,
       },
     ).populate(personPopulate);
 
     if (!user) {
       return response.status(404).send({
+        success: false,
         message: Messages.USER_NOT_FOUND,
       });
     }
+
     response.status(200).send({
+      success: true,
       message: Messages.USER_UPDATED,
       user,
     });
   } catch (error) {
+    console.log(error);
     response.status(500).send({
+      success: false,
       message: Messages.USER_NOT_UPDATED,
       error,
     });
   }
-});
+};
 
-// delete user with username and password
-router.delete("/", auth, Logger("DELETE users/"), (request, response) => {
+// PUT /users
+// Mevcut kullanıcıyı güncelle
+exports.updateUser = async (request, response) => {
+  try {
+    if (request.body.personID) {
+      request.body.person = request.body.personID;
+      delete request.body.personID;
+    } else if (request.body.sicil) {
+      const person = await Person.findOne({ sicil: request.body.sicil });
+      if (person) {
+        request.body.person = person._id;
+      }
+      delete request.body.sicil;
+    }
+
+    const user = await User.findOneAndUpdate(
+      { username: request.user.username },
+      request.body,
+      {
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+      },
+    ).populate(personPopulate);
+
+    if (!user) {
+      return response.status(404).send({
+        success: false,
+        message: Messages.USER_NOT_FOUND,
+      });
+    }
+
+    response.status(200).send({
+      success: true,
+      message: Messages.USER_UPDATED,
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    response.status(500).send({
+      success: false,
+      message: Messages.USER_NOT_UPDATED,
+      error,
+    });
+  }
+};
+
+// DELETE /users
+// Mevcut kullanıcıyı sil
+exports.deleteUser = async (request, response) => {
   const requiredFields = ["password"];
   const missingFields = requiredFields.filter((field) => !request.body[field]);
   if (missingFields.length > 0) {
@@ -505,152 +495,174 @@ router.delete("/", auth, Logger("DELETE users/"), (request, response) => {
     });
   }
 
-  User.findOneAndDelete({ username: request.user.username })
-    .then((user) => {
-      if (!user) {
-        return response.status(404).send({
-          message: Messages.USER_NOT_FOUND,
-        });
-      }
-      let password = toSHA256(request.body.password);
-
-      if (user.password !== password) {
-        return response.status(401).send({
-          message: Messages.PASSWORD_INCORRECT,
-        });
-      }
-      response.status(200).send({
-        message: Messages.USER_DELETED,
-      });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: Messages.USER_NOT_DELETED,
-        error,
-      });
+  try {
+    const user = await User.findOneAndDelete({
+      username: request.user.username,
     });
-});
 
-// delete user with id
-router.delete("/:id", auth, Logger("DELETE users/:id"), (request, response) => {
-  if (!request.user.roles.includes("admin")) {
-    return response.status(403).send({
-      message: Messages.USER_NOT_AUTHORIZED,
-    });
-  }
-  User.findByIdAndDelete(request.params.id)
-    .then((user) => {
-      if (!user) {
-        return response.status(404).send({
-          message: Messages.USER_NOT_FOUND,
-        });
-      }
-      response.status(200).send({
-        message: Messages.USER_DELETED,
-      });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: Messages.USER_NOT_DELETED,
-        error,
-      });
-    });
-});
-
-// get all users
-router.get("/", auth, Logger("GET users/"), (request, response) => {
-  if (!request.user.roles.includes("admin")) {
-    return response.status(403).send({
-      message: Messages.USER_NOT_AUTHORIZED,
-    });
-  }
-  User.find()
-    .then((users) => {
-      // remove password field from response
-      users = users.map((user) => {
-        user = user.toObject();
-        delete user.password;
-        delete user.__v;
-        return user;
-      });
-
-      response.status(200).send({
-        message: Messages.USERS_LIST,
-        users,
-      });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: Messages.USERS_GET_FAILED,
-        error,
-      });
-    });
-});
-
-// get all users name and surname
-router.get("/names", auth, Logger("GET users/names"), (request, response) => {
-  User.find({}, "name surname")
-    .then((users) => {
-      response.status(200).send({
-        message: Messages.USERS_LIST,
-        users,
-      });
-    })
-    .catch((error) => {
-      response.status(500).send({
-        message: Messages.USERS_GET_FAILED,
-        error,
-      });
-    });
-});
-
-// logout user
-router.post(
-  "/logout",
-  auth,
-  Logger("POST users/logout"),
-  async (request, response) => {
-    try {
-      // Token'ı header'dan al
-      const token = request.headers.authorization.split(" ")[1];
-
-      // Token'ın süresi kaç saniye kaldığını hesapla
-      const decoded = jwt.decode(token);
-      const expiresIn = decoded.exp - Math.floor(Date.now() / 1000);
-
-      // Token'ı blacklist'e ekle
-      const result = await addToBlacklist(token, expiresIn);
-
-      if (result) {
-        const clientIP =
-          request.headers["x-forwarded-for"] || request.socket.remoteAddress;
-        console.log(
-          getTimeForLog() + "User",
-          request.user.username,
-          "logged out [" + clientIP + "]",
-        );
-
-        response.status(200).send({
-          message: "Başarıyla çıkış yapıldı",
-        });
-      } else {
-        response.status(500).send({
-          message: "Çıkış işlemi sırasında bir hata oluştu",
-        });
-      }
-    } catch (error) {
-      response.status(500).send({
-        message: "Çıkış yapılırken bir hata oluştu",
-        error: error.message,
+    if (!user) {
+      return response.status(404).send({
+        success: false,
+        message: Messages.USER_NOT_FOUND,
       });
     }
-  },
-);
 
-// validate token endpoint
-router.post("/validate-token", async (request, response) => {
+    const password = toSHA256(request.body.password);
+
+    if (user.password !== password) {
+      return response.status(401).send({
+        success: false,
+        message: Messages.PASSWORD_INCORRECT,
+      });
+    }
+
+    response.status(200).send({
+      success: true,
+      message: Messages.USER_DELETED,
+    });
+  } catch (error) {
+    console.log(error);
+    response.status(500).send({
+      success: false,
+      message: Messages.USER_NOT_DELETED,
+      error,
+    });
+  }
+};
+
+// DELETE /users/:id
+// Kullanıcıyı sil (Admin)
+exports.deleteUserById = async (request, response) => {
+  if (!request.user.roles.includes("admin")) {
+    return response.status(403).send({
+      success: false,
+      message: Messages.USER_NOT_AUTHORIZED,
+    });
+  }
+
   try {
-    // Token'ı authorization header'dan al
+    const user = await User.findByIdAndDelete(request.params.id);
+
+    if (!user) {
+      return response.status(404).send({
+        success: false,
+        message: Messages.USER_NOT_FOUND,
+      });
+    }
+
+    response.status(200).send({
+      success: true,
+      message: Messages.USER_DELETED,
+    });
+  } catch (error) {
+    console.log(error);
+    response.status(500).send({
+      success: false,
+      message: Messages.USER_NOT_DELETED,
+      error,
+    });
+  }
+};
+
+// GET /users
+// Tüm kullanıcıları listele (Admin)
+exports.getAllUsers = async (request, response) => {
+  if (!request.user.roles.includes("admin")) {
+    return response.status(403).send({
+      success: false,
+      message: Messages.USER_NOT_AUTHORIZED,
+    });
+  }
+
+  try {
+    const users = await User.find();
+
+    const sanitizedUsers = users.map((user) => {
+      const userData = user.toObject();
+      delete userData.password;
+      delete userData.__v;
+      return userData;
+    });
+
+    response.status(200).send({
+      success: true,
+      message: Messages.USERS_LIST,
+      users: sanitizedUsers,
+    });
+  } catch (error) {
+    console.log(error);
+    response.status(500).send({
+      success: false,
+      message: Messages.USERS_GET_FAILED,
+      error,
+    });
+  }
+};
+
+// GET /users/names
+// Tüm kullanıcıların isim/soyadını listele
+exports.getUserNames = async (request, response) => {
+  try {
+    const users = await User.find({}, "name surname");
+
+    response.status(200).send({
+      success: true,
+      message: Messages.USERS_LIST,
+      users,
+    });
+  } catch (error) {
+    console.log(error);
+    response.status(500).send({
+      success: false,
+      message: Messages.USERS_GET_FAILED,
+      error,
+    });
+  }
+};
+
+// POST /users/logout
+// Çıkış yap
+exports.logout = async (request, response) => {
+  try {
+    const token = request.headers.authorization.split(" ")[1];
+    const decoded = jwt.decode(token);
+    const expiresIn = decoded.exp - Math.floor(Date.now() / 1000);
+
+    const result = await addToBlacklist(token, expiresIn);
+
+    if (result) {
+      const clientIP =
+        request.headers["x-forwarded-for"] || request.socket.remoteAddress;
+      console.log(
+        getTimeForLog() + "User",
+        request.user.username,
+        "logged out [" + clientIP + "]",
+      );
+
+      response.status(200).send({
+        success: true,
+        message: "Başarıyla çıkış yapıldı",
+      });
+    } else {
+      response.status(500).send({
+        success: false,
+        message: "Çıkış işlemi sırasında bir hata oluştu",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    response.status(500).send({
+      success: false,
+      message: "Çıkış yapılırken bir hata oluştu",
+      error: error.message,
+    });
+  }
+};
+
+// POST /users/validate-token
+// Token doğrula (Herkes)
+exports.validateToken = async (request, response) => {
+  try {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -661,7 +673,6 @@ router.post("/validate-token", async (request, response) => {
       });
     }
 
-    // Bearer prefix'ini kaldır ve token'ı al
     const token = authHeader.substring(7);
 
     if (!token || token.trim() === "") {
@@ -673,22 +684,10 @@ router.post("/validate-token", async (request, response) => {
     }
 
     try {
-      // Token'ı doğrula
       const decodedToken = jwt.verify(token, "RANDOM-TOKEN");
-
-      // console.log(
-      //   getTimeForLog() +
-      //     `Validating token for user ${decodedToken.username} (${decodedToken.id})`
-      // );
-
-      // Token'ın blacklist'te olup olmadığını ve versiyon kontrolünü yap
       const tokenValid = await isValidToken(token);
 
       if (!tokenValid) {
-        // console.log(
-        //   getTimeForLog() +
-        //     `Token validation failed for ${decodedToken.username}`
-        // );
         return response.status(401).send({
           success: false,
           message: "Token geçersiz veya oturum sonlandırılmış",
@@ -696,12 +695,6 @@ router.post("/validate-token", async (request, response) => {
         });
       }
 
-      // console.log(
-      //   getTimeForLog() +
-      //     `Token validated successfully for ${decodedToken.username}`
-      // );
-
-      // Token geçerliyse kullanıcı bilgilerini döndür (password hariç)
       response.status(200).send({
         success: true,
         message: "Token geçerlidir",
@@ -711,10 +704,9 @@ router.post("/validate-token", async (request, response) => {
           username: decodedToken.username,
           roles: decodedToken.roles,
         },
-        expiresAt: new Date(decodedToken.exp * 1000), // Unix timestamp'i tarih formatına çevir
+        expiresAt: new Date(decodedToken.exp * 1000),
       });
     } catch (jwtError) {
-      // JWT doğrulama hatası (süresi dolmuş, hatalı format, vs.)
       console.error(
         getTimeForLog() + "JWT verification error:",
         jwtError.message,
@@ -734,6 +726,4 @@ router.post("/validate-token", async (request, response) => {
       valid: false,
     });
   }
-});
-
-module.exports = router;
+};

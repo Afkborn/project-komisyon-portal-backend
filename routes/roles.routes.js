@@ -2,11 +2,10 @@ const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
 const checkRoles = require("../middleware/checkRoles");
-const RoleList = require("../constants/RoleList");
+const { getAllRoles } = require("../controller/roles.controller");
 
-// get all institutions
-router.get("/", auth, checkRoles(["admin"]), (_, response) => {
-  response.status(200).send(RoleList);
-});
+// GET /api/roles
+// Tüm rolleri listele
+router.get("/", auth, checkRoles(["admin"]), getAllRoles);
 
 module.exports = router;

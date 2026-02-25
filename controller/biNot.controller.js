@@ -1,23 +1,22 @@
 const Messages = require("../constants/Messages");
-const express = require("express");
-const router = express.Router();
-
-const auth = require("../middleware/auth");
-const Logger = require("../middleware/logger");
-
 const User = require("../model/User");
 const Person = require("../model/Person");
-
 const BiNotDerkenar = require("../model/BiNotDerkenar");
 const BiNotNotification = require("../model/BiNotNotification");
 
 const { recordActivity } = require("../actions/ActivityActions");
 const RequestTypeList = require("../constants/ActivityTypeList");
 
+/**
+ * Helper: Request'ten userId'yi al
+ */
 function getUserId(req) {
   return req?.user?.id || req?.user?._id;
 }
 
+/**
+ * Helper: Kullanıcının birim ID'lerini al
+ */
 async function getUserUnitIds(userId) {
   const user = await User.findById(userId).populate("person");
   if (!user) {
@@ -39,7 +38,9 @@ async function getUserUnitIds(userId) {
   return { user, unitIds: unique };
 }
 
-// Helper: reminderTarget'a göre alıcı listesini hazırla
+/**
+ * Helper: reminderTarget'a göre alıcı listesini hazırla
+ */
 async function getNotificationRecipients(
   reminderTarget,
   birimID,
@@ -48,21 +49,13 @@ async function getNotificationRecipients(
   const recipients = [];
 
   if (reminderTarget === "UNIT") {
-    // User modelinden tüm User'ları al ve person'ları populate et
     const users = await User.find().populate("person").select("_id person");
 
-    // console.log(
-    //   `Birim ID ${birimID} için ${users.length} kullanıcı bulundu. Filtreleniyor...`,
-    // );
-
-    // Client-side filtering: person'u olan ve birimID eşleşen User'ları bul
     for (const user of users) {
       if (!user.person) {
-        // Bu user'ın person'u yok, atla
         continue;
       }
 
-      // Bu user'ın person'unda birimID eşleşiyor mu?
       const personBirimIds = [
         user.person.birimID,
         user.person.ikinciBirimID,
@@ -74,10 +67,6 @@ async function getNotificationRecipients(
       const birimIdStr = birimID.toString();
       const matches = personBirimIds.includes(birimIdStr);
 
-    //   console.log(
-    //     `User ${user._id}: person=${user.person._id}, birimler=[${personBirimIds.join(", ")}], matches=${matches}`,
-    //   );
-
       if (matches && user._id.toString() !== excludeUserId.toString()) {
         recipients.push({
           user: user._id,
@@ -85,17 +74,15 @@ async function getNotificationRecipients(
         });
       }
     }
-
-    // console.log(
-    //   `Birim bildirim için ${recipients.length} alıcı seçildi: ${recipients.map((r) => r.user).join(", ")}`,
-    // );
   }
 
   return recipients;
 }
 
-// POST /api/biNot/add
-router.post("/add", auth, Logger("POST /biNot/add"), async (req, res) => {
+/**
+ * POST /api/biNot/add - Not ekle
+ */
+async function addNote(req, res) {
   const userId = getUserId(req);
   if (!userId) {
     return res.status(401).send({
@@ -125,7 +112,6 @@ router.post("/add", auth, Logger("POST /biNot/add"), async (req, res) => {
       });
     }
 
-    // birimID zorunlu (model required). Body'de yoksa kullanıcı person'ından türet.
     let birimID = req.body.birimID;
     if (!birimID) {
       const { user } = await getUserUnitIds(userId);
@@ -138,7 +124,6 @@ router.post("/add", auth, Logger("POST /biNot/add"), async (req, res) => {
       });
     }
 
-    // reminderTarget: private notlarda zorunlu olarak SELF
     const reminderTarget = isPrivate
       ? "SELF"
       : req.body.reminderTarget || "SELF";
@@ -158,22 +143,18 @@ router.post("/add", auth, Logger("POST /biNot/add"), async (req, res) => {
 
     const saved = await derkenar.save();
 
-    // Bildirim oluştur
     if (hasReminder) {
-      // reminderTarget'a göre alıcıları belirle
       const recipients = await getNotificationRecipients(
         reminderTarget,
         birimID,
         userId,
       );
 
-      // Creator'ı her zaman dahil et
       recipients.push({
         user: userId,
         isRead: false,
       });
 
-      // Tek bir bildirim dökümanı oluştur
       await BiNotNotification.create({
         derkenarID: saved._id,
         recipients,
@@ -200,10 +181,12 @@ router.post("/add", auth, Logger("POST /biNot/add"), async (req, res) => {
       message: error.message || Messages.SERVER_ERROR,
     });
   }
-});
+}
 
-// GET /api/biNot/list
-router.get("/list", auth, Logger("GET /biNot/list"), async (req, res) => {
+/**
+ * GET /api/biNot/list - Notları listele
+ */
+async function getNotesList(req, res) {
   const userId = getUserId(req);
   let { isPrivate, birimId } = req.query;
   isPrivate =
@@ -227,15 +210,12 @@ router.get("/list", auth, Logger("GET /biNot/list"), async (req, res) => {
 
     const orFilters = [];
 
-    // isPrivate öncelikli kontrol (birimId göz ardı edilir)
     if (isPrivate === true) {
-      // Sadece şahsi notlar
       orFilters.push({
         creator: userId,
         isPrivate: true,
       });
     } else if (isPrivate === false) {
-      // Sadece birim notları (tüm birimler)
       if (unitIds.length > 0) {
         orFilters.push({
           birimID: { $in: unitIds },
@@ -243,13 +223,11 @@ router.get("/list", auth, Logger("GET /biNot/list"), async (req, res) => {
         });
       }
     } else if (birimId) {
-      // Sadece belirtilen birime ait notlar (isPrivate belirtilmemiş)
       orFilters.push({
         birimID: birimId,
         isPrivate: false,
       });
     } else {
-      // Hiçbir parametre yoksa her ikisini de getir
       if (unitIds.length > 0) {
         orFilters.push({
           birimID: { $in: unitIds },
@@ -328,12 +306,12 @@ router.get("/list", auth, Logger("GET /biNot/list"), async (req, res) => {
       message: error.message || Messages.SERVER_ERROR,
     });
   }
-});
+}
 
-// PUT /api/biNot/:id
-// Derkenarı düzenle (title, content, fileNumber, priority, isPrivate, isCompleted)
-// NOT: AnımsatıcılarLA ilgili değişiklik yapılmaz
-router.put("/:id", auth, Logger("PUT /biNot/:id"), async (req, res) => {
+/**
+ * PUT /api/biNot/:id - Not düzenle
+ */
+async function updateNote(req, res) {
   const userId = getUserId(req);
   if (!userId) {
     return res.status(401).send({
@@ -347,7 +325,6 @@ router.put("/:id", auth, Logger("PUT /biNot/:id"), async (req, res) => {
     const { title, content, fileNumber, priority, isPrivate, isCompleted } =
       req.body;
 
-    // Derkenarı bul
     const note = await BiNotDerkenar.findById(noteId);
     if (!note) {
       return res.status(404).send({
@@ -356,7 +333,6 @@ router.put("/:id", auth, Logger("PUT /biNot/:id"), async (req, res) => {
       });
     }
 
-    // Sadece creator düzenleyebilir
     if (note.creator.toString() !== userId.toString()) {
       return res.status(403).send({
         success: false,
@@ -364,7 +340,6 @@ router.put("/:id", auth, Logger("PUT /biNot/:id"), async (req, res) => {
       });
     }
 
-    // Düzenlenebilecek alanları güncelle
     if (title !== undefined) note.title = title;
     if (content !== undefined) note.content = content;
     if (fileNumber !== undefined) note.fileNumber = fileNumber;
@@ -376,7 +351,7 @@ router.put("/:id", auth, Logger("PUT /biNot/:id"), async (req, res) => {
 
     await recordActivity(
       userId,
-      RequestTypeList.BINOT_CREATE_NOTE, // Event type olarak CREATE_NOTE kullanıyoruz (mevcutta UPDATE_NOTE yok)
+      RequestTypeList.BINOT_CREATE_NOTE,
       null,
       `BİNOT not düzenlendi: ${updated.title}`,
       null,
@@ -393,10 +368,12 @@ router.put("/:id", auth, Logger("PUT /biNot/:id"), async (req, res) => {
       message: error.message || Messages.SERVER_ERROR,
     });
   }
-});
+}
 
-// DELETE /api/biNot/:id
-router.delete("/:id", auth, Logger("DELETE /biNot/:id"), async (req, res) => {
+/**
+ * DELETE /api/biNot/:id - Not sil
+ */
+async function deleteNote(req, res) {
   const userId = getUserId(req);
   if (!userId) {
     return res.status(401).send({
@@ -443,51 +420,46 @@ router.delete("/:id", auth, Logger("DELETE /biNot/:id"), async (req, res) => {
       message: error.message || Messages.SERVER_ERROR,
     });
   }
-});
+}
 
-// GET /api/biNot/notifications/list
-// Kullanıcının dahil olduğu bildirimleri listele
-router.get(
-  "/notifications/list",
-  auth,
-  Logger("GET /biNot/notifications/list"),
-  async (req, res) => {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).send({
-        success: false,
-        message: Messages.TOKEN_NOT_FOUND,
-      });
-    }
+/**
+ * GET /api/biNot/notifications/list - Bildirimleri listele
+ */
+async function getNotificationsList(req, res) {
+  const userId = getUserId(req);
+  if (!userId) {
+    return res.status(401).send({
+      success: false,
+      message: Messages.TOKEN_NOT_FOUND,
+    });
+  }
 
-    try {
-      const now = new Date();
+  try {
+    const now = new Date();
 
-      // recipients.user alanında bu userId'yi içeren bildirimleri bul
-      const notifications = await BiNotNotification.find({
-        "recipients.user": userId,
+    const notifications = await BiNotNotification.find({
+      "recipients.user": userId,
+    })
+      .populate({
+        path: "derkenarID",
+        select: "title content fileNumber priority isCompleted reminderDate",
+        match: {
+          hasReminder: true,
+          isCompleted: false,
+          reminderDate: { $exists: true, $ne: null, $lte: now },
+        },
       })
-        .populate({
-          path: "derkenarID",
-          select: "title content fileNumber priority isCompleted reminderDate",
-          match: {
-            hasReminder: true,
-            isCompleted: false,
-            reminderDate: { $exists: true, $ne: null, $lte: now },
-          },
-        })
-        .populate({
-          path: "birimID",
-          select: "name",
-        })
-        .select("message createdAt derkenarID birimID recipients")
-        .sort({ createdAt: -1 })
-        .lean();
+      .populate({
+        path: "birimID",
+        select: "name",
+      })
+      .select("message createdAt derkenarID birimID recipients")
+      .sort({ createdAt: -1 })
+      .lean();
 
-      // Çıktıda sadece kullanıcının kendi bilgisini göster
-      const userNotifications = notifications
-        .filter((notif) => notif.derkenarID)
-        .map((notif) => {
+    const userNotifications = notifications
+      .filter((notif) => notif.derkenarID)
+      .map((notif) => {
         const userRecipient = notif.recipients.find(
           (r) => r.user.toString() === userId.toString(),
         );
@@ -502,93 +474,92 @@ router.get(
         };
       });
 
-      return res.status(200).send({
-        success: true,
-        length: userNotifications.length,
-        list: userNotifications,
-      });
-    } catch (error) {
-      return res.status(500).send({
+    return res.status(200).send({
+      success: true,
+      length: userNotifications.length,
+      list: userNotifications,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: error.message || Messages.SERVER_ERROR,
+    });
+  }
+}
+
+/**
+ * PATCH /api/biNot/notifications/read/:id - Bildirimi okundu işaretle
+ */
+async function markNotificationAsRead(req, res) {
+  const userId = getUserId(req);
+  if (!userId) {
+    return res.status(401).send({
+      success: false,
+      message: Messages.TOKEN_NOT_FOUND,
+    });
+  }
+
+  try {
+    const notificationId = req.params.id;
+
+    const notif = await BiNotNotification.findById(notificationId);
+    if (!notif) {
+      return res.status(404).send({
         success: false,
-        message: error.message || Messages.SERVER_ERROR,
+        message: "Bildirim bulunamadı",
       });
     }
-  },
-);
 
-// PATCH /api/biNot/notifications/read/:id
-// Bildirimi okundu işaretle (positional operator $ kullanan)
-router.patch(
-  "/notifications/read/:id",
-  auth,
-  Logger("PATCH /biNot/notifications/read/:id"),
-  async (req, res) => {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).send({
+    const userInRecipients = notif.recipients.some(
+      (r) => r.user.toString() === userId.toString(),
+    );
+    if (!userInRecipients) {
+      return res.status(403).send({
         success: false,
-        message: Messages.TOKEN_NOT_FOUND,
+        message: Messages.USER_NOT_AUTHORIZED,
       });
     }
 
-    try {
-      const notificationId = req.params.id;
-
-      // Validation: bildirim mevcut mu
-      const notif = await BiNotNotification.findById(notificationId);
-      if (!notif) {
-        return res.status(404).send({
-          success: false,
-          message: "Bildirim bulunamadı",
-        });
-      }
-
-      // Validation: user bu bildirimin recipients'i mi
-      const userInRecipients = notif.recipients.some(
-        (r) => r.user.toString() === userId.toString(),
-      );
-      if (!userInRecipients) {
-        return res.status(403).send({
-          success: false,
-          message: Messages.USER_NOT_AUTHORIZED,
-        });
-      }
-
-      // Positional operator $ kullanarak sadece bu user'ın recipient record'unu güncelle
-      const updated = await BiNotNotification.findOneAndUpdate(
-        {
-          _id: notificationId,
-          "recipients.user": userId,
+    const updated = await BiNotNotification.findOneAndUpdate(
+      {
+        _id: notificationId,
+        "recipients.user": userId,
+      },
+      {
+        $set: {
+          "recipients.$.isRead": true,
+          "recipients.$.readAt": new Date(),
         },
-        {
-          $set: {
-            "recipients.$.isRead": true,
-            "recipients.$.readAt": new Date(),
-          },
-        },
-        { new: true },
-      )
-        .populate({
-          path: "derkenarID",
-          select: "title content fileNumber",
-        })
-        .populate({
-          path: "birimID",
-          select: "name",
-        });
-
-      return res.status(200).send({
-        success: true,
-        message: "Bildirim okundu işaretlendi",
-        data: updated,
+      },
+      { new: true },
+    )
+      .populate({
+        path: "derkenarID",
+        select: "title content fileNumber",
+      })
+      .populate({
+        path: "birimID",
+        select: "name",
       });
-    } catch (error) {
-      return res.status(500).send({
-        success: false,
-        message: error.message || Messages.SERVER_ERROR,
-      });
-    }
-  },
-);
 
-module.exports = router;
+    return res.status(200).send({
+      success: true,
+      message: "Bildirim okundu işaretlendi",
+      data: updated,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: error.message || Messages.SERVER_ERROR,
+    });
+  }
+}
+
+module.exports = {
+  addNote,
+  getNotesList,
+  updateNote,
+  deleteNote,
+  getNotificationsList,
+  markNotificationAsRead,
+};

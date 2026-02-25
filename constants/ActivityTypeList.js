@@ -236,32 +236,38 @@ const ActivityTypeList = {
   },
 
   BINOT_CREATE_NOTE: {
-    id:39,
+    id: 39,
     app: "BiNot",
     name: "Not Oluşturma",
     field: "derkenarID",
   },
 
   BINOT_COMPLETE_NOTE: {
-    id:40,
+    id: 40,
     app: "BiNot",
     name: "Not Tamamlama",
-    field: "derkenarID"
+    field: "derkenarID",
   },
 
-  BINOT_DELETE_NOTE : {
+  BINOT_DELETE_NOTE: {
     id: 41,
     app: "BiNot",
     name: "Not Silme",
-    field: "derkenarID"
+    field: "derkenarID",
   },
 
-  BINOT_LIST_NOTE : {
-    id:42,
+  BINOT_LIST_NOTE: {
+    id: 42,
     app: "BiNot",
     name: "Not Görütüleme",
-  }
-  
+  },
+
+  REPORT_EXPIRING_4B_PERSONNEL: {
+    id: 43,
+    app: "EPSİS",
+    name: "657/4B Görev Süre Raporu",
+    filterType: "report",
+  },
 };
 
 // Dışa aktarım

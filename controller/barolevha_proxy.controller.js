@@ -1,15 +1,29 @@
-const express = require("express");
-const router = express.Router();
 const axios = require("axios");
-
 require("dotenv/config");
+
 const PROXY_ENABLED = process.env.PROXY_ENABLED == "true";
 const PROXY_URL = process.env.PROXY_URL;
 const PROXY_PORT = process.env.PROXY_PORT;
 const PROXY_USERNAME = process.env.PROXY_USERNAME;
 
-// Baro Levha Proxy Endpoint
-router.post("/list", async (req, res) => {
+// Helper: Proxy yapılandırmasını oluştur
+function getProxyConfig() {
+  if (!PROXY_ENABLED) return false;
+
+  return {
+    protocol: "http",
+    host: PROXY_URL,
+    port: parseInt(PROXY_PORT),
+    auth: {
+      username: PROXY_USERNAME,
+      password: process.env.PROXY_PASSWORD,
+    },
+  };
+}
+
+// POST /barolevha_proxy/list
+// Baro Levha'da avukat listesi ara
+exports.searchLawyers = async (req, res) => {
   try {
     const { name, surname, sicil } = req.body;
 
@@ -18,19 +32,6 @@ router.post("/list", async (req, res) => {
     params.append("name", name || "");
     params.append("surname", surname || "");
     params.append("sicil", sicil || "");
-    let proxy = null;
-    // İsteği proxy üzerinden yap
-    if (PROXY_ENABLED) {
-      proxy = {
-        protocol: "http",
-        host: PROXY_URL,
-        port: parseInt(PROXY_PORT),
-        auth: {
-          username: PROXY_USERNAME,
-          password: process.env.PROXY_PASSWORD,
-        },
-      };
-    }
 
     const response = await axios.post(
       "https://eskisehirbarosu.org.tr/ajax/baro-levha.php",
@@ -38,7 +39,7 @@ router.post("/list", async (req, res) => {
       {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         responseType: "text",
-        proxy: PROXY_ENABLED ? proxy : false,
+        proxy: getProxyConfig(),
       }
     );
 
@@ -48,6 +49,7 @@ router.post("/list", async (req, res) => {
       /getDetail\('info','(\d+)','([^']+)','([^']+)','[^']+'\);\s*"\s*title="[^"]*"[^>]*>[^<]+<\/a>/g;
     const results = [];
     let match;
+
     while ((match = regex.exec(html)) !== null) {
       results.push({
         sicil: match[1],
@@ -67,11 +69,14 @@ router.post("/list", async (req, res) => {
       message: "Baro Levha verisi alınırken hata oluştu",
     });
   }
-});
+};
 
-router.post("/info", async (req, res) => {
+// POST /barolevha_proxy/info
+// Avukat detay bilgisi getir
+exports.getLawyerInfo = async (req, res) => {
   try {
     const { sicil } = req.body;
+
     if (!sicil) {
       return res.status(400).json({
         success: false,
@@ -89,6 +94,7 @@ router.post("/info", async (req, res) => {
       {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         responseType: "text",
+        proxy: getProxyConfig(),
       }
     );
 
@@ -126,6 +132,7 @@ router.post("/info", async (req, res) => {
       // Her bir <li> için ayıkla
       const liRegex = /<li>([\s\S]*?)<\/li>/g;
       let liMatch;
+
       while ((liMatch = liRegex.exec(ulContent)) !== null) {
         const liHtml = liMatch[1];
 
@@ -146,7 +153,6 @@ router.post("/info", async (req, res) => {
         }
         // Adres
         else if (liHtml.includes("fa-map-marker")) {
-          // Adres genellikle <span ...></span> ADRES şeklinde geliyor
           const addressMatch = liHtml.match(
             /fa-map-marker[^>]*><\/span>\s*([^<]+)/
           );
@@ -174,6 +180,4 @@ router.post("/info", async (req, res) => {
       message: "Baro Levha detay verisi alınırken hata oluştu",
     });
   }
-});
-
-module.exports = router;
+};
