@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-
+const checkRoles = require("../middleware/checkRoles");
 const auth = require("../middleware/auth");
 const Logger = require("../middleware/logger");
 
@@ -13,6 +13,7 @@ const {
 router.get(
   "/",
   auth,
+  checkRoles([2, 3, 5, 8]), // EPSİS rolleri
   Logger("GET /activities/"),
   getAllActivities
 );
@@ -21,6 +22,7 @@ router.get(
 router.get(
   "/:userID",
   auth,
+  checkRoles([2, 3, 5, 8]), // EPSİS  rolleri
   Logger("GET /activities/:userID"),
   getActivitiesByUserId
 );

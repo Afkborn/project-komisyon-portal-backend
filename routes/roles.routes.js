@@ -6,6 +6,6 @@ const { getAllRoles } = require("../controller/roles.controller");
 
 // GET /api/roles
 // Tüm rolleri listele
-router.get("/", auth, checkRoles(["admin"]), getAllRoles);
+router.get("/", auth, checkRoles([2, 3, 5, 8]), getAllRoles);
 
 module.exports = router;

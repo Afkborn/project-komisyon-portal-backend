@@ -105,7 +105,7 @@ if (PROXY_ENABLED) {
       console.warn(
         getTimeForLog() + "Proxy şifresi yüklenemedi, proxy kullanılamayabilir",
       );
-    }
+    } 
   });
 } else {
   console.log(getTimeForLog() + "Proxy kullanılmıyor");

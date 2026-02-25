@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
+const checkRoles = require("../middleware/checkRoles");
 const Logger = require("../middleware/logger");
 const {
   changeUnit,
@@ -12,6 +13,7 @@ const {
 router.post(
   "/changeUnit",
   auth,
+  checkRoles([2, 3, 5, 8]), // EPSİS rolleri
   Logger("POST /personunits/changeUnit"),
   changeUnit
 );
@@ -21,6 +23,7 @@ router.post(
 router.delete(
   "/:id",
   auth,
+  checkRoles([2, 3, 5, 8]), // EPSİS rolleri
   Logger("DELETE /personunits/:id"),
   deletePersonUnit
 );

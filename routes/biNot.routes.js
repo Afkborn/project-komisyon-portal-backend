@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const auth = require("../middleware/auth");
+const checkRoles = require("../middleware/checkRoles");
 const Logger = require("../middleware/logger");
 
 const {
@@ -17,6 +18,7 @@ const {
 router.post(
   "/add",
   auth,
+  checkRoles([9]),
   Logger("POST /biNot/add"),
   addNote
 );
@@ -25,6 +27,7 @@ router.post(
 router.get(
   "/list",
   auth,
+  checkRoles([9]),
   Logger("GET /biNot/list"),
   getNotesList
 );
@@ -33,6 +36,7 @@ router.get(
 router.put(
   "/:id",
   auth,
+  checkRoles([9]),
   Logger("PUT /biNot/:id"),
   updateNote
 );
@@ -41,6 +45,7 @@ router.put(
 router.delete(
   "/:id",
   auth,
+  checkRoles([9]),
   Logger("DELETE /biNot/:id"),
   deleteNote
 );
@@ -49,6 +54,7 @@ router.delete(
 router.get(
   "/notifications/list",
   auth,
+  checkRoles([9]),
   Logger("GET /biNot/notifications/list"),
   getNotificationsList
 );
@@ -57,6 +63,7 @@ router.get(
 router.patch(
   "/notifications/read/:id",
   auth,
+  checkRoles([9]),
   Logger("PATCH /biNot/notifications/read/:id"),
   markNotificationAsRead
 );

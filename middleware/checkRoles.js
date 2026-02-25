@@ -8,7 +8,12 @@ const checkRoles = (requiredRoles) => {
       });
     }
 
-    const hasRequiredRole = req.user.roles.some(role => 
+    // Admin (ID: 1) her zaman tüm yetkilere sahiptir
+    if (req.user.roles && req.user.roles.includes(1)) {
+      return next();
+    }
+
+    const hasRequiredRole = req.user.roles && req.user.roles.some(role => 
       requiredRoles.includes(role)
     );
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
+const checkRoles = require("../middleware/checkRoles");
 const Logger = require("../middleware/logger");
 const {
   getCities,
@@ -14,15 +15,22 @@ const {
 
 // GET /api/segbis/cities
 // İlleri getir
-router.get("/cities", auth, Logger("GET /segbis/cities"), getCities);
+router.get(
+  "/cities",
+  auth,
+  checkRoles([6, 7]),
+  Logger("GET /segbis/cities"),
+  getCities,
+);
 
 // GET /api/segbis/cities/:cityName/units
 // Bir ile ait birimleri getir
 router.get(
   "/cities/:cityName/units",
   auth,
+  checkRoles([6, 7]),
   Logger("GET /segbis/cities/:cityName/units"),
-  getUnitsByCity
+  getUnitsByCity,
 );
 
 // GET /api/segbis/units/:unitId/personel
@@ -30,8 +38,9 @@ router.get(
 router.get(
   "/units/:unitId/personel",
   auth,
+  checkRoles([6, 7]),
   Logger("GET /segbis/units/:unitId/personel"),
-  getUnitPersonnel
+  getUnitPersonnel,
 );
 
 // POST /api/segbis/units/:unitId/personel
@@ -39,8 +48,9 @@ router.get(
 router.post(
   "/units/:unitId/personel",
   auth,
+  checkRoles([6, 7]),
   Logger("POST /segbis/units/:unitId/personel"),
-  addPersonnelToUnit
+  addPersonnelToUnit,
 );
 
 // DELETE /api/segbis/units/:unitId/personel/:personId
@@ -48,8 +58,9 @@ router.post(
 router.delete(
   "/units/:unitId/personel/:personId",
   auth,
+  checkRoles([6, 7]),
   Logger("DELETE /segbis/units/:unitId/personel/:personId"),
-  deletePersonnelFromUnit
+  deletePersonnelFromUnit,
 );
 
 // PUT /api/segbis/units/:unitId/personel/:personId
@@ -57,12 +68,19 @@ router.delete(
 router.put(
   "/units/:unitId/personel/:personId",
   auth,
+  checkRoles([6, 7]),
   Logger("PUT /segbis/units/:unitId/personel/:personId"),
-  updatePersonnel
+  updatePersonnel,
 );
 
 // POST /api/segbis/units
 // Yeni birim ekle
-router.post("/units", auth, Logger("POST /segbis/units"), addUnit);
+router.post(
+  "/units",
+  auth,
+  checkRoles([6, 7]),
+  Logger("POST /segbis/units"),
+  addUnit,
+);
 
 module.exports = router;
