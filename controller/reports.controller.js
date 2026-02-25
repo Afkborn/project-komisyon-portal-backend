@@ -1046,6 +1046,52 @@ exports.getUrgentJobs = async (request, response) => {
       });
     }
 
+    // 657/4B Personel Görev Süresi Kontrolü (1 ay içinde bitenler veya geçmişler)
+    const titles4B = await Title.find({
+      name: { $regex: "657/4B", $options: "i" },
+    }).select("_id name kind");
+
+    if (titles4B.length > 0) {
+      const title4BIds = titles4B.map((title) => title._id);
+      const unitIds = units.map((unit) => unit._id);
+
+      const persons4B = await Person.find({
+        title: { $in: title4BIds },
+        birimID: { $in: unitIds },
+        status: true,
+        goreveBaslamaTarihi: { $exists: true, $ne: null },
+      })
+        .populate("title", "name kind -_id")
+        .populate("birimID", "name -_id");
+
+      const now = new Date();
+      const oneMonthLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      for (const person of persons4B) {
+        const tenureStartDate = new Date(person.goreveBaslamaTarihi);
+        const tenureEndDate = new Date(
+          tenureStartDate.getFullYear() + 3,
+          tenureStartDate.getMonth(),
+          tenureStartDate.getDate()
+        );
+
+        // Süresi geçmiş veya 1 ay içinde bitecek olanları ekle
+        if (tenureEndDate <= oneMonthLater) {
+          urgentJobs.push({
+            urgentJobType: "657/4B Görev Süresi",
+            urgentJobEndDate: tenureEndDate,
+            urgentJobDetail: `${person.title?.name} görev süresi sona eriyor`,
+            personID: person._id,
+            sicil: person.sicil,
+            ad: person.ad,
+            soyad: person.soyad,
+            title: person.title?.name,
+            birim: person.birimID?.name,
+          });
+        }
+      }
+    }
+
     urgentJobs.sort((a, b) => a.urgentJobEndDate - b.urgentJobEndDate);
 
     let processEndDate = new Date();
