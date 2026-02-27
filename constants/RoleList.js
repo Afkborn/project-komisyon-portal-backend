@@ -18,5 +18,8 @@ exports.RoleList = [
   // BİNOT
   { id: 9, name: "binot-kullanici", label: "BİNOT Kullanıcı" },
 
+  // BiChat
+  { id: 10, name: "bichat-kullanici", label: "BiChat Kullanıcı" },
+
 
 ];

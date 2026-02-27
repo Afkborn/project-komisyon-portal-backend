@@ -64,7 +64,7 @@ router.put("/password", auth, Logger("PUT /users/password"), changePassword);
 
 // GET /api/users
 // Tüm kullanıcıları listele (Admin)
-router.get("/", auth, checkRoles([1]), Logger("GET /users"), getAllUsers);
+router.get("/", auth, checkRoles([10]), Logger("GET /users"), getAllUsers);
 
 // PUT /api/users/:id
 // Kullanıcıyı güncelle (Admin)

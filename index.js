@@ -1,12 +1,23 @@
 const express = require("express");
 const app = express();
+const http = require("http");
+const { Server } = require("socket.io");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const mongoDbConnect = require("./database/mongoDb");
 const getTimeForLog = require("./common/time");
 const { initRedis } = require("./config/redis");
+const { setupChatSocket } = require("./socket/chat.socket");
 require("dotenv").config();
 const port = process.env.PORT || 3000;
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
 if (process.env.REDIS_ENABLED == "true") {
   console.log(getTimeForLog() + "Redis kullanımı etkin");
@@ -82,6 +93,9 @@ app.use("/api/segbis", segbis); // SEGBİS işlemleri
 const biNot = require("./routes/biNot.routes");
 app.use("/api/binot", biNot); // BiNot işlemleri
 
+const chat = require("./routes/chat.routes");
+app.use("/api/chat", chat); // Chat işlemleri
+
 mongoDbConnect(); // MongoDB bağlantısını başlat
 
 const checkConstantTitle =
@@ -111,7 +125,11 @@ if (PROXY_ENABLED) {
   console.log(getTimeForLog() + "Proxy kullanılmıyor");
 }
 
+setupChatSocket(io);
+
+
 //  Sunucuyu başlat
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(getTimeForLog() + `Listening on port ${port}`);
+  console.log(getTimeForLog() + `WS Socket.io kuruldu: ws://localhost:${port}`);
 });

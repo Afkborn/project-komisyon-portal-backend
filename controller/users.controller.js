@@ -611,13 +611,6 @@ exports.deleteUserById = async (request, response) => {
 // GET /users
 // Tüm kullanıcıları listele (Admin)
 exports.getAllUsers = async (request, response) => {
-  if (!request.user.roles.includes("admin")) {
-    return response.status(403).send({
-      success: false,
-      message: Messages.USER_NOT_AUTHORIZED,
-    });
-  }
-
   try {
     const users = await User.find();
 
