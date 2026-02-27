@@ -322,8 +322,29 @@ async function updateNote(req, res) {
 
   try {
     const noteId = req.params.id;
-    const { title, content, fileNumber, priority, isPrivate, isCompleted } =
-      req.body;
+    const {
+      title,
+      content,
+      fileNumber,
+      priority,
+      isPrivate,
+      isCompleted,
+      reminderDate,
+      reminderTarget,
+    } = req.body;
+
+    const hasReminderProvided = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "hasReminder",
+    );
+    const reminderDateProvided = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "reminderDate",
+    );
+    const reminderTargetProvided = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "reminderTarget",
+    );
 
     const note = await BiNotDerkenar.findById(noteId);
     if (!note) {
@@ -348,7 +369,82 @@ async function updateNote(req, res) {
     if (isPrivate !== undefined) note.isPrivate = isPrivate;
     if (isCompleted !== undefined) note.isCompleted = isCompleted;
 
+    const finalHasReminder = hasReminderProvided
+      ? req.body.hasReminder === true || req.body.hasReminder === "true"
+      : note.hasReminder;
+
+    const parsedReminderDate = reminderDateProvided
+      ? reminderDate
+        ? new Date(reminderDate)
+        : null
+      : note.reminderDate;
+
+    if (
+      reminderDateProvided &&
+      parsedReminderDate &&
+      Number.isNaN(parsedReminderDate.getTime())
+    ) {
+      return res.status(400).send({
+        success: false,
+        message: "reminderDate geçerli bir tarih olmalıdır",
+      });
+    }
+
+    if (!finalHasReminder && reminderDateProvided && reminderDate) {
+      return res.status(400).send({
+        success: false,
+        message: "hasReminder false iken reminderDate gönderilemez",
+      });
+    }
+
+    if (finalHasReminder && !parsedReminderDate) {
+      return res.status(400).send({
+        success: false,
+        message: `reminderDate ${Messages.REQUIRED_FIELD}`,
+      });
+    }
+
+    const finalReminderTarget = note.isPrivate
+      ? "SELF"
+      : reminderTargetProvided
+        ? reminderTarget
+        : note.reminderTarget || "SELF";
+
+    note.hasReminder = finalHasReminder;
+    note.reminderDate = finalHasReminder ? parsedReminderDate : undefined;
+    note.reminderTarget = finalHasReminder ? finalReminderTarget : "SELF";
+
     const updated = await note.save();
+
+    if (updated.hasReminder) {
+      const recipients = await getNotificationRecipients(
+        updated.reminderTarget,
+        updated.birimID,
+        updated.creator,
+      );
+
+      const hasCreator = recipients.some(
+        (r) => r.user.toString() === updated.creator.toString(),
+      );
+      if (!hasCreator) {
+        recipients.push({
+          user: updated.creator,
+          isRead: false,
+        });
+      }
+
+      await BiNotNotification.findOneAndUpdate(
+        { derkenarID: updated._id },
+        {
+          derkenarID: updated._id,
+          recipients,
+          birimID: updated.birimID,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      );
+    } else {
+      await BiNotNotification.deleteMany({ derkenarID: updated._id });
+    }
 
     await recordActivity(
       userId,
