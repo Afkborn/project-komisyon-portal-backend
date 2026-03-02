@@ -350,6 +350,127 @@ async function deleteMessageForEveryone(req, res) {
   }
 }
 
+async function clearChatRoom(req, res) {
+  try {
+    const currentUserID = req.user._id || req.user.id;
+    const { roomId } = req.params;
+
+    if (!isValidObjectId(roomId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Geçersiz roomId",
+      });
+    }
+
+    const room = await AysChatRoom.findOne({
+      _id: roomId,
+      participants: currentUserID,
+    }).select("_id");
+
+    if (!room) {
+      return res.status(403).json({
+        success: false,
+        message: "Bu oda üzerinde işlem yapma yetkiniz yok",
+      });
+    }
+
+    const messagesToClear = await AysChatMessage.find({
+      roomID: roomId,
+      deletedBy: { $ne: currentUserID },
+    }).select("_id");
+
+    const messageIds = messagesToClear.map((message) => message._id);
+
+    if (messageIds.length > 0) {
+      await AysChatMessage.updateMany(
+        { _id: { $in: messageIds } },
+        { $addToSet: { deletedBy: currentUserID } },
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      clearedCount: messageIds.length,
+      message: "Sohbet sizin için temizlendi",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Sohbet temizlenirken hata oluştu",
+      error: error.message,
+    });
+  }
+}
+
+async function leaveGroupRoom(req, res) {
+  try {
+    const currentUserID = req.user._id || req.user.id;
+    const { roomId } = req.params;
+
+    if (!isValidObjectId(roomId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Geçersiz roomId",
+      });
+    }
+
+    const room = await AysChatRoom.findById(roomId).select("_id type participants");
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: "Sohbet odası bulunamadı",
+      });
+    }
+
+    const isParticipant = room.participants.some(
+      (participantID) => participantID.toString() === currentUserID.toString(),
+    );
+
+    if (!isParticipant) {
+      return res.status(403).json({
+        success: false,
+        message: "Bu oda üzerinde işlem yapma yetkiniz yok",
+      });
+    }
+
+    if (room.type !== "GROUP") {
+      return res.status(400).json({
+        success: false,
+        message: "Gruptan ayrılma sadece GROUP odalarda kullanılabilir",
+      });
+    }
+
+    await AysChatRoom.findByIdAndUpdate(
+      roomId,
+      {
+        $pull: { participants: currentUserID },
+        $set: { updatedAt: new Date() },
+      },
+      { new: true },
+    );
+
+    const io = req.app.get("io");
+    if (io) {
+      io.to(roomId.toString()).emit("user_left_group", {
+        roomId: roomId.toString(),
+        userId: currentUserID.toString(),
+        message: "Bir kullanıcı gruptan ayrıldı",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Gruptan ayrılma işlemi başarılı",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Gruptan ayrılırken hata oluştu",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   createOrGetDirectRoom,
   createGroupRoom,
@@ -357,4 +478,6 @@ module.exports = {
   getMessagesByRoomID,
   deleteMessageForMe,
   deleteMessageForEveryone,
+  clearChatRoom,
+  leaveGroupRoom,
 };

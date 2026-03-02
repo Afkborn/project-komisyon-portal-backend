@@ -10,6 +10,8 @@ const {
   getMessagesByRoomID,
   deleteMessageForMe,
   deleteMessageForEveryone,
+  clearChatRoom,
+  leaveGroupRoom,
 } = require("../controller/chat.controller");
 
 // POST /api/chat/direct-room
@@ -61,6 +63,24 @@ router.patch(
   auth,
   Logger("PATCH /chat/messages/:messageId/delete-for-everyone"),
   deleteMessageForEveryone,
+);
+
+// PATCH /api/chat/rooms/:roomId/clear
+// Oda mesajlarını sadece isteği yapan kullanıcı için temizler
+router.patch(
+  "/rooms/:roomId/clear",
+  auth,
+  Logger("PATCH /chat/rooms/:roomId/clear"),
+  clearChatRoom,
+);
+
+// PATCH /api/chat/rooms/:roomId/leave
+// GROUP odadan çıkış yapar
+router.patch(
+  "/rooms/:roomId/leave",
+  auth,
+  Logger("PATCH /chat/rooms/:roomId/leave"),
+  leaveGroupRoom,
 );
 
 
