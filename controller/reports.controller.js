@@ -1137,14 +1137,6 @@ exports.getPersonnelCount = async (req, res) => {
 exports.getExpiring4BPersonnel = async (request, response) => {
   try {
     let processStartDate = new Date();
-    let institutionId = request.query.institutionId;
-
-    if (!institutionId) {
-      return response.status(400).send({
-        success: false,
-        message: `Kurum ID ${Messages.REQUIRED_FIELD}`,
-      });
-    }
 
     let titles4B = await Title.find({
       name: { $regex: "657/4B", $options: "i" },
@@ -1160,17 +1152,13 @@ exports.getExpiring4BPersonnel = async (request, response) => {
 
     let title4BIds = titles4B.map((title) => title._id);
 
-    let units = await Unit.find({ institutionID: institutionId });
-    let unitIds = units.map((unit) => unit._id);
-
     let persons4B = await Person.find({
       title: { $in: title4BIds },
-      birimID: { $in: unitIds },
       status: true,
       goreveBaslamaTarihi: { $exists: true, $ne: null },
     })
       .populate("title", "name kind -_id")
-      .populate("birimID", "name -_id");
+      .populate("birimID", "name institutionID -_id");
 
     let now = new Date();
     let oneMonthLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -1186,6 +1174,11 @@ exports.getExpiring4BPersonnel = async (request, response) => {
       );
 
       if (tenureEndDate <= oneMonthLater) {
+        const institutionId = person.birimID?.institutionID;
+        const institution = institutionId
+          ? getInstitutionListByID(institutionId)
+          : null;
+
         expiring4BPersonnel.push({
           personID: person._id,
           sicil: person.sicil,
@@ -1194,6 +1187,8 @@ exports.getExpiring4BPersonnel = async (request, response) => {
           title: person.title?.name,
           titleKind: person.title?.kind,
           birim: person.birimID?.name,
+          institutionId,
+          institutionName: institution?.name || null,
           goreveBaslamaTarihi: person.goreveBaslamaTarihi,
           tenureEndDate: tenureEndDate,
           gunKalması: Math.floor(

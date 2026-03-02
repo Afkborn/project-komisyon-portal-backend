@@ -34,4 +34,8 @@ const BiNotDerkenarSchema = new Schema(
   { timestamps: true }
 );
 
+BiNotDerkenarSchema.index({ birimID: 1, isPrivate: 1, createdAt: -1 });
+BiNotDerkenarSchema.index({ creator: 1, isPrivate: 1, createdAt: -1 });
+BiNotDerkenarSchema.index({ isCompleted: 1, priority: 1, reminderDate: 1 });
+
 module.exports = mongoose.model("BiNotDerkenar", BiNotDerkenarSchema);

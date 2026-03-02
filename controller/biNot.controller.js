@@ -14,6 +14,19 @@ function getUserId(req) {
   return req?.user?.id || req?.user?._id;
 }
 
+function parseBooleanQuery(value) {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return null;
+}
+
+function parseDateQuery(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
 /**
  * Helper: Kullanıcının birim ID'lerini al
  */
@@ -188,9 +201,21 @@ async function addNote(req, res) {
  */
 async function getNotesList(req, res) {
   const userId = getUserId(req);
-  let { isPrivate, birimId } = req.query;
-  isPrivate =
-    isPrivate === "true" ? true : isPrivate === "false" ? false : null;
+  const {
+    birimId,
+    q,
+    priority,
+    reminderTarget,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = req.query;
+
+  const isPrivate = parseBooleanQuery(req.query.isPrivate);
+  const isCompleted = parseBooleanQuery(req.query.isCompleted);
+  const hasReminder = parseBooleanQuery(req.query.hasReminder);
+
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
 
   if (!userId) {
     return res.status(401).send({
@@ -240,7 +265,94 @@ async function getNotesList(req, res) {
       });
     }
 
-    const list = await BiNotDerkenar.find({ $or: orFilters })
+    const andFilters = [{ $or: orFilters }];
+
+    if (q && q.trim()) {
+      const searchRegex = new RegExp(q.trim(), "i");
+      andFilters.push({
+        $or: [
+          { title: searchRegex },
+          { content: searchRegex },
+          { fileNumber: searchRegex },
+        ],
+      });
+    }
+
+    if (priority) {
+      andFilters.push({ priority });
+    }
+
+    if (reminderTarget) {
+      andFilters.push({ reminderTarget });
+    }
+
+    if (isCompleted !== null) {
+      andFilters.push({ isCompleted });
+    }
+
+    if (hasReminder !== null) {
+      andFilters.push({ hasReminder });
+    }
+
+    const createdAtStart = parseDateQuery(req.query.createdAtStart);
+    const createdAtEnd = parseDateQuery(req.query.createdAtEnd);
+    if (req.query.createdAtStart && !createdAtStart) {
+      return res.status(400).send({
+        success: false,
+        message: "createdAtStart geçerli bir tarih olmalıdır",
+      });
+    }
+    if (req.query.createdAtEnd && !createdAtEnd) {
+      return res.status(400).send({
+        success: false,
+        message: "createdAtEnd geçerli bir tarih olmalıdır",
+      });
+    }
+    if (createdAtStart || createdAtEnd) {
+      const createdAtFilter = {};
+      if (createdAtStart) createdAtFilter.$gte = createdAtStart;
+      if (createdAtEnd) createdAtFilter.$lte = createdAtEnd;
+      andFilters.push({ createdAt: createdAtFilter });
+    }
+
+    const reminderDateStart = parseDateQuery(req.query.reminderDateStart);
+    const reminderDateEnd = parseDateQuery(req.query.reminderDateEnd);
+    if (req.query.reminderDateStart && !reminderDateStart) {
+      return res.status(400).send({
+        success: false,
+        message: "reminderDateStart geçerli bir tarih olmalıdır",
+      });
+    }
+    if (req.query.reminderDateEnd && !reminderDateEnd) {
+      return res.status(400).send({
+        success: false,
+        message: "reminderDateEnd geçerli bir tarih olmalıdır",
+      });
+    }
+    if (reminderDateStart || reminderDateEnd) {
+      const reminderDateFilter = {};
+      if (reminderDateStart) reminderDateFilter.$gte = reminderDateStart;
+      if (reminderDateEnd) reminderDateFilter.$lte = reminderDateEnd;
+      andFilters.push({ reminderDate: reminderDateFilter });
+    }
+
+    const allowedSortFields = [
+      "createdAt",
+      "updatedAt",
+      "reminderDate",
+      "priority",
+      "isCompleted",
+      "title",
+    ];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
+    const safeSortOrder = sortOrder === "asc" ? 1 : -1;
+
+    const finalFilter = andFilters.length > 1 ? { $and: andFilters } : andFilters[0];
+
+    const totalCount = await BiNotDerkenar.countDocuments(finalFilter);
+    const pageCount = Math.ceil(totalCount / limit);
+
+    const list = await BiNotDerkenar.find(finalFilter)
       .populate({
         path: "creator",
         select: "username name surname",
@@ -250,7 +362,9 @@ async function getNotesList(req, res) {
         },
       })
       .populate("birimID", "name")
-      .sort({ createdAt: -1 })
+      .sort({ [safeSortBy]: safeSortOrder })
+      .skip((page - 1) * limit)
+      .limit(limit)
       .lean();
 
     const noteIds = list.map((note) => note._id);
@@ -297,6 +411,10 @@ async function getNotesList(req, res) {
 
     return res.status(200).send({
       success: true,
+      page,
+      limit,
+      totalCount,
+      pageCount,
       length: enrichedList.length,
       list: enrichedList,
     });
