@@ -8,6 +8,8 @@ const {
   createGroupRoom,
   getMyRooms,
   getMessagesByRoomID,
+  deleteMessageForMe,
+  deleteMessageForEveryone,
 } = require("../controller/chat.controller");
 
 // POST /api/chat/direct-room
@@ -38,8 +40,30 @@ router.get("/my-rooms", auth, Logger("GET /chat/my-rooms"), getMyRooms);
 router.get(
   "/messages/:roomID",
   auth,
+  checkRoles([10]),
   Logger("GET /chat/messages/:roomID"),
   getMessagesByRoomID,
 );
+
+// PATCH /api/chat/messages/:messageId/delete-for-me
+// Mesajı sadece isteği yapan kullanıcı için gizler
+router.patch(
+  "/messages/:messageId/delete-for-me",
+  auth,
+  Logger("PATCH /chat/messages/:messageId/delete-for-me"),
+  deleteMessageForMe,
+);
+
+// PATCH /api/chat/messages/:messageId/delete-for-everyone
+// Mesaj sahibi için herkesten silme (soft delete)
+router.patch(
+  "/messages/:messageId/delete-for-everyone",
+  auth,
+  Logger("PATCH /chat/messages/:messageId/delete-for-everyone"),
+  deleteMessageForEveryone,
+);
+
+
+
 
 module.exports = router;

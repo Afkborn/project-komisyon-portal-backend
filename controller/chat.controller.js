@@ -157,7 +157,7 @@ async function getMyRooms(req, res) {
 
 async function getMessagesByRoomID(req, res) {
   try {
-    const currentUserID = req.user.id;
+    const currentUserID = req.user._id || req.user.id;
     const { roomID } = req.params;
     let { page = 1, limit = 30 } = req.query;
 
@@ -172,7 +172,9 @@ async function getMessagesByRoomID(req, res) {
       });
     }
 
-    const room = await AysChatRoom.findById(roomID).select("participants");
+    const room = await AysChatRoom.findById(roomID)
+      .select("participants")
+      .populate("participants", "username name surname roles");
     if (!room) {
       return res.status(404).json({
         success: false,
@@ -180,31 +182,49 @@ async function getMessagesByRoomID(req, res) {
       });
     }
 
-    const isParticipant = room.participants.some(
-      (participantID) => participantID.toString() === currentUserID.toString(),
-    );
+    // const isParticipant = room.participants.some(
+    //   (participantID) => participantID.toString() === currentUserID.toString(),
+    // );
 
-    if (!isParticipant) {
-      return res.status(403).json({
-        success: false,
-        message: "Bu odanın mesajlarını görüntüleme yetkiniz yok",
-      });
-    }
+    // if (!isParticipant) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Bu odanın mesajlarını görüntüleme yetkiniz yok",
+    //   });
+    // }
 
-    const totalRecords = await AysChatMessage.countDocuments({ roomID });
+    const messageFilter = {
+      roomID,
+      deletedBy: { $ne: currentUserID },
+    };
+
+    const totalRecords = await AysChatMessage.countDocuments(messageFilter);
     const pageCount = Math.ceil(totalRecords / limit);
 
-    const messages = await AysChatMessage.find({ roomID })
+    const messages = await AysChatMessage.find(messageFilter)
       .populate("sender", "username name surname")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
+    const sanitizedMessages = messages
+      .reverse()
+      .map((message) => {
+        const messageObject = message.toObject();
+
+        if (messageObject.isDeletedForAll) {
+          messageObject.content = "Bu mesaj silindi";
+        }
+
+        return messageObject;
+      });
+
     return res.status(200).json({
       success: true,
       pageCount,
-      length: messages.length,
-      messages: messages.reverse(),
+      length: sanitizedMessages.length,
+      participants: room.participants,
+      messages: sanitizedMessages,
     });
   } catch (error) {
     return res.status(500).json({
@@ -215,9 +235,126 @@ async function getMessagesByRoomID(req, res) {
   }
 }
 
+async function deleteMessageForMe(req, res) {
+  try {
+    const currentUserID = req.user._id || req.user.id;
+    const { messageId } = req.params;
+
+    if (!isValidObjectId(messageId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Geçersiz messageId",
+      });
+    }
+
+    const message = await AysChatMessage.findById(messageId).select("_id roomID");
+    if (!message) {
+      return res.status(404).json({
+        success: false,
+        message: "Mesaj bulunamadı",
+      });
+    }
+
+    const room = await AysChatRoom.findOne({
+      _id: message.roomID,
+      participants: currentUserID,
+    }).select("_id");
+
+    if (!room) {
+      return res.status(403).json({
+        success: false,
+        message: "Bu mesaj üzerinde işlem yapma yetkiniz yok",
+      });
+    }
+
+    await AysChatMessage.updateOne(
+      { _id: messageId },
+      { $addToSet: { deletedBy: currentUserID } },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Mesaj sizin için silindi",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Mesaj silinirken hata oluştu",
+      error: error.message,
+    });
+  }
+}
+
+async function deleteMessageForEveryone(req, res) {
+  try {
+    const currentUserID = req.user._id || req.user.id;
+    const { messageId } = req.params;
+
+    if (!isValidObjectId(messageId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Geçersiz messageId",
+      });
+    }
+
+    const message = await AysChatMessage.findById(messageId).select("_id roomID sender");
+    if (!message) {
+      return res.status(404).json({
+        success: false,
+        message: "Mesaj bulunamadı",
+      });
+    }
+
+    const room = await AysChatRoom.findOne({
+      _id: message.roomID,
+      participants: currentUserID,
+    }).select("_id");
+
+    if (!room) {
+      return res.status(403).json({
+        success: false,
+        message: "Bu mesaj üzerinde işlem yapma yetkiniz yok",
+      });
+    }
+
+    if (message.sender.toString() !== currentUserID.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Sadece mesaj sahibi herkesten silebilir",
+      });
+    }
+
+    await AysChatMessage.updateOne(
+      { _id: messageId },
+      { $set: { isDeletedForAll: true } },
+    );
+
+    const io = req.app.get("io");
+    if (io) {
+      io.to(message.roomID.toString()).emit("message_deleted", {
+        messageId: message._id.toString(),
+        isDeletedForAll: true,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Mesaj herkesten silindi",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Mesaj herkesten silinirken hata oluştu",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   createOrGetDirectRoom,
   createGroupRoom,
   getMyRooms,
   getMessagesByRoomID,
+  deleteMessageForMe,
+  deleteMessageForEveryone,
 };

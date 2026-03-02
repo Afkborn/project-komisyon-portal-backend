@@ -18,6 +18,16 @@ const AysChatMessageSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    isDeletedForAll: {
+      type: Boolean,
+      default: false,
+    },
+    deletedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     readBy: [
       {
         user: {
