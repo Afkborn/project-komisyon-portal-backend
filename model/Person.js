@@ -214,6 +214,18 @@ const personSchema = new Schema(
       type: Boolean,
       default: false,
     },
+
+    // kurum içi naklen atama
+    kurumIciNaklenAtamaVarmi: {
+      type: Boolean,
+      default: false,
+    },
+    kurumIciNaklenAtamaAciklama: {
+      type: String,
+    },
+    kurumIciNaklenAtamaTarihi: {
+      type: Date,
+    },
   },
   options,
 );

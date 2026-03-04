@@ -283,7 +283,9 @@ exports.getDeactivatedPersons = async (request, response) => {
   try {
     let institutionId = request.query.institutionId;
 
-    let persons = await Person.find({ status: false })
+    let persons = await Person.find({
+      $or: [{ status: false }, { kurumIciNaklenAtamaVarmi: true }],
+    })
       .select("-_id -__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi")
       .populate(populateConfig.basic);
 
@@ -772,6 +774,11 @@ exports.updatePersonBySicil = async (request, response) => {
       updateData.partTimeEndDate = null;
     }
 
+    if (updateData.kurumIciNaklenAtamaVarmi === false) {
+      updateData.kurumIciNaklenAtamaAciklama = null;
+      updateData.kurumIciNaklenAtamaTarihi = null;
+    }
+
     // Birime başlama tarihi kontrolü
     const goreveBaslamaTarihi =
       updateData.goreveBaslamaTarihi || person.goreveBaslamaTarihi;
@@ -845,6 +852,11 @@ exports.updatePersonById = async (request, response) => {
       updateData.partTimeReason = null;
       updateData.partTimeStartDate = null;
       updateData.partTimeEndDate = null;
+    }
+
+    if (updateData.kurumIciNaklenAtamaVarmi === false) {
+      updateData.kurumIciNaklenAtamaAciklama = null;
+      updateData.kurumIciNaklenAtamaTarihi = null;
     }
 
     // Birime başlama tarihi kontrolü

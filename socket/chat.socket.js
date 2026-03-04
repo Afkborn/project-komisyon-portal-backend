@@ -134,6 +134,64 @@ function setupChatSocket(io) {
         });
       }
     });
+
+    socket.on("mark_as_read", async (payload) => {
+      try {
+        const roomId = payload && payload.roomId;
+
+        if (!roomId) {
+          return socket.emit("chat_error", {
+            success: false,
+            message: "roomId gereklidir",
+          });
+        }
+
+        const room = await AysChatRoom.findOne({
+          _id: roomId,
+          participants: userID,
+        }).select("_id");
+
+        if (!room) {
+          return socket.emit("chat_error", {
+            success: false,
+            message: "Bu oda üzerinde okundu işlemi yapma yetkiniz yok",
+          });
+        }
+
+        const now = new Date();
+        await AysChatMessage.updateMany(
+          {
+            roomID: roomId,
+            sender: { $ne: userID },
+            readBy: {
+              $not: {
+                $elemMatch: {
+                  user: userID,
+                },
+              },
+            },
+          },
+          {
+            $push: {
+              readBy: {
+                user: userID,
+                readAt: now,
+              },
+            },
+          },
+        );
+
+        io.to(roomId.toString()).emit("messages_read", {
+          roomId: roomId.toString(),
+          readByUserId: (socket.user._id || socket.user.id).toString(),
+        });
+      } catch (error) {
+        socket.emit("chat_error", {
+          success: false,
+          message: "Okundu bilgisi güncellenirken hata oluştu",
+        });
+      }
+    });
   });
 }
 

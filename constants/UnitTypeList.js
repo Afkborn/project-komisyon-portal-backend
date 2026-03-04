@@ -286,7 +286,7 @@ exports.UnitTypeList = [
     gerekenKatipSayisi: 3,
     eksikKatipKontrol: true,
     tabloMevcutMu: true,
-    tabloHeaderName: "İcra Mahkemeleri Büroları",
+    tabloHeaderName: "İcra Daireleri",
     baskanGerekliMi: false,
     uyeHakimGerekliMi: false,
     hakimGerekliMi: false,

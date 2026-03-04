@@ -155,6 +155,73 @@ async function getMyRooms(req, res) {
   }
 }
 
+async function getUnreadCounts(req, res) {
+  try {
+    const currentUserID = req.user._id || req.user.id;
+
+    const rooms = await AysChatRoom.find({
+      participants: currentUserID,
+    }).select("_id");
+
+    const roomIds = rooms.map((room) => room._id);
+    const roomUnreadCounts = {};
+
+    roomIds.forEach((roomId) => {
+      roomUnreadCounts[roomId.toString()] = 0;
+    });
+
+    if (roomIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        totalUnread: 0,
+        roomUnreadCounts,
+      });
+    }
+
+    const unreadAgg = await AysChatMessage.aggregate([
+      {
+        $match: {
+          roomID: { $in: roomIds },
+          sender: { $ne: new mongoose.Types.ObjectId(currentUserID) },
+          readBy: {
+            $not: {
+              $elemMatch: {
+                user: new mongoose.Types.ObjectId(currentUserID),
+              },
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$roomID",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    let totalUnread = 0;
+
+    unreadAgg.forEach((item) => {
+      const roomId = item._id.toString();
+      roomUnreadCounts[roomId] = item.count;
+      totalUnread += item.count;
+    });
+
+    return res.status(200).json({
+      success: true,
+      totalUnread,
+      roomUnreadCounts,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Okunmamış mesaj sayıları alınırken hata oluştu",
+      error: error.message,
+    });
+  }
+}
+
 async function getMessagesByRoomID(req, res) {
   try {
     const currentUserID = req.user._id || req.user.id;
@@ -475,6 +542,7 @@ module.exports = {
   createOrGetDirectRoom,
   createGroupRoom,
   getMyRooms,
+  getUnreadCounts,
   getMessagesByRoomID,
   deleteMessageForMe,
   deleteMessageForEveryone,

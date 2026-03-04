@@ -7,6 +7,7 @@ const {
   createOrGetDirectRoom,
   createGroupRoom,
   getMyRooms,
+  getUnreadCounts,
   getMessagesByRoomID,
   deleteMessageForMe,
   deleteMessageForEveryone,
@@ -36,6 +37,15 @@ router.post(
 // GET /api/chat/my-rooms
 // Kullanıcının dahil olduğu tüm sohbet odalarını döner
 router.get("/my-rooms", auth, Logger("GET /chat/my-rooms"), getMyRooms);
+
+// GET /api/chat/unread-counts
+// Kullanıcının oda bazlı ve toplam okunmamış mesaj sayılarını döner
+router.get(
+  "/unread-counts",
+  auth,
+  Logger("GET /chat/unread-counts"),
+  getUnreadCounts,
+);
 
 // GET /api/chat/messages/:roomID
 // Oda mesajlarını sayfalı şekilde döner
