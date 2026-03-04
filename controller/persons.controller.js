@@ -606,6 +606,17 @@ exports.getPersonsByBirimId = async (request, response) => {
 
     persons = persons.concat(zabitkaatibiPersons);
 
+    const zabitKatibiIkinciBirimPersons = await Person.find({
+      kind: "zabitkatibi",
+      ikinciBirimID: birimID,
+      status: true,
+    })
+      .populate("title", "-_id -__v -deletable")
+      .populate("izinler", "-__v -personID")
+      .select("-kind");
+
+    persons = persons.concat(zabitKatibiIkinciBirimPersons);
+
     const temporaryPersons = await Person.find({
       temporaryBirimID: birimID,
       status: true,
@@ -717,7 +728,13 @@ exports.createPerson = async (request, response) => {
     let newPerson;
 
     if (kind === "zabitkatibi") {
-      newPerson = new Model({ ...commonFields, durusmaKatibiMi, calistigiKisi, nobetTutuyorMu });
+      newPerson = new Model({
+        ...commonFields,
+        ikinciBirimID,
+        durusmaKatibiMi,
+        calistigiKisi,
+        nobetTutuyorMu,
+      });
     } else if (kind === "yaziislerimudürü") {
       newPerson = new Model({ ...commonFields, ikinciBirimID });
     } else if (kind === "mubasir") {

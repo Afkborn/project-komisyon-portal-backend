@@ -653,6 +653,21 @@ exports.getPersonelTablo = async (request, response) => {
           persons = persons.concat(sorumluMubasir);
         }
 
+        let sorumluZabitKatibi = await Person.find({
+          kind: "zabitkatibi",
+          ikinciBirimID: unit._id,
+          status: true,
+        })
+          .populate("title", "-_id -__v -deletable")
+          .populate("izinler", "-__v -personID")
+          .select(
+            "-__v -goreveBaslamaTarihi -kind -calistigiKisi -birimeBaslamaTarihi -birimID -gecmisBirimler"
+          );
+
+        if (sorumluZabitKatibi.length > 0) {
+          persons = persons.concat(sorumluZabitKatibi);
+        }
+
         let geciciPersonel = await Person.find({
           temporaryBirimID: unit._id,
           isTemporary: true,

@@ -250,6 +250,11 @@ const Person = mongoose.model("Person", personSchema);
 const ZabitKatibi = Person.discriminator(
   "zabitkatibi",
   new Schema({
+    ikinciBirimID: {
+      type: Schema.Types.ObjectId,
+      ref: "Unit",
+      default: null,
+    },
     durusmaKatibiMi: { type: Boolean, default: false },
     calistigiKisi: {
       type: Schema.Types.ObjectId,
