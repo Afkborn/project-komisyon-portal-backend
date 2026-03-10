@@ -988,6 +988,68 @@ exports.uploadPersonPhoto = async (request, response) => {
   }
 };
 
+// POST /persons/bulk-photo
+// Dosya isimlerinden sicil okuyarak toplu personel fotoğrafı yükle
+exports.bulkUploadPhotos = async (request, response) => {
+  if (!request.files || request.files.length === 0) {
+    return response.status(400).send({
+      success: false,
+      message: "Yüklenecek fotoğraf bulunamadı",
+    });
+  }
+
+  const uploaded = [];
+  const notFound = [];
+
+  for (const file of request.files) {
+    const extractedSicil = path.parse(file.originalname).name;
+    const sicilAsNumber = Number(extractedSicil);
+    const person = await Person.findOne({ sicil: sicilAsNumber });
+
+    if (person) {
+      if (person.photo) {
+        const oldFileName = path.basename(person.photo);
+        const oldFilePath = path.join(
+          __dirname,
+          "..",
+          "uploads",
+          "persons",
+          oldFileName,
+        );
+
+        try {
+          await fs.promises.unlink(oldFilePath);
+        } catch (error) {
+          if (error.code !== "ENOENT") {
+            console.error("Eski personel fotoğrafı silinemedi:", error);
+          }
+        }
+      }
+
+      person.photo = `/uploads/persons/${file.filename}`;
+      await person.save();
+      uploaded.push(extractedSicil);
+    } else {
+      try {
+        fs.unlinkSync(file.path);
+      } catch (error) {
+        if (error.code !== "ENOENT") {
+          console.error("Eşleşmeyen dosya silinemedi:", error);
+        }
+      }
+
+      notFound.push(extractedSicil);
+    }
+  }
+
+  return response.status(200).send({
+    success: true,
+    message: "Toplu fotoğraf yükleme tamamlandı",
+    uploaded,
+    notFound,
+  });
+};
+
 // DELETE /persons/:id/photo
 // Personel fotoğrafını sil
 exports.deletePersonPhoto = async (request, response) => {

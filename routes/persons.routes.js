@@ -85,6 +85,12 @@ router.post(
   checkRoles([2, 3, 5, 8]),
   personsController.createPerson,
 );
+router.post(
+  "/bulk-photo",
+  authMiddleware,
+  personPhotoUpload.array("photos", 100),
+  personsController.bulkUploadPhotos,
+);
 
 // PUT Routes
 router.put(
