@@ -33,6 +33,10 @@ const UserSchema = mongoose.Schema(
     email: {
       type: String,
     },
+    profilePicture: {
+      type: String,
+      default: null,
+    },
     phoneNumber: {
       type: String,
       validate: {

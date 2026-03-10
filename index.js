@@ -4,6 +4,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const path = require("path");
 const mongoDbConnect = require("./database/mongoDb");
 const getTimeForLog = require("./common/time");
 const { initRedis } = require("./config/redis");
@@ -47,6 +48,7 @@ app.use(
 app.use(cors()); // CORS'u etkinleştirir
 
 app.use(bodyParser.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API'leri tanımla
 

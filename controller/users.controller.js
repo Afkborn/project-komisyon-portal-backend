@@ -2,6 +2,8 @@ const Messages = require("../constants/Messages");
 const User = require("../model/User");
 const { Person } = require("../model/Person");
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const path = require("path");
 const getTimeForLog = require("../common/time");
 const toSHA256 = require("../common/hashing");
 const {
@@ -313,6 +315,117 @@ exports.getDetails = async (request, response) => {
       success: false,
       message: Messages.USER_NOT_FOUND,
       error,
+    });
+  }
+};
+
+// PUT /users/profile-picture
+// Kullanıcının profil fotoğrafını güncelle
+exports.updateProfilePicture = async (request, response) => {
+  if (!request.file) {
+    return response.status(400).send({
+      success: false,
+      message: "Profil fotoğrafı dosyası gereklidir",
+    });
+  }
+
+  try {
+    const user = await User.findById(request.user.id);
+
+    if (!user) {
+      return response.status(404).send({
+        success: false,
+        message: Messages.USER_NOT_FOUND,
+      });
+    }
+
+    const oldProfilePicture = user.profilePicture;
+    user.profilePicture = `/uploads/profiles/${request.file.filename}`;
+    await user.save();
+
+    if (oldProfilePicture) {
+      const oldFileName = path.basename(oldProfilePicture);
+      const oldFilePath = path.join(
+        __dirname,
+        "..",
+        "uploads",
+        "profiles",
+        oldFileName,
+      );
+
+      fs.unlink(oldFilePath, (error) => {
+        if (error && error.code !== "ENOENT") {
+          console.error(
+            getTimeForLog() +
+              `Eski profil fotoğrafı silinemedi (${oldFilePath}):`,
+            error,
+          );
+        }
+      });
+    }
+
+    response.status(200).send({
+      success: true,
+      message: "Profil fotoğrafı güncellendi",
+      profilePicture: user.profilePicture,
+    });
+  } catch (error) {
+    console.log(error);
+    response.status(500).send({
+      success: false,
+      message: "Profil fotoğrafı güncellenemedi",
+      error: error.message,
+    });
+  }
+};
+
+// DELETE /users/profile-picture
+// Kullanıcının profil fotoğrafını sil
+exports.deleteProfilePicture = async (request, response) => {
+  try {
+    const user = await User.findById(request.user.id);
+
+    if (!user) {
+      return response.status(404).send({
+        success: false,
+        message: Messages.USER_NOT_FOUND,
+      });
+    }
+
+    if (!user.profilePicture) {
+      return response.status(404).send({
+        success: false,
+        message: "Silinecek profil fotoğrafı bulunamadı",
+      });
+    }
+
+    const fileName = path.basename(user.profilePicture);
+    const filePath = path.join(__dirname, "..", "uploads", "profiles", fileName);
+
+    try {
+      await fs.promises.unlink(filePath);
+    } catch (error) {
+      if (error.code !== "ENOENT") {
+        console.error(
+          getTimeForLog() + `Profil fotoğrafı silinirken hata oluştu (${filePath}):`,
+          error,
+        );
+      }
+    }
+
+    user.profilePicture = null;
+    await user.save();
+
+    return response.status(200).send({
+      success: true,
+      message: "Profil fotoğrafı başarıyla silindi",
+    });
+  } catch (error) {
+    console.error(getTimeForLog() + "Profil fotoğrafı silme hatası:", error);
+    return response.status(500).send({
+      success: false,
+      message: "Profil fotoğrafı silinemedi",
+      error: error.message,
     });
   }
 };

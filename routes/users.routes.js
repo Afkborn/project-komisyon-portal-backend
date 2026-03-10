@@ -3,10 +3,14 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 const checkRoles = require("../middleware/checkRoles");
 const Logger = require("../middleware/logger");
+const createPictureUploadMiddleware = require("../middleware/profilePictureUpload");
+const profilePictureUpload = createPictureUploadMiddleware("profiles");
 const {
   login,
   register,
   getDetails,
+  updateProfilePicture,
+  deleteProfilePicture,
   changePassword,
   updateUserById,
   updateUser,
@@ -57,6 +61,35 @@ router.get(
 // GET /api/users/details
 // Token'dan detayları al
 router.get("/details", auth, Logger("GET /users/details"), getDetails);
+
+// PUT /api/users/profile-picture
+// Profil fotoğrafı yükle
+router.put(
+  "/profile-picture",
+  auth,
+  Logger("PUT /users/profile-picture"),
+  (request, response, next) => {
+    profilePictureUpload.single("profilePicture")(request, response, (error) => {
+      if (error) {
+        return response.status(400).send({
+          success: false,
+          message: error.message,
+        });
+      }
+      next();
+    });
+  },
+  updateProfilePicture,
+);
+
+// DELETE /api/users/profile-picture
+// Profil fotoğrafını sil
+router.delete(
+  "/profile-picture",
+  auth,
+  Logger("DELETE /users/profile-picture"),
+  deleteProfilePicture,
+);
 
 // PUT /api/users/password
 // Şifreyi değiştir

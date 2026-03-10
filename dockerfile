@@ -5,6 +5,9 @@ WORKDIR /app
 # Loglar için klasör oluştur
 RUN mkdir -p /app/logs
 
+# Yüklenen dosyalar için klasör oluştur
+RUN mkdir -p /app/uploads /app/uploads/profiles
+
 # Gerekli paketleri yükleyin
 COPY package*.json ./
 RUN npm install --only=production
