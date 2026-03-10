@@ -11,7 +11,8 @@ const createPictureUploadMiddleware = (folderName) => {
       cb(null, uploadBaseDir);
     },
     filename: (request, file, cb) => {
-      const uniqueName = `${Date.now()}-${file.originalname.replace(/\s+/g, "-")}`;
+      const extension = path.extname(file.originalname).toLowerCase();
+      const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e6)}${extension}`;
       cb(null, uniqueName);
     },
   });
