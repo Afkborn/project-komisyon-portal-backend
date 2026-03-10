@@ -1,4 +1,6 @@
 const Messages = require("../constants/Messages");
+const fs = require("fs");
+const path = require("path");
 const {
   Person,
   zabitkatibi,
@@ -931,6 +933,100 @@ exports.updatePersonById = async (request, response) => {
     response.status(statusCode).send({
       success: false,
       message: error.message || Messages.PERSON_NOT_UPDATED,
+    });
+  }
+};
+
+// PUT /persons/:id/photo
+// Personel fotoğrafı yükle
+exports.uploadPersonPhoto = async (request, response) => {
+  if (!request.file) {
+    return response.status(400).send({
+      success: false,
+      message: "Fotoğraf dosyası gereklidir",
+    });
+  }
+
+  try {
+    const person = await Person.findById(request.params.id);
+
+    if (!person) {
+      return response.status(404).send({
+        success: false,
+        message: Messages.PERSON_NOT_FOUND,
+      });
+    }
+
+    if (person.photo) {
+      const oldFileName = path.basename(person.photo);
+      const oldFilePath = path.join(__dirname, "..", "uploads", "persons", oldFileName);
+
+      try {
+        await fs.promises.unlink(oldFilePath);
+      } catch (error) {
+        if (error.code !== "ENOENT") {
+          console.error("Eski personel fotoğrafı silinemedi:", error);
+        }
+      }
+    }
+
+    person.photo = `/uploads/persons/${request.file.filename}`;
+    await person.save();
+
+    return response.status(200).send({
+      success: true,
+      message: "Personel fotoğrafı güncellendi",
+      photo: person.photo,
+    });
+  } catch (error) {
+    console.error(error);
+    return response.status(500).send({
+      success: false,
+      message: "Personel fotoğrafı güncellenemedi",
+      error: error.message,
+    });
+  }
+};
+
+// DELETE /persons/:id/photo
+// Personel fotoğrafını sil
+exports.deletePersonPhoto = async (request, response) => {
+  try {
+    const person = await Person.findById(request.params.id);
+
+    if (!person) {
+      return response.status(404).send({
+        success: false,
+        message: Messages.PERSON_NOT_FOUND,
+      });
+    }
+
+    if (person.photo) {
+      const fileName = path.basename(person.photo);
+      const filePath = path.join(__dirname, "..", "uploads", "persons", fileName);
+
+      try {
+        await fs.promises.unlink(filePath);
+      } catch (error) {
+        if (error.code !== "ENOENT") {
+          console.error("Personel fotoğrafı silinemedi:", error);
+        }
+      }
+    }
+
+    person.photo = null;
+    await person.save();
+
+    return response.status(200).send({
+      success: true,
+      message: "Personel fotoğrafı silindi",
+    });
+  } catch (error) {
+    console.error(error);
+    return response.status(500).send({
+      success: false,
+      message: "Personel fotoğrafı silinemedi",
+      error: error.message,
     });
   }
 };

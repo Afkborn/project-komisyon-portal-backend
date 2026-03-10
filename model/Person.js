@@ -186,6 +186,10 @@ const personSchema = new Schema(
     email: {
       type: String,
     },
+    photo: {
+      type: String,
+      default: null,
+    },
     birthDate: {
       type: Date,
     },

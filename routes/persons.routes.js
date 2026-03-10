@@ -3,6 +3,8 @@ const router = express.Router();
 const personsController = require("../controller/persons.controller");
 const authMiddleware = require("../middleware/auth");
 const checkRoles = require("../middleware/checkRoles");
+const createPictureUploadMiddleware = require("../middleware/profilePictureUpload");
+const personPhotoUpload = createPictureUploadMiddleware("persons");
 
 // Route sırası önemlidir: Daha spesifik olanlar genel olanlardan önce
 
@@ -97,8 +99,19 @@ router.put(
   checkRoles([2, 3, 5, 8]),
   personsController.updatePersonById,
 );
+router.put(
+  "/:id/photo",
+  authMiddleware,
+  personPhotoUpload.single("photo"),
+  personsController.uploadPersonPhoto,
+);
 
 // DELETE Route
+router.delete(
+  "/:id/photo",
+  authMiddleware,
+  personsController.deletePersonPhoto,
+);
 router.delete(
   "/:id",
   authMiddleware,
